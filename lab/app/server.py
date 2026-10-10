@@ -273,8 +273,12 @@ def act_verdict(sid, accepted, text='', who='brian'):
         sug['status'] = 'accepted' if accepted else 'rejected'; sug['verdict'] = text
         if accepted:
             shutil.copy(sug['file'], f'{SDIR}/working.musicxml'); st['working'] = f'{SDIR}/working.musicxml'
-            for ext in ('.svg', '.audio.txt', '.bars.json', '.np.m4a'):
+            for ext in ('.audio.txt', '.bars.json', '.np.m4a'):
                 if os.path.exists(f"{SDIR}/{sid}{ext}"): shutil.copy(f"{SDIR}/{sid}{ext}", f'{SDIR}/working{ext}')
+            def redraw(xml=f'{SDIR}/working.musicxml', stem=f'{SDIR}/working'):
+                with render_lock:
+                    subprocess.run([sys.executable, f'{HERE}/render_one.py', xml, stem, SDIR], capture_output=True, text=True, timeout=300)
+            threading.Thread(target=redraw, daemon=True).start()
             st.setdefault('np_audio', {})
             if st['np_audio'].get(sid): st['np_audio']['working'] = now()
             else:
