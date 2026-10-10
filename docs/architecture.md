@@ -211,6 +211,8 @@ Used only by the MuseScore panel; the page polls HTTP instead. Client to server:
 | `open_in_sibelius.sh` | open a file in Sibelius and press Return on the import dialog (Sibelius is gone) |
 | `band/orchestrate_bv.py` | Bright Valley 18-81 sketch to 24 concert-band parts (23 pitched plus snare), concert pitch |
 | `songs/where_i_left_it.py` | a whole song built from tables (harmony per beat, concert melody, lyrics as `w:` lines, piano textures), converted with `abc2xml.py` into `$E/_scorewright_out/songs/`; the worked example for COMPOSING.md section 10 |
+| `songs/where_i_left_it_s2.py` | the rewrite after his verdict on S1: one `bar()` row per bar (concert melody with `N/` wordless and `M/` melisma notes, a left-hand ; right-hand voicing per beat, a piano figure per beat, dynamic, key), refuses a fade that ends on a tied continuation, inserts `<sound tempo>` steps for rit. and a tempo |
+| `style_profile.py` | `<reference scores...> --draft <draft> [--examples N] [--json out]`: per beat, the accompaniment chord and what the melody does against it (plain, colour, outside; appoggiatura, suspension, passing), plus chord vocabulary, inversions, chromatic chords, bass motion, pedals, how long a figure runs; prints the references' median and range and flags the draft outside it (COMPOSING.md section 11) |
 | `PREFLIGHT.md` | the checklist before any paid run |
 
 Repo root:

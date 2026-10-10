@@ -41,7 +41,8 @@ For a Claude Code session: read [CLAUDE.md](CLAUDE.md), then [lab/COMPOSING.md](
 | `lab/app/` | the server, the page, rendering, NotePerformer, input transcription, the MuseScore panel |
 | `lab/*.py` | composing tools, plus scripts from the training phase |
 | `lab/band/` | the concert band orchestration of Bright Valley |
-| `lab/songs/` | build scripts for whole new pieces; `where_i_left_it.py` (English horn and piano, with words) is the first |
+| `lab/songs/` | build scripts for whole new pieces: `where_i_left_it.py` (S1, rejected as too pop) and `where_i_left_it_s2.py` (the rewrite), English horn and piano with words |
+| `lab/style_profile.py` | measures a composer's harmonic and melodic habits from their scores and flags where a draft falls outside them |
 | `lab/NotaGen/` | git submodule; its ABC converters are used by the pipeline |
 | `*.py` at the root | `xmledit.py`, `diffview.py`, `retrieve.py`, `ranges.py`, `analyze.py`, and the August prototypes |
 | `deploy/` | the launchd plist |

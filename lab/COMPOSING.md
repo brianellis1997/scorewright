@@ -111,6 +111,36 @@ Rules learned from his verdicts:
   band piece written on two staves ("probably trumpet", "wind choir" in his own text); the useful
   output is the band score, with dynamics, slurs, articulations and tempo, not a continuation.
 
+Rules from his verdict on the first song, "Where I Left It" S1 (Oct 9 2026: "too pop, too
+saccharine, on the nose, no mystery, no tension"). Section 11 has the measurements behind them.
+
+- **Lean into the chord, don't sit on it.** "Chopin uses a passing note resolving to the chord a
+  lot; your melody is on the nose of the chord." Put appoggiaturas and suspensions on the stressed
+  syllables and resolve them by step, some only when the harmony moves under a held note, a few
+  never. S1 sat on root, third or fifth on 80% of beats, more than any of his 17 songs. Don't
+  overcorrect either: his songs sit at 40-79% (median 59%), and a draft with 35% was also outside.
+- **No pop progressions.** I-V-vi-IV and the descending pop bass (D, A/C#, Bm, Bm/A, G) are
+  "vanilla, some amateur pop composer". Use his vocabulary instead: pedal points with chords moving
+  above them, polychords (C/D, A/G, D/G), the Lydian #4, borrowed bVI, iv and bVII,
+  half-diminished chords, V7 with b9 or 13, a deceptive cadence to bVI, plagal iv-I at the end.
+  Keep plain triads (about a third of his chords): over a simple chord the leaning melody carries
+  the tension.
+- **Walk the left hand.** In his songs 82% of bass moves are leaps (root on the beat, then the
+  third or fifth) and only 7% are half steps. A chromatic bass line is a special moment, not the
+  default.
+- **Change key gradually, by a common tone or a pivot.** "I'm more subtle when transitioning to
+  different keys." S2's bridge goes D, Dm (one note changes), Bb, Gb, and comes home on the
+  common tone F# = Gb.
+- **Change the accompaniment figure every one to four bars.** He varies contour, register and
+  rhythm while the idea persists. S1 ran one rhythm for 72 bars ("got repetitive, I would vary it
+  long before you did").
+- **A fade on a held note runs to the end of the note.** End the hairpin on the event after the
+  tie chain, never on the tied continuation. S1's "home" in bars 35-36 stayed loud because the
+  fade ended where the note began.
+- **A ritardando has to change the tempo.** The text "rit." alone plays nothing in Dorico or
+  MuseScore. Write `<sound tempo>` steps per beat and "a tempo" after (the `TEMPO` table in
+  `songs/where_i_left_it_s2.py`). His pieces slow down at the end; S1 "rushed to the end".
+
 ## 3. Write in ABC, the way his files are written
 
 Output is answer lines in the same format the reduced score uses, one line per bar:
@@ -382,12 +412,25 @@ Accept copies the suggestion over the working score; Reject keeps the working sc
 verdict with his words. Never write to the working score directly: everything goes through a
 suggestion so the log stays complete.
 
-## 10. A new piece from words (lab/songs/where_i_left_it.py is the worked example)
+## 10. A new piece from words (lab/songs/where_i_left_it_s2.py is the worked example)
 
 When he asks for a whole piece, not a continuation, there is no score to splice into, so write a
 build script under `lab/songs/` that generates the full ABC: harmony per beat, the melody in
 concert pitch, the words, and the accompaniment per section. Re-running it rebuilds the piece, so
 revisions are edits to tables, not to 100 bars of ABC.
+
+`where_i_left_it.py` built S1, which he rejected for its style (section 2, the S1 rules).
+`where_i_left_it_s2.py` built S2. In S2 every bar is one `bar()` row with these fields:
+- the English horn in concert pitch, using the tokens `Pitch/sixteenths`, `~` (tie), `z/n`
+  (rest), `N/` (wordless note) and `M/` (melisma note, writes `_`)
+- one `left hand ; right hand` voicing per beat
+- a piano figure per beat (`pulse`, `ripple`, `wave`, `arch`, `fall`, `rock`, `barc`, `drive`,
+  `heart`, `chorale`)
+- a dynamic and a key
+
+Voicings are written out note by note, so inner voices can move. The script stops if a fade ends
+on a tied continuation, or if a bar or the syllable count comes out wrong. It also inserts the
+tempo steps.
 
 1. **Retrieve his idiom for the exact pairing first.** `corpus_find.py` with the instruments, then
    `dump_abc.py` on the two or three closest pieces (for "Where I Left It": the 9/19/19 English horn
@@ -409,3 +452,63 @@ revisions are edits to tables, not to 100 bars of ABC.
    syllable sits on its note (no syllable on a tie continuation), and every strong-beat or long
    melody note against the accompaniment chord (expect only deliberate suspensions and colours).
    Then render, look, and register it as a suggestion in its own piece so his verdict is logged.
+
+## 11. Writing in someone's style: measure, then check (style_profile.py)
+
+"Play it in my style" fails quietly. The draft flows, passes every check, and is still not the
+composer. S1 of "Where I Left It" was that: his idiom's surface (singing line, broken-chord
+ripple, pedal, swells) over a pop harmonic and melodic grammar. Reading his scores by ear is
+necessary but not enough. Measure his habits, measure the draft the same way, and fix whatever
+falls outside his range before he hears it.
+
+    python style_profile.py <his scores...> --draft <draft.musicxml> [--examples N] [--json out.json]
+
+For every beat it names the accompaniment chord (template match on the pitch classes sounding in
+the beat, each note counted for its presence plus its length, so broken-chord sixteenths count
+next to a held bass). Then it asks what the melody does against that chord:
+- a plain tone (root, third, fifth)
+- a colour tone the chord also has (seventh, sixth, added ninth)
+- a note outside the chord, and whether it resolves by step: appoggiatura, suspension (prepared
+  and held over a chord change) or accented passing tone
+
+It also measures:
+- chord vocabulary, inversions and chromatic chords
+- root motion, and bass motion (half step, whole step, leap)
+- pedal points and harmonic rhythm
+- how long one accompaniment rhythm and one figure (rhythm plus contour) run before changing
+- melodic steps, leaps and chromatic notes
+
+Everything is in sounding pitch. The reference pieces are summarised as median and range, and
+any draft value outside the range is flagged.
+
+Procedure:
+1. Pick the references by genre, not the whole archive: for a song, his 14 song studies and the
+   art songs (one version of each piece). The median of a mixed set is blunt; the range is the
+   useful part.
+2. Read two or three of them by hand anyway (dump_abc). The numbers say how much, the bars say
+   how: the 9/19/19 study leans E over Gmaj7 into D, C into B; The Ocean slides a chromatic line
+   F, E, E flat, D over a G flat chord and goes to the flat side by thirds. Quote bars when
+   telling him what his language is.
+3. Draft, profile, fix every flag, profile again. Aim inside the range near his median, not at
+   the opposite extreme. The first S2 overshot on six measures: 35% plain beats, no triads,
+   chromatic bass everywhere. The fix was the left hand walking and plain triads under the
+   leaning melody.
+4. Then render and look. Passing the profile means the grammar is in range, not that the piece
+   is good; he decides that.
+
+"Where I Left It", against his 17 songs (median, his range, S1, S2):
+
+    plain chord tones on beats      0.59   0.40-0.79   0.80 (above)   0.49
+    chords outside every template   0.24   0.05-0.62   0.01 (below)   0.26
+    chromatic chords                0.26   0.03-0.42   0.08           0.40
+    inversions                      0.56   0.43-0.84   0.41 (below)   0.43 (his lowest)
+    bass moves by half step         0.07   0.00-0.18   0.03           0.14
+    bars before the figure changes  1.4    1.0-3.0     10.8 (above)   1.6
+    longest run of one rhythm       14     4-55        72 (above)     10
+
+S1 was outside his range on 8 measures, S2 on none.
+
+Limits: chords come from templates (triads, sevenths, sixths, ninths, sus), so quartal harmony,
+clusters and polychords count as "outside every template", which in his music is itself a style
+marker. The melody is the first part that is not a keyboard, guitar or harp. One analysis window
+per beat suits slow songs. Fast music with a harmony per bar wants a longer window.

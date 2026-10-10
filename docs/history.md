@@ -69,7 +69,7 @@ How Scorewright went from "train a music model" to "a frontier model plus a harn
 
 ## Where it stands (Oct 9 2026)
 
-- Oct 9: the first whole song. Claude wrote the lyrics ("Where I Left It"), then set them for English horn and piano after his 14 song studies, words under the notes (`lab/songs/where_i_left_it.py`, PROJECT.md section 57). It is S1 of the piece `where-i-left-it`, the current piece. `quartet2` keeps its 48-bar working score with S34 (bars 49-65) still open.
-- 124 lines in `_bridge/verdicts.jsonl`.
+- Oct 9: the first whole song. Claude wrote the lyrics ("Where I Left It"), then set them for English horn and piano after his 14 song studies, words under the notes (`lab/songs/where_i_left_it.py`, PROJECT.md section 57). It is S1 of the piece `where-i-left-it`, the current piece. His verdict: impressive, lyrics and pedalling right, but "too pop, saccharine, on the nose, no mystery", one accompaniment rhythm for too long, abrupt key changes, fades that stopped before the held notes, no ritardando. S1 rejected. `lab/style_profile.py` measured his 17 songs and S1: S1 fell outside his range on 8 measures (melody on plain chord tones 80% of beats, one figure for 72 bars). S2 (`lab/songs/where_i_left_it_s2.py`) was rewritten and measured until it fell inside on all of them, and posted the same day. `quartet2` keeps its 48-bar working score with S34 (bars 49-65) still open.
+- 125 lines in `_bridge/verdicts.jsonl`. The GitHub repo went public on Oct 9 2026.
 - Open items from section 55: pick a public name ("Scorewright" is already taken by scorewright.com), and re-test the 🎹 take with a real piano. From section 56: grant Accessibility to the whisperer python so the NotePerformer helper can run under launchd.
 - The bet behind it, from section 45: an owner's own corpus plus his own verdicts are the two things a single composer can supply that the field lacks.
