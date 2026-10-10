@@ -32,7 +32,19 @@ The server writes an ABC file with the preset's staves (piano gets a braced treb
 - A take or upload he sent shows its rendered staff under the message.
 - The log keeps its scroll position unless it was already at the bottom.
 
-Under the log is the input row: 🎤 talk, 🎵 hum, 🎹 take, 📎 upload, the text box, and Send. Enter sends, Shift+Enter makes a new line. The text box saves every keystroke on the device, so a draft survives a reload, and clears on send. The four buttons are described in [input.md](input.md).
+Under the log is the input row: 🎤 talk, 🎵 hum, 🎹 take, 📎 upload, the text box, Send and ＋ Review. On a phone the text box gets its own full-width row above the buttons. Enter sends, Cmd or Ctrl+Enter adds to the review, Shift+Enter makes a new line. The text box saves every keystroke on the device, so a draft survives a reload, and clears on send. When bars are selected, Send puts them in front of the message (`[S10 bars 45–48] ...`). The four buttons are described in [input.md](input.md).
+
+## Review comments
+
+A review works like a pull-request review: comments on passages collect in a draft and reach Claude together, so he is never mid-change while Brian is still reviewing (Oct 10 2026).
+
+- Select a bar or a passage in the score pane (below), say or type the comment, press ＋ Review. With nothing selected the comment is general. The selection clears after each comment.
+- "Your review · N comments" appears above the input row: each comment with its suggestion and bars (amber), × to remove it, a tap to show those bars. The commented bars are shaded amber on the score.
+- Submit review sends them all. Text still in the box is added as one more comment first.
+- The draft lives on the server (`review` in `state.json`, `/api/review`), so it survives reloads and is the same on the phone and the desktop.
+- On submit the server writes one chat entry, one inbox line `[REVIEW S<n>] k comments` with a line per comment (the JSON also carries the list as `review`), and one `verdicts.jsonl` record per suggestion commented on: `verdict: "CHANGES REQUESTED. ..."`, `source: "ui-review"`, with the comments.
+
+Dorico does not export its own comments (not in MusicXML, not as a file). Its Remote Control API can read the current selection, which is the way to comment on single notes from Dorico later.
 
 ## Accept and Reject
 
@@ -49,8 +61,9 @@ On Accept the suggestion's clean score becomes the working score and any other o
 
 The toolbar, left to right:
 
-- what is showing: "working score" or "suggestion S<n> (green = new)", plus "· bar N selected"
-- a hint, desktop only: click a bar to select it, P or space plays from there, press again to stop, ← → move the selection
+- what is showing: "working score" or "suggestion S<n> (green = new)", plus "· bar N selected" or "· bars N–M selected"
+- ↔ to… and × (only while something is selected): ↔ then a tap on another bar extends the selection to that passage; × clears it
+- a hint, desktop only: click a bar to select it, shift-click to extend, P or space plays from there, press again to stop, ← → move the selection
 - zoom out and zoom in (the minus and plus buttons): steps of 1x, 1.5x, 2x and 3x of the pane width, remembered per device. Zooming keeps the selected bar (or the suggestion's first bar) in view.
 - working: show the working score
 - latest suggestion: hidden when nothing is open. When a newer open suggestion arrives it turns green and reads "new: S<n> (click to show)".
@@ -62,7 +75,7 @@ The score is a Verovio SVG of the whole piece on one long page. A suggestion is 
 
 Clicking a bar selects it with a blue box. The hit test runs per bar in its own coordinate system and picks the tightest bar under the click, because slurs and hairpins inflate their neighbours' boxes. On the phone, tap a bar, then ▶ play.
 
-Keys (ignored while typing): P or space toggles playback from the selected bar, Escape stops, ← and → move the selection one bar. Playback seeks to the bar's start time from `<id>.bars.json`. If the audio is not rendered yet the page says "audio still rendering, try again in a few seconds". See [playback.md](playback.md).
+Keys (ignored while typing): P or space toggles playback from the selected bar (the first bar of a passage), Escape stops, ← and → move the selection one bar, Shift+← and Shift+→ shrink or grow a passage. Playback seeks to the bar's start time from `<id>.bars.json`. If the audio is not rendered yet the page says "audio still rendering, try again in a few seconds". See [playback.md](playback.md).
 
 ## Live updates
 

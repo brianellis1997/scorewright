@@ -71,6 +71,8 @@ He talks or types in the page, or in the MuseScore panel. Each message becomes a
 - `[TAKE take_HHMMSS] ...` or `[TAKE upload_HHMMSS] ...`: notes he played or uploaded. The JSON line carries `take` (the `.abc` file), `wav` and `midi` paths. See [docs/input.md](docs/input.md).
 - `[HUM] I heard: D#5(2) E5(1) ... | ...`: hummed notes, possibly corrected by him, lengths in eighths
 - `[NEW PIECE <name>] ...`: he made a new piece from the header menu
+- `[REVIEW S<n>] k comments`, then one line per comment, `bars 45-48: ...`, `bar 76: ...` or `general: ...`: his review, collected in the page and submitted at once (the JSON line also carries `review`, the list). Treat it as one revision: re-read the piece as pages, answer every comment in one new suggestion whose note goes through them comment by comment, then withdraw the suggestion it replaces. Brian, Oct 10 2026: "like reviewing a PR, so I'm not submitting one at a time while you're in the middle of a change."
+- a message that starts `[S10 bars 45-48]` or `[working bar 12]`: he had those bars selected when he sent it
 
 Rules, from COMPOSING.md section 9 and from what went wrong in earlier sessions:
 

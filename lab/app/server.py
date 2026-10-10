@@ -250,6 +250,43 @@ def act_message(text, who='brian'):
         open(INBOX, 'a').write(json.dumps(dict(ts=now(), session=SESSION, text=text)) + '\n')
     broadcast(dict(type='chat', who=who, text=text))
 
+def review_text(items):
+    sids = {c.get('sid') or 'working' for c in items}
+    one = sids.pop() if len(sids) == 1 else None
+    lines = [f"[REVIEW{' ' + one if one else ''}] {len(items)} comment{'' if len(items) == 1 else 's'}"]
+    for c in items:
+        where = 'general' if not c.get('lo') else (f"bar {c['lo']}" if c['lo'] == c['hi'] else f"bars {c['lo']}-{c['hi']}")
+        if not one and c.get('lo'): where += f" of {c.get('sid') or 'working'}"
+        lines.append(f"{where}: {c['text']}")
+    return '\n'.join(lines)
+
+def act_review(op, body):
+    """a review: comments on bars collected as a draft, delivered together on submit"""
+    with lock:
+        st = load(); rv = st.setdefault('review', [])
+        if op == 'add':
+            text = (body.get('text') or '').strip()
+            if not text: return False
+            lo = int(body['lo']) if body.get('lo') else None
+            hi = int(body.get('hi') or lo) if lo else None
+            st['review_seq'] = st.get('review_seq', 0) + 1
+            rv.append(dict(id=st['review_seq'], ts=now(), sid=body.get('sid') or '', lo=lo, hi=hi, text=text))
+        elif op == 'del':
+            st['review'] = [c for c in rv if c['id'] != body.get('id')]
+        elif op == 'submit':
+            if not rv: return False
+            items, text = rv, review_text(rv)
+            chat(st, 'brian', text, dict(review=items)); st['review'] = []
+        save(st)
+    if op == 'submit':
+        for sid in sorted({c['sid'] for c in items if c['sid']}):
+            mine = [c for c in items if c['sid'] == sid]
+            open(f'{BRIDGE}/verdicts.jsonl', 'a').write(json.dumps(dict(ts=now(), test=f'{SESSION}/{sid}', verdict='CHANGES REQUESTED. ' + review_text(mine),
+                                                                     review=mine, source='ui-review')) + '\n')
+        open(INBOX, 'a').write(json.dumps(dict(ts=now(), session=SESSION, text=text, review=items)) + '\n')
+        broadcast(dict(type='chat', who='brian', text=text))
+    return True
+
 def act_suggest(xml_path, lo, hi, note, lines=None):
     with lock:
         st = load(); st['seq'] += 1; sid = f"S{st['seq']}"; st['busy'] = None
@@ -494,6 +531,7 @@ class H(BaseHTTPRequestHandler):
             return self._send(200, json.dumps(res))
         body = json.loads(self.rfile.read(n) or b'{}')
         if self.path == '/api/message': act_message(body.get('text', '')); return self._send(200, '{"ok":true}')
+        if self.path == '/api/review': return self._send(200, json.dumps(dict(ok=act_review(body.get('op', ''), body))))
         if self.path == '/api/np/done':
             np_done(body.get('xml', ''), body.get('stem', ''), int(body.get('tries', 0)), int(body.get('rc', 1)), body.get('tail', ''))
             return self._send(200, '{"ok":true}')

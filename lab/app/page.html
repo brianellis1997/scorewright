@@ -2,8 +2,8 @@
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Scorewright</title>
 <style>
-:root{--bg:#f6f4ef;--panel:#fff;--ink:#1b1a17;--ink2:#5b5850;--line:#ddd8cc;--btn:#e6e2d8;--green:#0b8a3e;--red:#c02626;--blue:#2a5bd7}
-@media(prefers-color-scheme:dark){:root{--bg:#161512;--panel:#1f1d19;--ink:#efece4;--ink2:#a9a498;--line:#34312a;--btn:#3b3830}}
+:root{--bg:#f6f4ef;--panel:#fff;--ink:#1b1a17;--ink2:#5b5850;--line:#ddd8cc;--btn:#e6e2d8;--green:#0b8a3e;--red:#c02626;--blue:#2a5bd7;--amber:#9a6a00}
+@media(prefers-color-scheme:dark){:root{--bg:#161512;--panel:#1f1d19;--ink:#efece4;--ink2:#a9a498;--line:#34312a;--btn:#3b3830;--amber:#e3b341}}
 body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 -apple-system,"Segoe UI",sans-serif;display:grid;grid-template-rows:auto 1fr;height:100vh;height:100dvh}
 header{display:flex;gap:10px;align-items:center;padding:8px 12px;border-bottom:1px solid var(--line);background:var(--panel)}
 header b{font-size:16px} header .s{color:var(--ink2);font-size:13px;margin-left:auto}
@@ -27,6 +27,14 @@ button.ok{background:var(--green);color:#fff} button.no{background:var(--red);co
 #takebox{border-top:1px solid var(--line);padding:8px;background:var(--panel)} #takebox .stf{background:#fff;border-radius:6px;overflow:auto;max-height:220px} #takebox .stf svg{width:100%;height:auto;display:block} #takebox textarea{width:100%;box-sizing:border-box;font:inherit;padding:6px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);margin:6px 0} #takebox .btns{display:flex;gap:6px}
 .m .stf{background:#fff;border-radius:6px;overflow:auto;margin-top:6px} .m .stf svg{width:100%;height:auto;display:block}
 #ask textarea{flex:1;font:inherit;padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);resize:none}
+#ask textarea{min-width:0} #ask>button{flex:0 0 auto}
+.sendcol{display:flex;flex-direction:column;gap:4px;flex:0 0 auto} .sendcol button{flex:1;padding:6px 8px;white-space:nowrap}
+#review{border-top:1px solid var(--line);padding:6px 10px;max-height:32vh;overflow:auto}
+#review .rh{display:flex;align-items:center;gap:8px;margin-bottom:2px} #review .rh b{flex:1;font-size:14px}
+#review .rc{display:flex;gap:6px;align-items:flex-start;padding:5px 0;border-top:1px dashed var(--line);font-size:14px}
+#review .rc .t{flex:1;cursor:pointer} #review .rc .bars{color:var(--amber);font-weight:600;margin-right:6px;white-space:nowrap}
+#review .rc button{padding:2px 9px}
+@media(max-width:800px){#ask{flex-wrap:wrap} #ask textarea{order:-1;flex:1 0 100%;box-sizing:border-box} .sendcol{flex-direction:row;margin-left:auto} .sendcol button{padding:10px 12px}}
 #score{overflow:hidden;padding:8px;min-height:0;display:flex;flex-direction:column}
 #svg{flex:1;min-height:0;overflow:auto;-webkit-overflow-scrolling:touch;border-radius:6px}
 #score svg{width:calc(var(--zoom,1) * 100%);max-width:none;height:auto;display:block;background:#fff;border-radius:6px}
@@ -56,6 +64,7 @@ audio{height:32px;vertical-align:middle}
  <section id=chat>
   <div id=log></div>
   <div id=status hidden></div>
+  <div id=review hidden></div>
   <div id=takebox hidden></div>
   <div id=ask>
    <button class=mic id=mic title="talk">🎤</button>
@@ -63,12 +72,12 @@ audio{height:32px;vertical-align:middle}
    <button class=mic id=take title="a take: press, play the piano and talk, press again">🎹</button>
    <button class=mic id=upbtn title="upload a recording or video of you playing" onclick="document.getElementById('upfile').click()">📎</button><input type=file id=upfile accept="audio/*,video/*" hidden>
    <textarea id=msg rows=2 placeholder="talk or type: continue from bar 24, keep it open… / orchestrate 18-81 for band…"></textarea>
-   <button class=go onclick="send()">Send</button>
+   <div class=sendcol><button class=go onclick="send()">Send</button><button onclick="addComment()" title="add this comment on the selected bars to your review; Claude gets them all when you submit">＋ Review</button></div>
   </div>
  </section>
  <section id=score>
   <div id=tools>
-   <span id=showing>working score</span><span class=desk style="margin-left:6px">click a bar to select it · P or space plays from there · press again to stop · ← → move the selection</span>
+   <span id=showing>working score</span><button id=extend hidden onclick="armExtend()" title="then tap the last bar of the passage">↔ to…</button><button id=selx hidden onclick="clearSel()" title="clear the selection">×</button><span class=desk style="margin-left:6px">click a bar to select it, shift-click to extend · P or space plays from there · press again to stop · ← → move the selection</span>
    <button class=z onclick="zoom(-1)" title="zoom out">−</button><button class=z onclick="zoom(1)" title="zoom in">+</button>
    <button onclick="showScore('', true)">working</button>
    <button id=latest onclick="showLatest()">latest suggestion</button>
@@ -80,7 +89,7 @@ audio{height:32px;vertical-align:middle}
  </section>
 </main>
 <script>
-let state=null, showingId='', seenChat=0, bars=[], selBar=null;
+let state=null, showingId='', seenChat=0, bars=[], selBar=null, selHi=null, armed=false;
 async function api(p, body){ const r = await fetch(p, body?{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}:{}); return r.json().catch(()=>({})); }
 function esc(s){ return (s||'').replace(/[&<>]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
 function statusUpdate(){ const el=document.getElementById('status'); if(!el||!state) return;
@@ -131,8 +140,8 @@ document.getElementById('upfile').addEventListener('change', ev=>{ const f=ev.ta
       box.innerHTML='<div class=w>'+esc(s.status)+'… '+secs+' s. A recording takes about two thirds of its own length to transcribe.</div>'; setTimeout(poll, 2500); };
     poll(); };
   x.send(f); });
-async function refresh(){ const st=await api('/api/state'); if(window.__session && (st.session!==window.__session || st.page_version!==window.__pv)){ if(!window.__rec && !document.getElementById('hum').classList.contains('on')) location.reload(); return; } window.__session=st.session; window.__pv=st.page_version; const changed=!state||JSON.stringify(st.chat)!==JSON.stringify(state.chat)||JSON.stringify(st.suggestions)!==JSON.stringify(state.suggestions); state=st; if(changed){ render(); const open=st.suggestions.filter(s=>s.status==='open'); const newest=open.length?open[open.length-1].id:''; if(newest && newest!==window.__lastSeen && window.__lastSeen!==undefined){ document.getElementById('latest').textContent='new: '+newest+' (click to show)'; document.getElementById('latest').style.background='#0b8a3e'; document.getElementById('latest').style.color='#fff'; } window.__lastSeen=newest; } statusUpdate(); }   // never switch what he is looking at; a new suggestion only lights the button
-async function showScore(id, manual){ showingId=id; if(manual) window.__manual=true; document.getElementById('showing').textContent = id?('suggestion '+id+' (green = new)'):'working score'; const r=await fetch('/svg?id='+encodeURIComponent(id)); document.getElementById('svg').innerHTML = r.ok? await r.text() : '<p style="padding:20px;color:#888">nothing to show yet</p>'; bars = await (await fetch('/bars?id='+encodeURIComponent(id))).json(); wireBars(); if(id){ const sg=(state&&state.suggestions||[]).find(x=>x.id===id); if(sg) setTimeout(()=>scrollToBar(sg.lo), 60); } const au=document.getElementById('au'); au.pause(); au.removeAttribute('src'); au.hidden=true; }
+async function refresh(){ const st=await api('/api/state'); if(window.__session && (st.session!==window.__session || st.page_version!==window.__pv)){ if(!window.__rec && !document.getElementById('hum').classList.contains('on')) location.reload(); return; } window.__session=st.session; window.__pv=st.page_version; const changed=!state||JSON.stringify(st.chat)!==JSON.stringify(state.chat)||JSON.stringify(st.suggestions)!==JSON.stringify(state.suggestions); const rvChanged=!state||JSON.stringify(st.review||[])!==JSON.stringify(state.review||[]); state=st; if(rvChanged){ renderReview(); drawRects(); } if(changed){ render(); const open=st.suggestions.filter(s=>s.status==='open'); const newest=open.length?open[open.length-1].id:''; if(newest && newest!==window.__lastSeen && window.__lastSeen!==undefined){ document.getElementById('latest').textContent='new: '+newest+' (click to show)'; document.getElementById('latest').style.background='#0b8a3e'; document.getElementById('latest').style.color='#fff'; } window.__lastSeen=newest; } statusUpdate(); }   // never switch what he is looking at; a new suggestion only lights the button
+async function showScore(id, manual){ showingId=id; if(manual) window.__manual=true; document.getElementById('showing').textContent = id?('suggestion '+id+' (green = new)'):'working score'; const r=await fetch('/svg?id='+encodeURIComponent(id)); document.getElementById('svg').innerHTML = r.ok? await r.text() : '<p style="padding:20px;color:#888">nothing to show yet</p>'; bars = await (await fetch('/bars?id='+encodeURIComponent(id))).json(); wireBars(); selectRange(selBar, selHi); if(id){ const sg=(state&&state.suggestions||[]).find(x=>x.id===id); if(sg) setTimeout(()=>scrollToBar(sg.lo), 60); } const au=document.getElementById('au'); au.pause(); au.removeAttribute('src'); au.hidden=true; }
 // score zoom: fit to the pane by default, − / + step through larger sizes; the pane scrolls, the page never does
 const ZOOMS=[1,1.5,2,3]; let zi=0; try{ zi=Math.max(0,Math.min(ZOOMS.length-1,parseInt(localStorage.getItem('sw_zoom')||'0')||0)); }catch(e){}
 function applyZoom(){ document.getElementById('score').style.setProperty('--zoom', ZOOMS[zi]); try{ localStorage.setItem('sw_zoom', String(zi)); }catch(e){} }
@@ -150,27 +159,53 @@ function wireBars(){
       const pt=g.ownerSVGElement.createSVGPoint(); pt.x=ev.clientX; pt.y=ev.clientY; const p=pt.matrixTransform(ctm.inverse());
       const inside = p.x>=b.x && p.x<=b.x+b.width && p.y>=b.y-60 && p.y<=b.y+b.height+60; const d = inside? b.width : 1e6+(Math.hypot(Math.max(b.x-p.x,0,p.x-b.x-b.width), Math.max(b.y-p.y,0,p.y-b.y-b.height)));   // the tightest bar under the click wins (slurs and hairpins inflate other bars' boxes)
       if(d<bestD){ bestD=d; best={n,g,b}; } });
-    if(best && bestD<1e6+900) selectBar(best.n);
+    if(best && bestD<1e6+900) tapBar(best.n, ev.shiftKey);
   });
   box.style.cursor='pointer';
 }
-function selectBar(n){
-  selBar=n; const box=document.getElementById('svg');
-  box.querySelectorAll('rect.sw-sel').forEach(r=>r.remove());
-  box.querySelectorAll('g.measure').forEach(g=>{ if(parseInt(g.getAttribute('data-n')||'0')!==n) return; let b; try{ b=g.getBBox(); }catch(e){ return; } if(!b.width) return;
-    const r=document.createElementNS('http://www.w3.org/2000/svg','rect'); r.setAttribute('class','sw-sel'); r.setAttribute('x',b.x-8); r.setAttribute('y',b.y-40); r.setAttribute('width',b.width+16); r.setAttribute('height',b.height+80); r.setAttribute('fill','#2a5bd7'); r.setAttribute('fill-opacity','0.12'); r.setAttribute('stroke','#2a5bd7'); r.setAttribute('stroke-width','3'); r.setAttribute('rx','6'); r.style.pointerEvents='none'; g.parentNode.insertBefore(r, g); });
-  document.getElementById('showing').textContent=(showingId?('suggestion '+showingId+' (green = new)'):'working score')+' · bar '+n+' selected';
+// selection: a bar or a passage. Tap selects one bar; shift-click, or ↔ then a tap, extends to a passage
+function selLabel(){ return !selBar? '' : (selHi>selBar? 'bars '+selBar+'–'+selHi : 'bar '+selBar); }
+function tapBar(n, ext){ if((ext||armed) && selBar) selectRange(Math.min(selBar,n), Math.max(selHi,n)); else selectRange(n, n); }
+function selectRange(lo, hi){
+  armed=false; selBar=lo||null; selHi=lo?(hi||lo):null; drawRects();
+  const x=document.getElementById('extend'); x.textContent='↔ to…'; x.classList.remove('go'); x.hidden=!selBar; document.getElementById('selx').hidden=!selBar;
+  document.getElementById('showing').textContent=(showingId?('suggestion '+showingId+' (green = new)'):'working score')+(selBar?' · '+selLabel()+' selected':'');
 }
+function clearSel(){ selectRange(null, null); }
+function armExtend(){ armed=true; const x=document.getElementById('extend'); x.textContent='tap the last bar'; x.classList.add('go'); }
+function barRect(g, cls, fill, op, stroke){ let b; try{ b=g.getBBox(); }catch(e){ return; } if(!b.width) return;
+  const r=document.createElementNS('http://www.w3.org/2000/svg','rect'); r.setAttribute('class',cls); r.setAttribute('x',b.x-8); r.setAttribute('y',b.y-40); r.setAttribute('width',b.width+16); r.setAttribute('height',b.height+80); r.setAttribute('fill',fill); r.setAttribute('fill-opacity',op); if(stroke){ r.setAttribute('stroke',stroke); r.setAttribute('stroke-width','3'); } r.setAttribute('rx','6'); r.style.pointerEvents='none'; g.parentNode.insertBefore(r, g); }
+function drawRects(){ const box=document.getElementById('svg'); box.querySelectorAll('rect.sw-sel,rect.sw-rv').forEach(r=>r.remove());
+  const rv=((state&&state.review)||[]).filter(c=>c.lo && (c.sid||'')===(showingId||''));
+  box.querySelectorAll('g.measure').forEach(g=>{ const n=parseInt(g.getAttribute('data-n')||'0'); if(!n) return;
+    if(rv.some(c=>n>=c.lo&&n<=c.hi)) barRect(g,'sw-rv','#e0a800','0.2',null);
+    if(selBar && n>=selBar && n<=selHi) barRect(g,'sw-sel','#2a5bd7','0.12','#2a5bd7'); }); }
+// review: comments on passages wait here, marked on the score, until he submits them all at once
+function where(c){ return c.lo? ((c.sid?c.sid+' ':'')+(c.lo===c.hi?'bar '+c.lo:'bars '+c.lo+'–'+c.hi)) : 'general'; }
+function renderReview(){ const el=document.getElementById('review'); const rv=(state&&state.review)||[]; el.hidden=!rv.length; if(!rv.length){ el.innerHTML=''; return; }
+  el.innerHTML='<div class=rh><b>Your review · '+rv.length+' comment'+(rv.length>1?'s':'')+'</b><button class=go onclick="submitReview()">Submit review</button></div>'+
+    rv.map(c=>'<div class=rc><span class=t onclick="gotoComment('+c.id+')"><span class=bars>'+esc(where(c))+'</span>'+esc(c.text)+'</span><button title="remove this comment" onclick="delComment('+c.id+')">×</button></div>').join(''); }
+function stopMic(){ if(window.__rec){ try{ window.__rec.abort(); }catch(e){} window.__rec=null; mic.classList.remove('on'); } }
+async function addComment(){ const t=document.getElementById('msg'); const text=t.value.trim();
+  if(!text){ t.placeholder=selBar? 'say or type your comment on '+selLabel()+', then ＋ Review' : 'select bars, then say or type a comment and press ＋ Review'; t.focus(); return; }
+  stopMic(); await api('/api/review',{op:'add', sid:showingId, lo:selBar, hi:selHi, text}); t.value=''; try{ localStorage.removeItem('sw_draft'); }catch(e){} clearSel(); refresh(); }
+async function submitReview(){ const t=document.getElementById('msg'); const text=t.value.trim(); stopMic();
+  if(text){ await api('/api/review',{op:'add', sid:showingId, lo:selBar, hi:selHi, text}); t.value=''; try{ localStorage.removeItem('sw_draft'); }catch(e){} }
+  await api('/api/review',{op:'submit'}); clearSel(); refresh(); }
+async function delComment(id){ await api('/api/review',{op:'del', id}); refresh(); }
+async function gotoComment(id){ const c=((state&&state.review)||[]).find(x=>x.id===id); if(!c||!c.lo) return;
+  if((c.sid||'')!==(showingId||'')) await showScore(c.sid||'', true); selectRange(c.lo, c.hi); setTimeout(()=>scrollToBar(c.lo), 120); }
 async function playFrom(n){ const au=document.getElementById('au'); if(!au.src || au.hidden){ const r=await fetch('/audio?id='+encodeURIComponent(showingId)); const uri=await r.text(); if(!uri){ alert('audio still rendering, try again in a few seconds'); return; } au.src=uri; au.hidden=false; } const b=bars.find(x=>x[0]===n); au.currentTime = b? b[1] : 0; au.play(); }
 document.addEventListener('keydown', e=>{ if(e.target.tagName==='TEXTAREA'||e.target.tagName==='INPUT') return; const au=document.getElementById('au');
   if(e.key==='p'||e.key==='P'||e.key===' '){ e.preventDefault(); if(!au.paused){ au.pause(); return; } playFrom(selBar||1); }
   if(e.key==='Escape'){ au.pause(); }
-  if(e.key==='ArrowRight'&&selBar){ selectBar(selBar+1); } if(e.key==='ArrowLeft'&&selBar>1){ selectBar(selBar-1); } });
+  if(e.key==='ArrowRight'&&selBar){ if(e.shiftKey) selectRange(selBar, selHi+1); else selectRange(selBar+1, selBar+1); }
+  if(e.key==='ArrowLeft'&&selBar>1){ if(e.shiftKey) selectRange(selBar, Math.max(selBar, selHi-1)); else selectRange(selBar-1, selBar-1); } });
 function showLatest(){ const open=state.suggestions.filter(s=>s.status==='open'); if(open.length) showScore(open[open.length-1].id, true); const b=document.getElementById('latest'); b.textContent='latest suggestion'; b.style.background=''; b.style.color=''; }
 async function playAudio(){ playFrom(selBar||1); }
 async function cont(){ await api('/api/message',{text:'[CONTINUE] propose the next bars from where the working score stops'}); refresh(); }
 async function openIn(app){ await fetch('/open?app='+app+'&id='+encodeURIComponent(showingId)); }
-async function send(){ const t=document.getElementById('msg'); const text=t.value.trim(); if(!text) return; if(window.__rec){ try{ window.__rec.abort(); }catch(e){} window.__rec=null; mic.classList.remove('on'); } t.value=''; try{ localStorage.removeItem('sw_draft'); }catch(e){} if(pending){ const p=pending; pending=null; t.placeholder='talk or type…'; await api('/api/verdict_note',{id:p.id,text}); } else await api('/api/message',{text}); refresh(); }
+async function send(){ const t=document.getElementById('msg'); const typed=t.value.trim(); if(!typed) return; const text=(selBar? '['+(showingId||'working')+' '+selLabel()+'] ' : '')+typed; stopMic(); t.value=''; try{ localStorage.removeItem('sw_draft'); }catch(e){} if(pending){ const p=pending; pending=null; t.placeholder='talk or type…'; await api('/api/verdict_note',{id:p.id,text}); } else await api('/api/message',{text}); refresh(); }
 let pending=null;
 async function verdict(id, ok){ await api(ok?'/api/accept':'/api/reject',{id,text:''}); pending={id,ok}; const t=document.getElementById('msg'); t.placeholder = ok? 'Accepted '+id+'. Talk or type what you want next, or press ▶ continue to let Claude propose' : 'Rejected '+id+'. Why not? talk or type'; t.focus(); if(!ok && mic && !mic.disabled) mic.click(); refresh(); }
 // the text box survives reloads: every keystroke is saved, restored on load, cleared on send
@@ -221,6 +256,6 @@ if(!SR){ mic.disabled=true; mic.title='no speech recognition in this browser'; }
 else { let rec=null; mic.onclick=()=>{ if(rec){ rec.stop(); return; } rec=new SR(); window.__rec=rec; rec.continuous=true; rec.interimResults=true; rec.lang='en-US'; const t=document.getElementById('msg'); let base=t.value?t.value+' ':'';
   rec.onresult=e=>{ let fin='',tmp=''; for(let i=0;i<e.results.length;i++){ (e.results[i].isFinal?fin+=e.results[i][0].transcript+' ':tmp+=e.results[i][0].transcript); } t.value=base+fin+tmp; };
   rec.onend=()=>{ mic.classList.remove('on'); rec=null; window.__rec=null; }; rec.onerror=()=>{ mic.classList.remove('on'); rec=null; window.__rec=null; }; mic.classList.add('on'); rec.start(); }; }
-document.getElementById('msg').addEventListener('keydown', e=>{ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); send(); } });
+document.getElementById('msg').addEventListener('keydown', e=>{ if(e.key==='Enter'&&(e.metaKey||e.ctrlKey)){ e.preventDefault(); addComment(); } else if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); send(); } });
 refresh().then(()=>{ const open=(state&&state.suggestions||[]).filter(s=>s.status==='open'); showScore(open.length?open[open.length-1].id:''); }); setInterval(refresh, 2000);
 </script></body></html>

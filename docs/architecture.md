@@ -140,6 +140,7 @@ POST:
 | route | body | what it does |
 |---|---|---|
 | `/api/message` | `{text}` | chat entry plus inbox line |
+| `/api/review` | `{op: "add", sid, lo, hi, text}`, `{op: "del", id}`, `{op: "submit"}` | the review draft (`review` in `state.json`); submit makes one chat entry, one `[REVIEW S<n>]` inbox line carrying the comments, and a `CHANGES REQUESTED` verdict record per suggestion |
 | `/api/suggest` | `{file, lo, hi, note, lines}` | register a suggestion (what `sw_suggest.py` calls) |
 | `/api/accept` | `{id, text, who}` | accept: verdict record, working score replaced, other open suggestions rebased. `who` other than `brian` labels the chat line "Noted from your message" |
 | `/api/reject` | `{id, text, who}` | reject: verdict record |
