@@ -207,7 +207,8 @@ function card(){
     <div class="row" style="margin-top:10px;justify-content:space-between"><button class="play" id="play">▶ Play</button>
     <span class="row meta"><span class="mark">${LETTERS[c]}</span>${esc(lab.label)}</span></div>`;
   roll(document.getElementById('roll'), N && N.notes[i], {staff:true, color:isSong(i) ? colors.song : colors.ink});
-  document.getElementById('play').onclick = () => { if(N) playSeq([i]); };
+  document.getElementById('play').onclick = () => { if(playing){ stopAll(); return; } if(N) playSeq([i]); else document.getElementById('play').textContent = 'Loading notes…'; };
+  if(playing) playLabels(true);
   document.getElementById('nnh').textContent = 'Closest phrases in other pieces · ' + S.view;
   document.getElementById('nn').innerHTML = D.nn[S.view][i].map(j => `<button data-i="${j}"><canvas></canvas><span><span class="t">${esc(D.pieces[D.piece[j]].t)}</span><br><span class="m">${esc(pieceLine(j))}</span></span></button>`).join('');
   document.querySelectorAll('#nn button').forEach(b => { const j = +b.dataset.i; roll(b.querySelector('canvas'), N && N.notes[j]); b.onclick = () => select(j); });
@@ -225,18 +226,35 @@ function legend(){
 }
 function setView(v){ S.view = v; S.focus = -1; document.querySelectorAll('.tabs button').forEach(b => b.setAttribute('aria-pressed', b.dataset.view === v)); legend(); card(); draw(); }
 
-// sound: a soft triangle voice, quarter = 72
+// sound: a soft triangle voice, quarter = 72. iOS mutes Web Audio under the silent switch unless the
+// page's audio session is "playback"; older iOS needs a media element started from the same tap
+let voices = [], unlocked = false;
+function audioOn(){
+  try{ if('audioSession' in navigator) navigator.audioSession.type = 'playback'; }catch(e){}
+  ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+  if(ac.state !== 'running') ac.resume();
+  if(!unlocked){ unlocked = true;
+    try{ const n = 800, b = new Uint8Array(44 + n * 2), v = new DataView(b.buffer), w = (o, s) => [...s].forEach((c, k) => b[o + k] = c.charCodeAt(0));
+      w(0, 'RIFF'); v.setUint32(4, 36 + n * 2, true); w(8, 'WAVEfmt '); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+      v.setUint32(24, 8000, true); v.setUint32(28, 16000, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true); w(36, 'data'); v.setUint32(40, n * 2, true);
+      const a = new Audio('data:audio/wav;base64,' + btoa(String.fromCharCode(...b))); a.setAttribute('playsinline', ''); a.play().catch(() => {}); }catch(e){} }
+}
 function voice(t, f, d){ const o = ac.createOscillator(), g = ac.createGain(), lp = ac.createBiquadFilter(); o.type = 'triangle'; o.frequency.value = f; lp.type = 'lowpass'; lp.frequency.value = 2400;
   g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.22, t + 0.02); g.gain.setTargetAtTime(0.12, t + 0.05, 0.15); g.gain.setTargetAtTime(0, t + Math.max(0.06, d - 0.04), 0.06);
-  o.connect(lp); lp.connect(g); g.connect(ac.destination); o.start(t); o.stop(t + d + 0.4); }
-function playSeq(list){
-  if(!N) return; ac = ac || new (window.AudioContext || window.webkitAudioContext)(); if(ac.state === 'suspended') ac.resume();
-  const q = 60 / 72 / 12; let t = ac.currentTime + 0.08; const marks = [];
+  o.connect(lp); lp.connect(g); g.connect(ac.destination); o.start(t); o.stop(t + d + 0.4); voices.push(o); }
+function playLabels(on){ const p = document.getElementById('play'); if(p) p.textContent = on ? '■ Stop' : '▶ Play';
+  const l = document.getElementById('listen'); l.textContent = on && S.listening ? '■ Stop' : '▶ Listen to 4 from the region'; }
+function stopAll(){ voices.forEach(o => { try{ o.stop(); }catch(e){} }); voices = []; if(playing) playing.forEach(clearTimeout); playing = null; S.listening = false; playLabels(false); }
+function playSeq(list, listening){
+  if(!N || !list.length) return; stopAll(); S.listening = !!listening; audioOn();
+  const q = 60 / 72 / 12; let t = ac.currentTime + 0.12; const marks = [];
   for(const i of list){ const ns = N.notes[i]; for(const [on, du, p] of ns) voice(t + on * q, 440 * Math.pow(2, (p - 69) / 12), du * q); marks.push([t, i]); t += (Math.max(...ns.map(n => n[0] + n[1])) * q) + 0.7; }
-  if(playing) playing.forEach(clearTimeout); playing = marks.map(([at, i]) => setTimeout(() => select(i), Math.max(0, (at - ac.currentTime) * 1000)));
+  playing = marks.map(([at, i]) => setTimeout(() => { if(list.length > 1) select(i); playLabels(true); }, Math.max(0, (at - ac.currentTime) * 1000)));
+  playing.push(setTimeout(() => { playing = null; voices = []; S.listening = false; playLabels(false); }, (t - ac.currentTime) * 1000));
+  playLabels(true);
 }
-document.getElementById('listen').onclick = () => { if(S.focus < 0) return; const m = []; for(let i = 0; i < D.n_main; i++) if(cl(i) === S.focus) m.push(i);
-  const pick = []; for(let k = 0; k < 4 && m.length; k++) pick.push(m.splice(Math.floor(Math.random() * m.length), 1)[0]); playSeq(pick); };
+document.getElementById('listen').onclick = () => { if(S.listening){ stopAll(); return; } if(S.focus < 0) return; const m = []; for(let i = 0; i < D.n_main; i++) if(cl(i) === S.focus) m.push(i);
+  const pick = []; for(let k = 0; k < 4 && m.length; k++) pick.push(m.splice(Math.floor(Math.random() * m.length), 1)[0]); playSeq(pick, true); };
 
 // pan, zoom, tap, hover
 const pts = new Map(); let down = null, moved = false, pinch = null;
