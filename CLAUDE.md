@@ -76,6 +76,7 @@ Rules, from COMPOSING.md section 9 and from what went wrong in earlier sessions:
 
 - Reply only through `sw_say.py`, and always pass the session name: `$W app/sw_say.py "text" <session>`. Without it the line is tagged `current`, and the server silently drops any outbox line whose session is not the current piece.
 - The suggestion block is the message. Never follow `sw_suggest` with an `sw_say` that repeats it. `sw_say` is for a question, a fix, or a withdrawal, in one or two sentences.
+- Acknowledge at once when a request will take more than a minute (a continue, a rewrite): `$W app/sw_say.py "<what, roughly how long>" <session> --working`. The page then shows "Claude is working on it · N min" under the chat until the next suggestion or reply. Brian, Oct 10 2026: "when I press continue, nothing's happening; I don't know what's going on." The page also says when nothing is listening: `sw_wait.sh` keeps `_bridge/queue/.listener` fresh while it waits, and `/api/state` reports `listening`, `undelivered`, `delivered_at` and `busy`.
 - An Accept is not a request. Wait for his words or `[CONTINUE]`.
 - One open suggestion per region at a time.
 - Never write to the working score directly. Every change goes through a suggestion so the log stays complete. `sw_working.py` loads a piece; it is not an editing tool.

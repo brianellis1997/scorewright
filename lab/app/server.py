@@ -252,7 +252,7 @@ def act_message(text, who='brian'):
 
 def act_suggest(xml_path, lo, hi, note, lines=None):
     with lock:
-        st = load(); st['seq'] += 1; sid = f"S{st['seq']}"
+        st = load(); st['seq'] += 1; sid = f"S{st['seq']}"; st['busy'] = None
         dst = f'{SDIR}/{sid}.musicxml'; shutil.copy(xml_path, dst)
         # editor copies: green + markers + pedal fix + layout
         W = sys.executable
@@ -377,7 +377,7 @@ def watch_outbox():
                         m = json.loads(l)
                         if m.get('session', SESSION) == SESSION:
                             with lock:
-                                st = load(); chat(st, 'claude', m['text']); save(st)
+                                st = load(); chat(st, 'claude', m['text']); st['busy'] = m['ts'] if m.get('working') else None; save(st)
                             broadcast(dict(type='chat', who='claude', text=m['text']))
                 if len(lines) != seen:
                     seen = len(lines)
@@ -401,6 +401,16 @@ class H(BaseHTTPRequestHandler):
         if u.path == '/': return self._send(200, PAGE, 'text/html; charset=utf-8')
         if u.path == '/api/state':
             st = load(); st['page_version'] = STARTED; st['session'] = SESSION; st['np_pending'] = [os.path.basename(x) for x in NP_PENDING if os.path.dirname(x) == SDIR]
+            try:
+                st['listening'] = time.time() - os.path.getmtime(f'{BRIDGE}/queue/.listener') < 15
+            except OSError:
+                st['listening'] = False
+            try:
+                cur = f'{BRIDGE}/queue/.inbox_cursor'
+                st['undelivered'] = max(0, open(INBOX, 'rb').read().count(b'\n') - int(open(cur).read().strip() or 0))
+                st['delivered_at'] = os.path.getmtime(cur)
+            except (OSError, ValueError):
+                st['undelivered'], st['delivered_at'] = 0, 0
             return self._send(200, json.dumps(st))
         if u.path == '/api/sessions':
             return self._send(200, json.dumps(dict(current=SESSION, sessions=list_sessions(), presets=list(PRESETS))))

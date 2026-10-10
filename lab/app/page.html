@@ -14,6 +14,7 @@ html,body{max-width:100%;overflow-x:hidden}
 @media(max-width:800px){main{grid-template-columns:minmax(0,1fr);grid-template-rows:52vh minmax(0,1fr)} #score{order:-1;border-bottom:1px solid var(--line)} #chat{border-right:0} .desk{display:none!important} button{padding:10px 12px;font-size:16px} #ask textarea{font-size:16px} #tools{font-size:13px;gap:5px;flex-wrap:nowrap;overflow-x:auto;white-space:nowrap;padding-bottom:6px} #tools>*{flex:0 0 auto}}
 #chat{display:flex;flex-direction:column;border-right:1px solid var(--line);background:var(--panel);min-height:0}
 #log{flex:1;overflow:auto;padding:10px}
+#status{padding:6px 12px;font-size:13px;color:var(--ink2);border-top:1px solid var(--line)}
 .m{margin:0 0 8px;padding:8px 10px;border-radius:10px;max-width:92%;white-space:pre-wrap}
 .m.brian{background:#e8efff;margin-left:auto} .m.claude{background:#eef3ea} @media(prefers-color-scheme:dark){.m.brian{background:#243352}.m.claude{background:#253421}}
 .m .w{font-size:11px;color:var(--ink2);margin-bottom:2px}
@@ -54,6 +55,7 @@ audio{height:32px;vertical-align:middle}
 <main>
  <section id=chat>
   <div id=log></div>
+  <div id=status hidden></div>
   <div id=takebox hidden></div>
   <div id=ask>
    <button class=mic id=mic title="talk">🎤</button>
@@ -81,6 +83,14 @@ audio{height:32px;vertical-align:middle}
 let state=null, showingId='', seenChat=0, bars=[], selBar=null;
 async function api(p, body){ const r = await fetch(p, body?{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}:{}); return r.json().catch(()=>({})); }
 function esc(s){ return (s||'').replace(/[&<>]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
+function statusUpdate(){ const el=document.getElementById('status'); if(!el||!state) return;
+  const last=state.chat[state.chat.length-1]; let t='';
+  if(state.busy){ const m=Math.max(0,Math.floor((Date.now()-Date.parse(state.busy))/60000)); t='Claude is working on it'+(m?' · '+m+' min':'')+'…'; }
+  else if(last && last.who==='brian' && !last.verdict){
+    if(state.undelivered>0) t = state.listening ? 'Sent. Claude is picking it up…' : 'Claude is not connected right now. Your message is saved and will be read when a session starts.';
+    else { const m=Math.max(0,Math.floor((Date.now()/1000-(state.delivered_at||0))/60)); t='Claude is working on it'+(m?' · '+m+' min':'')+'…'; }
+  }
+  el.textContent=t; el.hidden=!t; }
 function render(){
   const log=document.getElementById('log'); const atBottom = log.scrollTop+log.clientHeight >= log.scrollHeight-40;
   let h='';
@@ -121,7 +131,7 @@ document.getElementById('upfile').addEventListener('change', ev=>{ const f=ev.ta
       box.innerHTML='<div class=w>'+esc(s.status)+'… '+secs+' s. A recording takes about two thirds of its own length to transcribe.</div>'; setTimeout(poll, 2500); };
     poll(); };
   x.send(f); });
-async function refresh(){ const st=await api('/api/state'); if(window.__session && (st.session!==window.__session || st.page_version!==window.__pv)){ if(!window.__rec && !document.getElementById('hum').classList.contains('on')) location.reload(); return; } window.__session=st.session; window.__pv=st.page_version; const changed=!state||JSON.stringify(st.chat)!==JSON.stringify(state.chat)||JSON.stringify(st.suggestions)!==JSON.stringify(state.suggestions); state=st; if(changed){ render(); const open=st.suggestions.filter(s=>s.status==='open'); const newest=open.length?open[open.length-1].id:''; if(newest && newest!==window.__lastSeen && window.__lastSeen!==undefined){ document.getElementById('latest').textContent='new: '+newest+' (click to show)'; document.getElementById('latest').style.background='#0b8a3e'; document.getElementById('latest').style.color='#fff'; } window.__lastSeen=newest; } }   // never switch what he is looking at; a new suggestion only lights the button
+async function refresh(){ const st=await api('/api/state'); if(window.__session && (st.session!==window.__session || st.page_version!==window.__pv)){ if(!window.__rec && !document.getElementById('hum').classList.contains('on')) location.reload(); return; } window.__session=st.session; window.__pv=st.page_version; const changed=!state||JSON.stringify(st.chat)!==JSON.stringify(state.chat)||JSON.stringify(st.suggestions)!==JSON.stringify(state.suggestions); state=st; if(changed){ render(); const open=st.suggestions.filter(s=>s.status==='open'); const newest=open.length?open[open.length-1].id:''; if(newest && newest!==window.__lastSeen && window.__lastSeen!==undefined){ document.getElementById('latest').textContent='new: '+newest+' (click to show)'; document.getElementById('latest').style.background='#0b8a3e'; document.getElementById('latest').style.color='#fff'; } window.__lastSeen=newest; } statusUpdate(); }   // never switch what he is looking at; a new suggestion only lights the button
 async function showScore(id, manual){ showingId=id; if(manual) window.__manual=true; document.getElementById('showing').textContent = id?('suggestion '+id+' (green = new)'):'working score'; const r=await fetch('/svg?id='+encodeURIComponent(id)); document.getElementById('svg').innerHTML = r.ok? await r.text() : '<p style="padding:20px;color:#888">nothing to show yet</p>'; bars = await (await fetch('/bars?id='+encodeURIComponent(id))).json(); wireBars(); if(id){ const sg=(state&&state.suggestions||[]).find(x=>x.id===id); if(sg) setTimeout(()=>scrollToBar(sg.lo), 60); } const au=document.getElementById('au'); au.pause(); au.removeAttribute('src'); au.hidden=true; }
 // score zoom: fit to the pane by default, − / + step through larger sizes; the pane scrolls, the page never does
 const ZOOMS=[1,1.5,2,3]; let zi=0; try{ zi=Math.max(0,Math.min(ZOOMS.length-1,parseInt(localStorage.getItem('sw_zoom')||'0')||0)); }catch(e){}
