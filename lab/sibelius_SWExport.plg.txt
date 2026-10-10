@@ -1,0 +1,56 @@
+{
+	Initialize "() {
+AddToPluginsMenu('SWExport Folder','Run');
+}"
+	Run "() {
+src = '/Users/bdogellis/Documents/Score Exports/extra_sept2026/src';
+dst = '/Users/bdogellis/Documents/Score Exports/extra_sept2026/MusicXML/';
+logf = '/Users/bdogellis/Documents/Score Exports/_bridge/swexport.log';
+Sibelius.CreateTextFile(logf);
+Sibelius.AppendLineToFile(logf, 'START', True);
+folder = Sibelius.GetFolder(src);
+names = CreateArray();
+n = 0;
+for each SIB file in folder
+{
+	names[n] = file.NameWithExt;
+	n = n + 1;
+}
+Sibelius.AppendLineToFile(logf, 'FOUND ' & n, True);
+ok = 0;
+for i = 0 to n
+{
+	path = names[i];
+	if (Sibelius.Open(path, True) = True)
+	{
+		score = Sibelius.ActiveScore;
+		if (IsObject(score))
+		{
+			f = Sibelius.GetFile(score.FileName);
+			if (score.StaffCount = 0)
+			{
+				Sibelius.AppendLineToFile(logf, 'EMPTY ' & f.NameNoPath, True);
+			}
+			else
+			{
+				score.Redraw = False;
+				score.SaveAs(dst & f.NameNoPath, 'XML');
+				score.Redraw = True;
+				ok = ok + 1;
+				Sibelius.AppendLineToFile(logf, 'OK ' & f.NameNoPath, True);
+			}
+			Sibelius.Close(False);
+		}
+		else
+		{
+			Sibelius.AppendLineToFile(logf, 'NOSCORE ' & path, True);
+		}
+	}
+	else
+	{
+		Sibelius.AppendLineToFile(logf, 'OPENFAIL ' & path, True);
+	}
+}
+Sibelius.AppendLineToFile(logf, 'DONE ' & ok & ' of ' & n, True);
+}"
+}

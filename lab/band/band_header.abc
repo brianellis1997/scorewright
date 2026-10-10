@@ -1,0 +1,32 @@
+X:1
+T:Bright Valley Exaltation
+C:Brian Ellis, orchestrated for concert band by Scorewright
+%%score [ 1 2 3 ] [ 4 5 ] [ 6 7 8 9 ] [ 10 11 12 13 ] [ 14 15 16 ] [ 17 18 ] [ 19 20 21 22 ] 23 24
+L:1/8
+Q:1/4=120
+M:4/4
+K:Bb
+V:1 treble nm="Piccolo" snm="Picc."
+V:2 treble nm="Flute 1" snm="Fl. 1"
+V:3 treble nm="Flute 2" snm="Fl. 2"
+V:4 treble nm="Oboe" snm="Ob."
+V:5 bass nm="Bassoon" snm="Bsn."
+V:6 treble transpose=-2 nm="Clarinet in Bb 1" snm="Cl. 1"
+V:7 treble transpose=-2 nm="Clarinet in Bb 2" snm="Cl. 2"
+V:8 treble transpose=-2 nm="Clarinet in Bb 3" snm="Cl. 3"
+V:9 treble transpose=-14 nm="Bass Clarinet in Bb" snm="B. Cl."
+V:10 treble transpose=-9 nm="Alto Saxophone 1" snm="A. Sx. 1"
+V:11 treble transpose=-9 nm="Alto Saxophone 2" snm="A. Sx. 2"
+V:12 treble transpose=-14 nm="Tenor Saxophone" snm="T. Sx."
+V:13 treble transpose=-21 nm="Baritone Saxophone" snm="B. Sx."
+V:14 treble transpose=-2 nm="Trumpet in Bb 1" snm="Tpt. 1"
+V:15 treble transpose=-2 nm="Trumpet in Bb 2" snm="Tpt. 2"
+V:16 treble transpose=-2 nm="Trumpet in Bb 3" snm="Tpt. 3"
+V:17 treble transpose=-7 nm="Horn in F 1" snm="Hn. 1"
+V:18 treble transpose=-7 nm="Horn in F 2" snm="Hn. 2"
+V:19 bass nm="Trombone 1" snm="Tbn. 1"
+V:20 bass nm="Trombone 2" snm="Tbn. 2"
+V:21 bass nm="Euphonium" snm="Euph."
+V:22 bass nm="Tuba" snm="Tba."
+V:23 bass nm="Timpani" snm="Timp."
+V:24 perc nm="Snare Drum" snm="S. Dr."

@@ -1,0 +1,3 @@
+[submodule "lab/NotaGen"]
+	path = lab/NotaGen
+	url = https://github.com/ElectricAlexis/NotaGen.git

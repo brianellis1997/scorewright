@@ -1,0 +1,32 @@
+# Python and OS
+__pycache__/
+*.pyc
+.DS_Store
+
+# generated results anywhere
+*.log
+*.out
+*.bak_*
+*.pkl
+
+# lab/ is a working directory: keep code, docs and small inputs, skip generated outputs
+lab/*
+!lab/*.py
+!lab/*.sh
+!lab/*.md
+!lab/app/
+!lab/band/
+!lab/ft2/
+!lab/ft3/
+!lab/cloud/
+!lab/NotaGen/
+!lab/sibelius_SWExport.plg.txt
+!lab/unfinished_piano_since_fall2018.txt
+
+# inside the kept lab folders, still skip outputs
+lab/app/*.abc
+lab/app/*.xml
+lab/app/take_*
+lab/band/*.xml
+lab/ft3/*.jsonl
+lab/cloud/*.html

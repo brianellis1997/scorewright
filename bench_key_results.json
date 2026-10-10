@@ -1,0 +1,2151 @@
+[
+ {
+  "file": "1 6 15 Piano in E.musicxml",
+  "want": "E ?",
+  "got": "E minor",
+  "cat": "ok",
+  "conf": 0.802
+ },
+ {
+  "file": "11 26 in C maj.musicxml",
+  "want": "C major",
+  "got": "C major",
+  "cat": "ok",
+  "conf": 0.912
+ },
+ {
+  "file": "12 Guitar Etudes no 1 in E minor.musicxml",
+  "want": "E minor",
+  "got": "G major",
+  "cat": "relative",
+  "conf": 0.699
+ },
+ {
+  "file": "123016 minuet warmup in a minor.musicxml",
+  "want": "a minor",
+  "got": "A minor",
+  "cat": "ok",
+  "conf": 0.896
+ },
+ {
+  "file": "21517 String Trio in D minor.musicxml",
+  "want": "D minor",
+  "got": "D minor",
+  "cat": "ok",
+  "conf": 0.859
+ },
+ {
+  "file": "22417 String Quartet in E minor.musicxml",
+  "want": "E minor",
+  "got": "E major",
+  "cat": "parallel",
+  "conf": 0.787
+ },
+ {
+  "file": "52416 in A minor.musicxml",
+  "want": "A minor",
+  "got": "A minor",
+  "cat": "ok",
+  "conf": 0.928
+ },
+ {
+  "file": "52616 Choral in C.musicxml",
+  "want": "C ?",
+  "got": "C major",
+  "cat": "ok",
+  "conf": 0.917
+ },
+ {
+  "file": "52816 in c minor.musicxml",
+  "want": "c minor",
+  "got": "C minor",
+  "cat": "ok",
+  "conf": 0.926
+ },
+ {
+  "file": "53116 Binary in Bb.musicxml",
+  "want": "Bb ?",
+  "got": "G minor",
+  "cat": "wrong",
+  "conf": 0.79
+ },
+ {
+  "file": "81316 Cello Sonata in d minor.musicxml",
+  "want": "d minor",
+  "got": "A major",
+  "cat": "wrong",
+  "conf": 0.827
+ },
+ {
+  "file": "81516 Clarinet Piano Duet in C.musicxml",
+  "want": "C ?",
+  "got": "C major",
+  "cat": "ok",
+  "conf": 0.848
+ },
+ {
+  "file": "81616 Waltz in c minor.musicxml",
+  "want": "c minor",
+  "got": "C minor",
+  "cat": "ok",
+  "conf": 0.931
+ },
+ {
+  "file": "82716 Clarinet Concerto in Eb.musicxml",
+  "want": "Eb ?",
+  "got": "B- major",
+  "cat": "wrong",
+  "conf": 0.781
+ },
+ {
+  "file": "82716 Clarinet Grandiose in Eb Major.musicxml",
+  "want": "Eb major",
+  "got": "B- major",
+  "cat": "wrong",
+  "conf": 0.781
+ },
+ {
+  "file": "9116 Guitar Piano Duet in F.musicxml",
+  "want": "F ?",
+  "got": "D minor",
+  "cat": "wrong",
+  "conf": 0.927
+ },
+ {
+  "file": "9216 Sax Quartet w Piano in D.musicxml",
+  "want": "D ?",
+  "got": "D major",
+  "cat": "ok",
+  "conf": 0.602
+ },
+ {
+  "file": "9216 Strings in D.musicxml",
+  "want": "D ?",
+  "got": "D major",
+  "cat": "ok",
+  "conf": 0.761
+ },
+ {
+  "file": "9316 Strings in A.musicxml",
+  "want": "A ?",
+  "got": "D major",
+  "cat": "wrong",
+  "conf": 0.801
+ },
+ {
+  "file": "BEM 001 in F#-.musicxml",
+  "want": "F ?",
+  "got": "A major",
+  "cat": "wrong",
+  "conf": 0.787
+ },
+ {
+  "file": "BEM 003 Piano in B.musicxml",
+  "want": "B ?",
+  "got": "B major",
+  "cat": "ok",
+  "conf": 0.887
+ },
+ {
+  "file": "Ballad in Ab Maj.musicxml",
+  "want": "Ab major",
+  "got": "F minor",
+  "cat": "relative",
+  "conf": 0.869
+ },
+ {
+  "file": "Blues Comp Project 1 in F.musicxml",
+  "want": "F ?",
+  "got": "F major",
+  "cat": "ok",
+  "conf": 0.795
+ },
+ {
+  "file": "Blues Comp Project 2 in A minor.musicxml",
+  "want": "A minor",
+  "got": "A minor",
+  "cat": "ok",
+  "conf": 0.911
+ },
+ {
+  "file": "Blues in A.musicxml",
+  "want": "A ?",
+  "got": "G minor",
+  "cat": "wrong",
+  "conf": 0.543
+ },
+ {
+  "file": "Breillo no 28 in G minor.musicxml",
+  "want": "G minor",
+  "got": "G minor",
+  "cat": "ok",
+  "conf": 0.777
+ },
+ {
+  "file": "Briello No 2 in G.musicxml",
+  "want": "G ?",
+  "got": "G major",
+  "cat": "ok",
+  "conf": 0.854
+ },
+ {
+  "file": "Briello no 1 in Db.musicxml",
+  "want": "Db ?",
+  "got": "B- minor",
+  "cat": "wrong",
+  "conf": 0.842
+ },
+ {
+  "file": "Briello no 10 in C.musicxml",
+  "want": "C ?",
+  "got": "C major",
+  "cat": "ok",
+  "conf": 0.91
+ },
+ {
+  "file": "Briello no 11 in B.musicxml",
+  "want": "B ?",
+  "got": "B major",
+  "cat": "ok",
+  "conf": 0.794
+ },
+ {
+  "file": "Briello no 118 in C# minor.musicxml",
+  "want": "C# minor",
+  "got": "C# minor",
+  "cat": "ok",
+  "conf": 0.912
+ },
+ {
+  "file": "Briello no 12 in F minor.musicxml",
+  "want": "F minor",
+  "got": "F minor",
+  "cat": "ok",
+  "conf": 0.951
+ },
+ {
+  "file": "Briello no 13 in C.musicxml",
+  "want": "C ?",
+  "got": "C major",
+  "cat": "ok",
+  "conf": 0.758
+ },
+ {
+  "file": "Briello no 14 in F#.musicxml",
+  "want": "F ?",
+  "got": "F# minor",
+  "cat": "wrong",
+  "conf": 0.849
+ },
+ {
+  "file": "Briello no 15 in E minor.musicxml",
+  "want": "E minor",
+  "got": "G major",
+  "cat": "relative",
+  "conf": 0.893
+ },
+ {
+  "file": "Briello no 16 in E.musicxml",
+  "want": "E ?",
+  "got": "D major",
+  "cat": "wrong",
+  "conf": 0.917
+ },
+ {
+  "file": "Briello no 17 in F# minor.musicxml",
+  "want": "F# minor",
+  "got": "F# minor",
+  "cat": "ok",
+  "conf": 0.88
+ },
+ {
+  "file": "Briello no 18 in A minor.musicxml",
+  "want": "A minor",
+  "got": "A minor",
+  "cat": "ok",
+  "conf": 0.796
+ },
+ {
+  "file": "Briello no 19 in Eb major.musicxml",
+  "want": "Eb major",
+  "got": "E- major",
+  "cat": "ok",
+  "conf": 0.967
+ },
+ {
+  "file": "Briello no 20 in D minor.musicxml",
+  "want": "D minor",
+  "got": "D minor",
+  "cat": "ok",
+  "conf": 0.909
+ },
+ {
+  "file": "Briello no 21 in D.musicxml",
+  "want": "D ?",
+  "got": "D major",
+  "cat": "ok",
+  "conf": 0.916
+ },
+ {
+  "file": "Briello no 22 in G minor.musicxml",
+  "want": "G minor",
+  "got": "G minor",
+  "cat": "ok",
+  "conf": 0.888
+ },
+ {
+  "file": "Briello no 23 in Eb minor.musicxml",
+  "want": "Eb minor",
+  "got": "E- minor",
+  "cat": "ok",
+  "conf": 0.967
+ },
+ {
+  "file": "Briello no 24 in Eb maj.musicxml",
+  "want": "Eb major",
+  "got": "E- major",
+  "cat": "ok",
+  "conf": 0.849
+ },
+ {
+  "file": "Briello no 25 in Ab Maj.musicxml",
+  "want": "Ab major",
+  "got": "F minor",
+  "cat": "relative",
+  "conf": 0.777
+ },
+ {
+  "file": "Briello no 26 in D.musicxml",
+  "want": "D ?",
+  "got": "D major",
+  "cat": "ok",
+  "conf": 0.922
+ },
+ {
+  "file": "Briello no 27 in E minor.musicxml",
+  "want": "E minor",
+  "got": "E minor",
+  "cat": "ok",
+  "conf": 0.935
+ },
+ {
+  "file": "Briello no 29 in D minor.musicxml",
+  "want": "D minor",
+  "got": "G minor",
+  "cat": "wrong",
+  "conf": 0.324
+ },
+ {
+  "file": "Briello no 3 in Bb.musicxml",
+  "want": "Bb ?",
+  "got": "G minor",
+  "cat": "wrong",
+  "conf": 0.745
+ },
+ {
+  "file": "Briello no 30 in C#.musicxml",
+  "want": "C ?",
+  "got": "C# major",
+  "cat": "wrong",
+  "conf": 0.701
+ },
+ {
+  "file": "Briello no 31 in C minor.musicxml",
+  "want": "C minor",
+  "got": "C minor",
+  "cat": "ok",
+  "conf": 0.872
+ },
+ {
+  "file": "Briello no 32 in F Major.musicxml",
+  "want": "F major",
+  "got": "F major",
+  "cat": "ok",
+  "conf": 0.779
+ },
+ {
+  "file": "Briello no 33 in G# minor.musicxml",
+  "want": "G# minor",
+  "got": "G# minor",
+  "cat": "ok",
+  "conf": 0.809
+ },
+ {
+  "file": "Briello no 34 in E Major.musicxml",
+  "want": "E major",
+  "got": "E major",
+  "cat": "ok",
+  "conf": 0.893
+ },
+ {
+  "file": "Briello no 35 in Bb minor.musicxml",
+  "want": "Bb minor",
+  "got": "B- minor",
+  "cat": "ok",
+  "conf": 0.925
+ },
+ {
+  "file": "Briello no 36 in D# minor.musicxml",
+  "want": "D# minor",
+  "got": "E- minor",
+  "cat": "ok",
+  "conf": 0.839
+ },
+ {
+  "file": "Briello no 37 in B minor.musicxml",
+  "want": "B minor",
+  "got": "B minor",
+  "cat": "ok",
+  "conf": 0.643
+ },
+ {
+  "file": "Briello no 38 in E Major.musicxml",
+  "want": "E major",
+  "got": "E major",
+  "cat": "ok",
+  "conf": 0.908
+ },
+ {
+  "file": "Briello no 39 in F minor.musicxml",
+  "want": "F minor",
+  "got": "A- major",
+  "cat": "relative",
+  "conf": 0.942
+ },
+ {
+  "file": "Briello no 4 in d minor.musicxml",
+  "want": "d minor",
+  "got": "D minor",
+  "cat": "ok",
+  "conf": 0.858
+ },
+ {
+  "file": "Briello no 40 in F# minor.musicxml",
+  "want": "F# minor",
+  "got": "A major",
+  "cat": "relative",
+  "conf": 0.874
+ },
+ {
+  "file": "Briello no 41 in C# minor.musicxml",
+  "want": "C# minor",
+  "got": "C# minor",
+  "cat": "ok",
+  "conf": 0.842
+ },
+ {
+  "file": "Briello no 42 in G major.musicxml",
+  "want": "G major",
+  "got": "G major",
+  "cat": "ok",
+  "conf": 0.865
+ },
+ {
+  "file": "Briello no 43 in A minor.musicxml",
+  "want": "A minor",
+  "got": "A minor",
+  "cat": "ok",
+  "conf": 0.9
+ },
+ {
+  "file": "Briello no 44 in B major.musicxml",
+  "want": "B major",
+  "got": "B major",
+  "cat": "ok",
+  "conf": 0.943
+ },
+ {
+  "file": "Briello no 45 in D minor.musicxml",
+  "want": "D minor",
+  "got": "A minor",
+  "cat": "wrong",
+  "conf": 0.88
+ },
+ {
+  "file": "Briello no 46 in C major.musicxml",
+  "want": "C major",
+  "got": "C major",
+  "cat": "ok",
+  "conf": 0.862
+ },
+ {
+  "file": "Briello no 47 in G major.musicxml",
+  "want": "G major",
+  "got": "G major",
+  "cat": "ok",
+  "conf": 0.924
+ },
+ {
+  "file": "Briello no 48 in D.musicxml",
+  "want": "D ?",
+  "got": "D major",
+  "cat": "ok",
+  "conf": 0.883
+ },
+ {
+  "file": "Briello no 49 in Gb Major.musicxml",
+  "want": "Gb major",
+  "got": "F# major",
+  "cat": "ok",
+  "conf": 0.912
+ },
+ {
+  "file": "Briello no 5 in A.musicxml",
+  "want": "A ?",
+  "got": "D major",
+  "cat": "wrong",
+  "conf": 0.817
+ },
+ {
+  "file": "Briello no 50 in Bb maj.musicxml",
+  "want": "Bb major",
+  "got": "B- minor",
+  "cat": "parallel",
+  "conf": 0.838
+ },
+ {
+  "file": "Briello no 51 in Eb maj.musicxml",
+  "want": "Eb major",
+  "got": "E- major",
+  "cat": "ok",
+  "conf": 0.78
+ },
+ {
+  "file": "Briello no 52 in Cb major.musicxml",
+  "want": "Cb major",
+  "got": "B major",
+  "cat": "ok",
+  "conf": 0.783
+ },
+ {
+  "file": "Briello no 53 in G minor.musicxml",
+  "want": "G minor",
+  "got": "G minor",
+  "cat": "ok",
+  "conf": 0.884
+ },
+ {
+  "file": "Briello no 54 in Ab maj.musicxml",
+  "want": "Ab major",
+  "got": "A- major",
+  "cat": "ok",
+  "conf": 0.942
+ },
+ {
+  "file": "Briello no 55 in Eb minor.musicxml",
+  "want": "Eb minor",
+  "got": "E- minor",
+  "cat": "ok",
+  "conf": 0.907
+ },
+ {
+  "file": "Briello no 56 in D minor.musicxml",
+  "want": "D minor",
+  "got": "D major",
+  "cat": "parallel",
+  "conf": 0.771
+ },
+ {
+  "file": "Briello no 57 in B minor.musicxml",
+  "want": "B minor",
+  "got": "B minor",
+  "cat": "ok",
+  "conf": 0.964
+ },
+ {
+  "file": "Briello no 59 in A minor.musicxml",
+  "want": "A minor",
+  "got": "A minor",
+  "cat": "ok",
+  "conf": 0.855
+ },
+ {
+  "file": "Briello no 6 in c minor.musicxml",
+  "want": "c minor",
+  "got": "C minor",
+  "cat": "ok",
+  "conf": 0.957
+ },
+ {
+  "file": "Briello no 60 in C# minor.musicxml",
+  "want": "C# minor",
+  "got": "C# minor",
+  "cat": "ok",
+  "conf": 0.914
+ },
+ {
+  "file": "Briello no 61 in C major.musicxml",
+  "want": "C major",
+  "got": "C major",
+  "cat": "ok",
+  "conf": 0.75
+ },
+ {
+  "file": "Briello no 62 in F Major.musicxml",
+  "want": "F major",
+  "got": "F major",
+  "cat": "ok",
+  "conf": 0.82
+ },
+ {
+  "file": "Briello no 63 in A major.musicxml",
+  "want": "A major",
+  "got": "A major",
+  "cat": "ok",
+  "conf": 0.794
+ },
+ {
+  "file": "Briello no 64 in E minor.musicxml",
+  "want": "E minor",
+  "got": "E minor",
+  "cat": "ok",
+  "conf": 0.965
+ },
+ {
+  "file": "Briello no 65 in D major.musicxml",
+  "want": "D major",
+  "got": "A major",
+  "cat": "wrong",
+  "conf": 0.801
+ },
+ {
+  "file": "Briello no 66 in G minor.musicxml",
+  "want": "G minor",
+  "got": "G minor",
+  "cat": "ok",
+  "conf": 0.911
+ },
+ {
+  "file": "Briello no 67 in E Major.musicxml",
+  "want": "E major",
+  "got": "E major",
+  "cat": "ok",
+  "conf": 0.959
+ },
+ {
+  "file": "Briello no 68 in F minor.musicxml",
+  "want": "F minor",
+  "got": "F minor",
+  "cat": "ok",
+  "conf": 0.901
+ },
+ {
+  "file": "Briello no 69 in Bb minor.musicxml",
+  "want": "Bb minor",
+  "got": "B- minor",
+  "cat": "ok",
+  "conf": 0.887
+ },
+ {
+  "file": "Briello no 7 in eb minor.musicxml",
+  "want": "eb minor",
+  "got": "B- minor",
+  "cat": "wrong",
+  "conf": 0.803
+ },
+ {
+  "file": "Briello no 70 in B major.musicxml",
+  "want": "B major",
+  "got": "B major",
+  "cat": "ok",
+  "conf": 0.687
+ },
+ {
+  "file": "Briello no 71 in C minor.musicxml",
+  "want": "C minor",
+  "got": "C minor",
+  "cat": "ok",
+  "conf": 0.905
+ },
+ {
+  "file": "Briello no 72 in G# minor.musicxml",
+  "want": "G# minor",
+  "got": "G# minor",
+  "cat": "ok",
+  "conf": 0.961
+ },
+ {
+  "file": "Briello no 74 in F# minor.musicxml",
+  "want": "F# minor",
+  "got": "F# minor",
+  "cat": "ok",
+  "conf": 0.953
+ },
+ {
+  "file": "Briello no 75 in C# major.musicxml",
+  "want": "C# major",
+  "got": "C# major",
+  "cat": "ok",
+  "conf": 0.676
+ },
+ {
+  "file": "Briello no 76 in Eb major.musicxml",
+  "want": "Eb major",
+  "got": "E- major",
+  "cat": "ok",
+  "conf": 0.865
+ },
+ {
+  "file": "Briello no 77 in Ab Major.musicxml",
+  "want": "Ab major",
+  "got": "A- major",
+  "cat": "ok",
+  "conf": 0.853
+ },
+ {
+  "file": "Briello no 78 in E minor.musicxml",
+  "want": "E minor",
+  "got": "G major",
+  "cat": "relative",
+  "conf": 0.904
+ },
+ {
+  "file": "Briello no 8 in e minor.musicxml",
+  "want": "e minor",
+  "got": "E minor",
+  "cat": "ok",
+  "conf": 0.918
+ },
+ {
+  "file": "Briello no 80 in D minor.musicxml",
+  "want": "D minor",
+  "got": "D minor",
+  "cat": "ok",
+  "conf": 0.712
+ },
+ {
+  "file": "Briello no 81 in G major.musicxml",
+  "want": "G major",
+  "got": "G minor",
+  "cat": "parallel",
+  "conf": 0.769
+ },
+ {
+  "file": "Briello no 82 in C major.musicxml",
+  "want": "C major",
+  "got": "C major",
+  "cat": "ok",
+  "conf": 0.715
+ },
+ {
+  "file": "Briello no 83 in F minor.musicxml",
+  "want": "F minor",
+  "got": "F minor",
+  "cat": "ok",
+  "conf": 0.747
+ },
+ {
+  "file": "Briello no 84 in Bb Major.musicxml",
+  "want": "Bb major",
+  "got": "E- major",
+  "cat": "wrong",
+  "conf": 0.797
+ },
+ {
+  "file": "Briello no 85 in D# minor.musicxml",
+  "want": "D# minor",
+  "got": "E- minor",
+  "cat": "ok",
+  "conf": 0.952
+ },
+ {
+  "file": "Briello no 86 in G# minor.musicxml",
+  "want": "G# minor",
+  "got": "G# minor",
+  "cat": "ok",
+  "conf": 0.91
+ },
+ {
+  "file": "Briello no 87 in C# minor.musicxml",
+  "want": "C# minor",
+  "got": "C# minor",
+  "cat": "ok",
+  "conf": 0.906
+ },
+ {
+  "file": "Briello no 89 in B minor.musicxml",
+  "want": "B minor",
+  "got": "B minor",
+  "cat": "ok",
+  "conf": 0.96
+ },
+ {
+  "file": "Briello no 9 in Ab.musicxml",
+  "want": "Ab ?",
+  "got": "F minor",
+  "cat": "wrong",
+  "conf": 0.755
+ },
+ {
+  "file": "Briello no 90 in E minor.musicxml",
+  "want": "E minor",
+  "got": "E minor",
+  "cat": "ok",
+  "conf": 0.697
+ },
+ {
+  "file": "Briello no 91 in A minor.musicxml",
+  "want": "A minor",
+  "got": "C major",
+  "cat": "relative",
+  "conf": 0.759
+ },
+ {
+  "file": "Briello no 92 in D minor.musicxml",
+  "want": "D minor",
+  "got": "D minor",
+  "cat": "ok",
+  "conf": 0.923
+ },
+ {
+  "file": "Canon in G.musicxml",
+  "want": "G ?",
+  "got": "E minor",
+  "cat": "wrong",
+  "conf": 0.856
+ },
+ {
+  "file": "Chaccone in E.musicxml",
+  "want": "E ?",
+  "got": "C# minor",
+  "cat": "wrong",
+  "conf": 0.872
+ },
+ {
+  "file": "Chica no 1 in D Major.musicxml",
+  "want": "D major",
+  "got": "D major",
+  "cat": "ok",
+  "conf": 0.93
+ },
+ {
+  "file": "Chica no 10 in D.musicxml",
+  "want": "D ?",
+  "got": "D major",
+  "cat": "ok",
+  "conf": 0.898
+ },
+ {
+  "file": "Chica no 10 in G Minor.musicxml",
+  "want": "G minor",
+  "got": "G minor",
+  "cat": "ok",
+  "conf": 0.895
+ },
+ {
+  "file": "Chica no 11 in D.musicxml",
+  "want": "D ?",
+  "got": "D major",
+  "cat": "ok",
+  "conf": 0.881
+ },
+ {
+  "file": "Chica no 11 in G minor.musicxml",
+  "want": "G minor",
+  "got": "G minor",
+  "cat": "ok",
+  "conf": 0.78
+ },
+ {
+  "file": "Chica no 12 in D.musicxml",
+  "want": "D ?",
+  "got": "D major",
+  "cat": "ok",
+  "conf": 0.857
+ },
+ {
+  "file": "Chica no 12 in G minor.musicxml",
+  "want": "G minor",
+  "got": "G minor",
+  "cat": "ok",
+  "conf": 0.903
+ },
+ {
+  "file": "Chica no 13 in G minor.musicxml",
+  "want": "G minor",
+  "got": "G minor",
+  "cat": "ok",
+  "conf": 0.8
+ },
+ {
+  "file": "Chica no 14 in G minor.musicxml",
+  "want": "G minor",
+  "got": "G minor",
+  "cat": "ok",
+  "conf": 0.769
+ },
+ {
+  "file": "Chica no 15 in G minor.musicxml",
+  "want": "G minor",
+  "got": "G minor",
+  "cat": "ok",
+  "conf": 0.842
+ },
+ {
+  "file": "Chica no 2 in D.musicxml",
+  "want": "D ?",
+  "got": "D major",
+  "cat": "ok",
+  "conf": 0.923
+ },
+ {
+  "file": "Chica no 2 in G minor.musicxml",
+  "want": "G minor",
+  "got": "G minor",
+  "cat": "ok",
+  "conf": 0.926
+ },
+ {
+  "file": "Chica no 3 in D.musicxml",
+  "want": "D ?",
+  "got": "D major",
+  "cat": "ok",
+  "conf": 0.834
+ },
+ {
+  "file": "Chica no 3 in G minor.musicxml",
+  "want": "G minor",
+  "got": "G minor",
+  "cat": "ok",
+  "conf": 0.812
+ },
+ {
+  "file": "Chica no 4 in D.musicxml",
+  "want": "D ?",
+  "got": "E minor",
+  "cat": "wrong",
+  "conf": 0.889
+ },
+ {
+  "file": "Chica no 4 in G minor.musicxml",
+  "want": "G minor",
+  "got": "G minor",
+  "cat": "ok",
+  "conf": 0.911
+ },
+ {
+  "file": "Chica no 5 in D.musicxml",
+  "want": "D ?",
+  "got": "D major",
+  "cat": "ok",
+  "conf": 0.918
+ },
+ {
+  "file": "Chica no 5 in G minor.musicxml",
+  "want": "G minor",
+  "got": "G minor",
+  "cat": "ok",
+  "conf": 0.928
+ },
+ {
+  "file": "Chica no 5 in G.musicxml",
+  "want": "G ?",
+  "got": "E minor",
+  "cat": "wrong",
+  "conf": 0.881
+ },
+ {
+  "file": "Chica no 6 in D.musicxml",
+  "want": "D ?",
+  "got": "D major",
+  "cat": "ok",
+  "conf": 0.941
+ },
+ {
+  "file": "Chica no 6 in G minor.musicxml",
+  "want": "G minor",
+  "got": "G minor",
+  "cat": "ok",
+  "conf": 0.926
+ },
+ {
+  "file": "Chica no 7 in D.musicxml",
+  "want": "D ?",
+  "got": "D major",
+  "cat": "ok",
+  "conf": 0.843
+ },
+ {
+  "file": "Chica no 7 in G Minor.musicxml",
+  "want": "G minor",
+  "got": "G minor",
+  "cat": "ok",
+  "conf": 0.851
+ },
+ {
+  "file": "Chica no 8 in D.musicxml",
+  "want": "D ?",
+  "got": "D major",
+  "cat": "ok",
+  "conf": 0.932
+ },
+ {
+  "file": "Chica no 8 in G minor.musicxml",
+  "want": "G minor",
+  "got": "G minor",
+  "cat": "ok",
+  "conf": 0.9
+ },
+ {
+  "file": "Chica no 9 in D.musicxml",
+  "want": "D ?",
+  "got": "D major",
+  "cat": "ok",
+  "conf": 0.943
+ },
+ {
+  "file": "Chica no 9 in G minor.musicxml",
+  "want": "G minor",
+  "got": "G minor",
+  "cat": "ok",
+  "conf": 0.841
+ },
+ {
+  "file": "Chicas in D Major.musicxml",
+  "want": "D major",
+  "got": "D major",
+  "cat": "ok",
+  "conf": 0.952
+ },
+ {
+  "file": "Chicas in G Major.musicxml",
+  "want": "G major",
+  "got": "G major",
+  "cat": "ok",
+  "conf": 0.974
+ },
+ {
+  "file": "Chicas in G Minor.musicxml",
+  "want": "G minor",
+  "got": "G minor",
+  "cat": "ok",
+  "conf": 0.936
+ },
+ {
+  "file": "Christmas Waltz no 1 in Ab.musicxml",
+  "want": "Ab ?",
+  "got": "A- major",
+  "cat": "ok",
+  "conf": 0.853
+ },
+ {
+  "file": "Christmas Waltz no 2 in G.musicxml",
+  "want": "G ?",
+  "got": "E minor",
+  "cat": "wrong",
+  "conf": 0.927
+ },
+ {
+  "file": "Etude no 1 in B (Book One).musicxml",
+  "want": "B ?",
+  "got": "B major",
+  "cat": "ok",
+  "conf": 0.924
+ },
+ {
+  "file": "Etude no 2 in C major (Book 1).musicxml",
+  "want": "C major",
+  "got": "C major",
+  "cat": "ok",
+  "conf": 0.843
+ },
+ {
+  "file": "Etude no 3 in A Book 1 Guitar.musicxml",
+  "want": "A ?",
+  "got": "A major",
+  "cat": "ok",
+  "conf": 0.87
+ },
+ {
+  "file": "Etudes for 61 keys no 1 in C# minor.musicxml",
+  "want": "C# minor",
+  "got": "C# minor",
+  "cat": "ok",
+  "conf": 0.911
+ },
+ {
+  "file": "Fantasy for Orchestra no 1 in E minor 8.musicxml",
+  "want": "E minor",
+  "got": "B minor",
+  "cat": "wrong",
+  "conf": 0.815
+ },
+ {
+  "file": "Fantasy for Orchestra no 1 in E minor.musicxml",
+  "want": "E minor",
+  "got": "B minor",
+  "cat": "wrong",
+  "conf": 0.858
+ },
+ {
+  "file": "Fugue no 1 in A minor.musicxml",
+  "want": "A minor",
+  "got": "E minor",
+  "cat": "wrong",
+  "conf": 0.873
+ },
+ {
+  "file": "Fugue no 1 in A.musicxml",
+  "want": "A ?",
+  "got": "F# minor",
+  "cat": "wrong",
+  "conf": 0.825
+ },
+ {
+  "file": "Lambo in C#.musicxml",
+  "want": "C ?",
+  "got": "C# major",
+  "cat": "wrong",
+  "conf": 0.803
+ },
+ {
+  "file": "No 3 in C.musicxml",
+  "want": "C ?",
+  "got": "C major",
+  "cat": "ok",
+  "conf": 0.93
+ },
+ {
+  "file": "No 4 in F#M.musicxml",
+  "want": "F# ?",
+  "got": "E- minor",
+  "cat": "wrong",
+  "conf": 0.887
+ },
+ {
+  "file": "Nocturne in Ab.musicxml",
+  "want": "Ab ?",
+  "got": "A- major",
+  "cat": "ok",
+  "conf": 0.929
+ },
+ {
+  "file": "Nocturne in F# minor.musicxml",
+  "want": "F# minor",
+  "got": "F# minor",
+  "cat": "ok",
+  "conf": 0.825
+ },
+ {
+  "file": "Nocturne no 2 in Db.musicxml",
+  "want": "Db ?",
+  "got": "C# major",
+  "cat": "ok",
+  "conf": 0.922
+ },
+ {
+  "file": "Nocturne no 3 in C# minor.musicxml",
+  "want": "C# minor",
+  "got": "C# minor",
+  "cat": "ok",
+  "conf": 0.957
+ },
+ {
+  "file": "Nocturne no 6 in B.musicxml",
+  "want": "B ?",
+  "got": "C# minor",
+  "cat": "wrong",
+  "conf": 0.887
+ },
+ {
+  "file": "Passacaglia in D.musicxml",
+  "want": "D ?",
+  "got": "D major",
+  "cat": "ok",
+  "conf": 0.898
+ },
+ {
+  "file": "Passacaglia in G minor for String Quartet.musicxml",
+  "want": "G minor",
+  "got": "G minor",
+  "cat": "ok",
+  "conf": 0.948
+ },
+ {
+  "file": "Piano Concerto No 1 in D.musicxml",
+  "want": "D ?",
+  "got": "D minor",
+  "cat": "ok",
+  "conf": 0.801
+ },
+ {
+  "file": "Piano Solo in D maj.musicxml",
+  "want": "D major",
+  "got": "D major",
+  "cat": "ok",
+  "conf": 0.83
+ },
+ {
+  "file": "Piano Sonata No 1 in D.musicxml",
+  "want": "D ?",
+  "got": "B minor",
+  "cat": "wrong",
+  "conf": 0.927
+ },
+ {
+  "file": "Piano Sonata no 1 in D minor, 1st mov.musicxml",
+  "want": "D minor",
+  "got": "D minor",
+  "cat": "ok",
+  "conf": 0.684
+ },
+ {
+  "file": "Piano Trio no 1 in E.musicxml",
+  "want": "E ?",
+  "got": "E major",
+  "cat": "ok",
+  "conf": 0.905
+ },
+ {
+  "file": "Piano Violin Sonata Mov 3 Rondo in Bb minor 8.musicxml",
+  "want": "Bb minor",
+  "got": "B- minor",
+  "cat": "ok",
+  "conf": 0.839
+ },
+ {
+  "file": "Piano Violin Sonata Mov 3 Rondo in Bb minor.musicxml",
+  "want": "Bb minor",
+  "got": "B- minor",
+  "cat": "ok",
+  "conf": 0.839
+ },
+ {
+  "file": "Piano in Bb minor.musicxml",
+  "want": "Bb minor",
+  "got": "B- minor",
+  "cat": "ok",
+  "conf": 0.896
+ },
+ {
+  "file": "Pieces of Solemn, no 1 in A minor.musicxml",
+  "want": "A minor",
+  "got": "A minor",
+  "cat": "ok",
+  "conf": 0.822
+ },
+ {
+  "file": "Prelude and Fugue no 1 in A.musicxml",
+  "want": "A ?",
+  "got": "A major",
+  "cat": "ok",
+  "conf": 0.885
+ },
+ {
+  "file": "Prelude in E minor.musicxml",
+  "want": "E minor",
+  "got": "E minor",
+  "cat": "ok",
+  "conf": 0.917
+ },
+ {
+  "file": "Prelude in F minor.musicxml",
+  "want": "F minor",
+  "got": "F minor",
+  "cat": "ok",
+  "conf": 0.949
+ },
+ {
+  "file": "Prelude in G minor.musicxml",
+  "want": "G minor",
+  "got": "G minor",
+  "cat": "ok",
+  "conf": 0.96
+ },
+ {
+  "file": "Prelude no 1 in A.musicxml",
+  "want": "A ?",
+  "got": "A major",
+  "cat": "ok",
+  "conf": 0.939
+ },
+ {
+  "file": "Prelude no 2 in Bb minor.musicxml",
+  "want": "Bb minor",
+  "got": "B- minor",
+  "cat": "ok",
+  "conf": 0.856
+ },
+ {
+  "file": "Proud in Bb Maj.musicxml",
+  "want": "Bb major",
+  "got": "G minor",
+  "cat": "relative",
+  "conf": 0.928
+ },
+ {
+  "file": "Running in Gb Maj.musicxml",
+  "want": "Gb major",
+  "got": "F# major",
+  "cat": "ok",
+  "conf": 0.594
+ },
+ {
+  "file": "Serenade in C-.musicxml",
+  "want": "C ?",
+  "got": "C# minor",
+  "cat": "wrong",
+  "conf": 0.905
+ },
+ {
+  "file": "Serenade in E.musicxml",
+  "want": "E ?",
+  "got": "C# minor",
+  "cat": "wrong",
+  "conf": 0.897
+ },
+ {
+  "file": "Sexophone Sound in C.musicxml",
+  "want": "C ?",
+  "got": "E major",
+  "cat": "wrong",
+  "conf": 0.828
+ },
+ {
+  "file": "Sight-Reading no 100 in A.musicxml",
+  "want": "A ?",
+  "got": "A major",
+  "cat": "ok",
+  "conf": 0.837
+ },
+ {
+  "file": "Sight-Reading no 101 in A minor.musicxml",
+  "want": "A minor",
+  "got": "A minor",
+  "cat": "ok",
+  "conf": 0.864
+ },
+ {
+  "file": "Sight-Reading no 102 in Bb.musicxml",
+  "want": "Bb ?",
+  "got": "B- major",
+  "cat": "ok",
+  "conf": 0.844
+ },
+ {
+  "file": "Sight-Reading no 103 in Bb minor.musicxml",
+  "want": "Bb minor",
+  "got": "B- minor",
+  "cat": "ok",
+  "conf": 0.937
+ },
+ {
+  "file": "Sight-Reading no 104 in B.musicxml",
+  "want": "B ?",
+  "got": "B major",
+  "cat": "ok",
+  "conf": 0.911
+ },
+ {
+  "file": "Sight-Reading no 105 in B minor.musicxml",
+  "want": "B minor",
+  "got": "B minor",
+  "cat": "ok",
+  "conf": 0.985
+ },
+ {
+  "file": "Sight-Reading no 106 in C.musicxml",
+  "want": "C ?",
+  "got": "G major",
+  "cat": "wrong",
+  "conf": 0.846
+ },
+ {
+  "file": "Sight-Reading no 107 in C minor.musicxml",
+  "want": "C minor",
+  "got": "C minor",
+  "cat": "ok",
+  "conf": 0.975
+ },
+ {
+  "file": "Sight-Reading no 108 in D.musicxml",
+  "want": "D ?",
+  "got": "D major",
+  "cat": "ok",
+  "conf": 0.899
+ },
+ {
+  "file": "Sight-Reading no 109 in D minor.musicxml",
+  "want": "D minor",
+  "got": "D minor",
+  "cat": "ok",
+  "conf": 0.734
+ },
+ {
+  "file": "Sight-Reading no 110 in Eb.musicxml",
+  "want": "Eb ?",
+  "got": "E- major",
+  "cat": "ok",
+  "conf": 0.874
+ },
+ {
+  "file": "Sight-Reading no 111 in D# minor.musicxml",
+  "want": "D# minor",
+  "got": "E- minor",
+  "cat": "ok",
+  "conf": 0.859
+ },
+ {
+  "file": "Sight-Reading no 112 in E.musicxml",
+  "want": "E ?",
+  "got": "E major",
+  "cat": "ok",
+  "conf": 0.851
+ },
+ {
+  "file": "Sight-Reading no 113 in E minor.musicxml",
+  "want": "E minor",
+  "got": "E minor",
+  "cat": "ok",
+  "conf": 0.923
+ },
+ {
+  "file": "Sight-Reading no 114 in F.musicxml",
+  "want": "F ?",
+  "got": "F major",
+  "cat": "ok",
+  "conf": 0.896
+ },
+ {
+  "file": "Sight-Reading no 115 in F minor.musicxml",
+  "want": "F minor",
+  "got": "F minor",
+  "cat": "ok",
+  "conf": 0.954
+ },
+ {
+  "file": "Sight-Reading no 116 in Gb.musicxml",
+  "want": "Gb ?",
+  "got": "E- minor",
+  "cat": "wrong",
+  "conf": 0.902
+ },
+ {
+  "file": "Sight-Reading no 117 in F# minor.musicxml",
+  "want": "F# minor",
+  "got": "F# minor",
+  "cat": "ok",
+  "conf": 0.938
+ },
+ {
+  "file": "Sight-Reading no 118 in G.musicxml",
+  "want": "G ?",
+  "got": "G major",
+  "cat": "ok",
+  "conf": 0.927
+ },
+ {
+  "file": "Sight-Reading no 119 in G minor.musicxml",
+  "want": "G minor",
+  "got": "G minor",
+  "cat": "ok",
+  "conf": 0.951
+ },
+ {
+  "file": "Sight-Reading no 120 in Ab.musicxml",
+  "want": "Ab ?",
+  "got": "A- major",
+  "cat": "ok",
+  "conf": 0.909
+ },
+ {
+  "file": "Sight-Reading no 121 in G# minor.musicxml",
+  "want": "G# minor",
+  "got": "G# minor",
+  "cat": "ok",
+  "conf": 0.915
+ },
+ {
+  "file": "Sight-Reading no 122 in A.musicxml",
+  "want": "A ?",
+  "got": "A major",
+  "cat": "ok",
+  "conf": 0.877
+ },
+ {
+  "file": "Sight-Reading no 123 in A minor.musicxml",
+  "want": "A minor",
+  "got": "A minor",
+  "cat": "ok",
+  "conf": 0.95
+ },
+ {
+  "file": "Sight-Reading no 124 in Bb.musicxml",
+  "want": "Bb ?",
+  "got": "G minor",
+  "cat": "wrong",
+  "conf": 0.856
+ },
+ {
+  "file": "Sight-Reading no 125 in Bb minor.musicxml",
+  "want": "Bb minor",
+  "got": "B- minor",
+  "cat": "ok",
+  "conf": 0.892
+ },
+ {
+  "file": "Sight-Reading no 126 in B.musicxml",
+  "want": "B ?",
+  "got": "B major",
+  "cat": "ok",
+  "conf": 0.929
+ },
+ {
+  "file": "Sight-Reading no 88 in Eb.musicxml",
+  "want": "Eb ?",
+  "got": "E- major",
+  "cat": "ok",
+  "conf": 0.917
+ },
+ {
+  "file": "Sight-Reading no 91 in E minor.musicxml",
+  "want": "E minor",
+  "got": "E minor",
+  "cat": "ok",
+  "conf": 0.978
+ },
+ {
+  "file": "Sight-Reading no 92 in F.musicxml",
+  "want": "F ?",
+  "got": "F major",
+  "cat": "ok",
+  "conf": 0.945
+ },
+ {
+  "file": "Sight-Reading no 93 in F Minor.musicxml",
+  "want": "F minor",
+  "got": "F minor",
+  "cat": "ok",
+  "conf": 0.914
+ },
+ {
+  "file": "Sight-Reading no 94 in Gb.musicxml",
+  "want": "Gb ?",
+  "got": "F# major",
+  "cat": "ok",
+  "conf": 0.956
+ },
+ {
+  "file": "Sight-Reading no 95 in F# minor.musicxml",
+  "want": "F# minor",
+  "got": "F# minor",
+  "cat": "ok",
+  "conf": 0.932
+ },
+ {
+  "file": "Sight-Reading no 96 in G.musicxml",
+  "want": "G ?",
+  "got": "G major",
+  "cat": "ok",
+  "conf": 0.979
+ },
+ {
+  "file": "Sight-Reading no 97 in G minor.musicxml",
+  "want": "G minor",
+  "got": "G minor",
+  "cat": "ok",
+  "conf": 0.938
+ },
+ {
+  "file": "Sight-Reading no 98 in Ab.musicxml",
+  "want": "Ab ?",
+  "got": "A- major",
+  "cat": "ok",
+  "conf": 0.906
+ },
+ {
+  "file": "Sight-Reading no 99 in G# minor.musicxml",
+  "want": "G# minor",
+  "got": "G# minor",
+  "cat": "ok",
+  "conf": 0.942
+ },
+ {
+  "file": "Sight-reading no 87 in D minor.musicxml",
+  "want": "D minor",
+  "got": "D minor",
+  "cat": "ok",
+  "conf": 0.901
+ },
+ {
+  "file": "Sightreading 40 in D.musicxml",
+  "want": "D ?",
+  "got": "D major",
+  "cat": "ok",
+  "conf": 0.922
+ },
+ {
+  "file": "Sightreading no 31 in A.musicxml",
+  "want": "A ?",
+  "got": "A major",
+  "cat": "ok",
+  "conf": 0.913
+ },
+ {
+  "file": "Sightreading no 32 in A minor.musicxml",
+  "want": "A minor",
+  "got": "A minor",
+  "cat": "ok",
+  "conf": 0.871
+ },
+ {
+  "file": "Sightreading no 32 in Bb.musicxml",
+  "want": "Bb ?",
+  "got": "B- major",
+  "cat": "ok",
+  "conf": 0.857
+ },
+ {
+  "file": "Sightreading no 34 in Bb minor.musicxml",
+  "want": "Bb minor",
+  "got": "B- minor",
+  "cat": "ok",
+  "conf": 0.922
+ },
+ {
+  "file": "Sightreading no 35 in B.musicxml",
+  "want": "B ?",
+  "got": "B major",
+  "cat": "ok",
+  "conf": 0.931
+ },
+ {
+  "file": "Sightreading no 36 in B minor.musicxml",
+  "want": "B minor",
+  "got": "B major",
+  "cat": "parallel",
+  "conf": 0.784
+ },
+ {
+  "file": "Sightreading no 37 in C major.musicxml",
+  "want": "C major",
+  "got": "C major",
+  "cat": "ok",
+  "conf": 0.85
+ },
+ {
+  "file": "Sightreading no 38 in C minor.musicxml",
+  "want": "C minor",
+  "got": "C major",
+  "cat": "parallel",
+  "conf": 0.682
+ },
+ {
+  "file": "Sightreading no 39 in Db.musicxml",
+  "want": "Db ?",
+  "got": "C# major",
+  "cat": "ok",
+  "conf": 0.938
+ },
+ {
+  "file": "Sightreading no 40 in C# minor.musicxml",
+  "want": "C# minor",
+  "got": "C# minor",
+  "cat": "ok",
+  "conf": 0.948
+ },
+ {
+  "file": "Sightreading no 41 in D minor.musicxml",
+  "want": "D minor",
+  "got": "D minor",
+  "cat": "ok",
+  "conf": 0.897
+ },
+ {
+  "file": "Sightreading no 42 in Eb.musicxml",
+  "want": "Eb ?",
+  "got": "E- major",
+  "cat": "ok",
+  "conf": 0.949
+ },
+ {
+  "file": "Sightreading no 43 in Eb minor.musicxml",
+  "want": "Eb minor",
+  "got": "E- minor",
+  "cat": "ok",
+  "conf": 0.86
+ },
+ {
+  "file": "Sightreading no 44 in E.musicxml",
+  "want": "E ?",
+  "got": "E major",
+  "cat": "ok",
+  "conf": 0.862
+ },
+ {
+  "file": "Sightreading no 45 in E minor.musicxml",
+  "want": "E minor",
+  "got": "E minor",
+  "cat": "ok",
+  "conf": 0.928
+ },
+ {
+  "file": "Sightreading no 46 in F.musicxml",
+  "want": "F ?",
+  "got": "F major",
+  "cat": "ok",
+  "conf": 0.872
+ },
+ {
+  "file": "Sightreading no 47 in F minor.musicxml",
+  "want": "F minor",
+  "got": "F minor",
+  "cat": "ok",
+  "conf": 0.939
+ },
+ {
+  "file": "Sightreading no 48 in Gb.musicxml",
+  "want": "Gb ?",
+  "got": "F# major",
+  "cat": "ok",
+  "conf": 0.895
+ },
+ {
+  "file": "Sightreading no 49 in F# minor.musicxml",
+  "want": "F# minor",
+  "got": "F# minor",
+  "cat": "ok",
+  "conf": 0.896
+ },
+ {
+  "file": "Sightreading no 50 in G.musicxml",
+  "want": "G ?",
+  "got": "G major",
+  "cat": "ok",
+  "conf": 0.939
+ },
+ {
+  "file": "Sightreading no 51 in G minor.musicxml",
+  "want": "G minor",
+  "got": "G minor",
+  "cat": "ok",
+  "conf": 0.788
+ },
+ {
+  "file": "Sightreading no 52 in Ab.musicxml",
+  "want": "Ab ?",
+  "got": "A- major",
+  "cat": "ok",
+  "conf": 0.888
+ },
+ {
+  "file": "Sightreading no 53 in G# minor.musicxml",
+  "want": "G# minor",
+  "got": "G# minor",
+  "cat": "ok",
+  "conf": 0.924
+ },
+ {
+  "file": "Sightreading no 54 in A.musicxml",
+  "want": "A ?",
+  "got": "A major",
+  "cat": "ok",
+  "conf": 0.911
+ },
+ {
+  "file": "Sightreading no 55 in A minor.musicxml",
+  "want": "A minor",
+  "got": "A minor",
+  "cat": "ok",
+  "conf": 0.786
+ },
+ {
+  "file": "Sightreading no 56 in Bb.musicxml",
+  "want": "Bb ?",
+  "got": "B- major",
+  "cat": "ok",
+  "conf": 0.873
+ },
+ {
+  "file": "Sightreading no 57 in Bb minor.musicxml",
+  "want": "Bb minor",
+  "got": "B- minor",
+  "cat": "ok",
+  "conf": 0.892
+ },
+ {
+  "file": "Sightreading no 58 in B.musicxml",
+  "want": "B ?",
+  "got": "G# minor",
+  "cat": "wrong",
+  "conf": 0.922
+ },
+ {
+  "file": "Sightreading no 59 in B minor.musicxml",
+  "want": "B minor",
+  "got": "B minor",
+  "cat": "ok",
+  "conf": 0.955
+ },
+ {
+  "file": "Sightreading no 60 in C.musicxml",
+  "want": "C ?",
+  "got": "C major",
+  "cat": "ok",
+  "conf": 0.929
+ },
+ {
+  "file": "Sightreading no 61 in C minor.musicxml",
+  "want": "C minor",
+  "got": "C minor",
+  "cat": "ok",
+  "conf": 0.905
+ },
+ {
+  "file": "Sightreading no 62 in D.musicxml",
+  "want": "D ?",
+  "got": "D major",
+  "cat": "ok",
+  "conf": 0.914
+ },
+ {
+  "file": "Sightreading no 63 in D minor.musicxml",
+  "want": "D minor",
+  "got": "D minor",
+  "cat": "ok",
+  "conf": 0.91
+ },
+ {
+  "file": "Sightreading no 64 in Eb.musicxml",
+  "want": "Eb ?",
+  "got": "E- major",
+  "cat": "ok",
+  "conf": 0.974
+ },
+ {
+  "file": "Sightreading no 65 in D# minor.musicxml",
+  "want": "D# minor",
+  "got": "E- minor",
+  "cat": "ok",
+  "conf": 0.87
+ },
+ {
+  "file": "Sightreading no 66 in E.musicxml",
+  "want": "E ?",
+  "got": "E major",
+  "cat": "ok",
+  "conf": 0.922
+ },
+ {
+  "file": "Sightreading no 67 in E minor.musicxml",
+  "want": "E minor",
+  "got": "E minor",
+  "cat": "ok",
+  "conf": 0.977
+ },
+ {
+  "file": "Sightreading no 68 in F.musicxml",
+  "want": "F ?",
+  "got": "F major",
+  "cat": "ok",
+  "conf": 0.931
+ },
+ {
+  "file": "Sightreading no 69 in F minor.musicxml",
+  "want": "F minor",
+  "got": "F minor",
+  "cat": "ok",
+  "conf": 0.871
+ },
+ {
+  "file": "Sightreading no 70 in Gb.musicxml",
+  "want": "Gb ?",
+  "got": "F# major",
+  "cat": "ok",
+  "conf": 0.929
+ },
+ {
+  "file": "Sightreading no 71 in F# minor.musicxml",
+  "want": "F# minor",
+  "got": "F# minor",
+  "cat": "ok",
+  "conf": 0.969
+ },
+ {
+  "file": "Sightreading no 72 in G.musicxml",
+  "want": "G ?",
+  "got": "E minor",
+  "cat": "wrong",
+  "conf": 0.939
+ },
+ {
+  "file": "Sightreading no 73 in G minor.musicxml",
+  "want": "G minor",
+  "got": "G minor",
+  "cat": "ok",
+  "conf": 0.87
+ },
+ {
+  "file": "Sightreading no 74 in Ab.musicxml",
+  "want": "Ab ?",
+  "got": "A- major",
+  "cat": "ok",
+  "conf": 0.877
+ },
+ {
+  "file": "Sightreading no 75 in G# minor.musicxml",
+  "want": "G# minor",
+  "got": "G# minor",
+  "cat": "ok",
+  "conf": 0.969
+ },
+ {
+  "file": "Sightreading no 76 in A.musicxml",
+  "want": "A ?",
+  "got": "A major",
+  "cat": "ok",
+  "conf": 0.882
+ },
+ {
+  "file": "Sightreading no 77 in A minor.musicxml",
+  "want": "A minor",
+  "got": "A minor",
+  "cat": "ok",
+  "conf": 0.899
+ },
+ {
+  "file": "Sightreading no 78 in Bb minor.musicxml",
+  "want": "Bb minor",
+  "got": "B- minor",
+  "cat": "ok",
+  "conf": 0.944
+ },
+ {
+  "file": "Sightreading no 78 in Bb.musicxml",
+  "want": "Bb ?",
+  "got": "G minor",
+  "cat": "wrong",
+  "conf": 0.925
+ },
+ {
+  "file": "Sightreading no 80 in B.musicxml",
+  "want": "B ?",
+  "got": "G# minor",
+  "cat": "wrong",
+  "conf": 0.888
+ },
+ {
+  "file": "Sightreading no 81 in B minor.musicxml",
+  "want": "B minor",
+  "got": "B minor",
+  "cat": "ok",
+  "conf": 0.844
+ },
+ {
+  "file": "Sightreading no 82 in C.musicxml",
+  "want": "C ?",
+  "got": "A minor",
+  "cat": "wrong",
+  "conf": 0.893
+ },
+ {
+  "file": "Sightreading no 83 in C minor.musicxml",
+  "want": "C minor",
+  "got": "C minor",
+  "cat": "ok",
+  "conf": 0.965
+ },
+ {
+  "file": "Sightreading no 84 in Db.musicxml",
+  "want": "Db ?",
+  "got": "C# major",
+  "cat": "ok",
+  "conf": 0.931
+ },
+ {
+  "file": "Sightreading no 85 in C# minor.musicxml",
+  "want": "C# minor",
+  "got": "C# minor",
+  "cat": "ok",
+  "conf": 0.938
+ },
+ {
+  "file": "Sightreading no 86 in D.musicxml",
+  "want": "D ?",
+  "got": "D major",
+  "cat": "ok",
+  "conf": 0.913
+ },
+ {
+  "file": "Sightreading no 89 in D# minor.musicxml",
+  "want": "D# minor",
+  "got": "E- minor",
+  "cat": "ok",
+  "conf": 0.88
+ },
+ {
+  "file": "Sightreading no 90 in E.musicxml",
+  "want": "E ?",
+  "got": "E major",
+  "cat": "ok",
+  "conf": 0.889
+ },
+ {
+  "file": "Song Study no 1 in D minor.musicxml",
+  "want": "D minor",
+  "got": "D major",
+  "cat": "parallel",
+  "conf": 0.861
+ },
+ {
+  "file": "Song Study no 1 in D.musicxml",
+  "want": "D ?",
+  "got": "D major",
+  "cat": "ok",
+  "conf": 0.906
+ },
+ {
+  "file": "Song Study no 2 in Ab.musicxml",
+  "want": "Ab ?",
+  "got": "C# major",
+  "cat": "wrong",
+  "conf": 0.853
+ },
+ {
+  "file": "The Piano Series No 1, in F#M.musicxml",
+  "want": "F# ?",
+  "got": "E- minor",
+  "cat": "wrong",
+  "conf": 0.891
+ },
+ {
+  "file": "The Piano Series No 2, in Ab M.musicxml",
+  "want": "Ab ?",
+  "got": "F minor",
+  "cat": "wrong",
+  "conf": 0.883
+ },
+ {
+  "file": "The Piano Series No 3 in Eb Minor.musicxml",
+  "want": "Eb minor",
+  "got": "F# major",
+  "cat": "relative",
+  "conf": 0.893
+ },
+ {
+  "file": "Unaccompanied Cello No 1 in G Maj.musicxml",
+  "want": "G major",
+  "got": "D major",
+  "cat": "wrong",
+  "conf": 0.819
+ },
+ {
+  "file": "Viola Solo in G.musicxml",
+  "want": "G ?",
+  "got": "G major",
+  "cat": "ok",
+  "conf": 0.847
+ },
+ {
+  "file": "Violin Cello Duet in G.musicxml",
+  "want": "G ?",
+  "got": "G major",
+  "cat": "ok",
+  "conf": 0.913
+ },
+ {
+  "file": "Violin Fugue in C minor.musicxml",
+  "want": "C minor",
+  "got": "B- minor",
+  "cat": "wrong",
+  "conf": 0.794
+ },
+ {
+  "file": "Violin Minuet in Bb.musicxml",
+  "want": "Bb ?",
+  "got": "G minor",
+  "cat": "wrong",
+  "conf": 0.9
+ },
+ {
+  "file": "Violin Solo Allegro in C minor.musicxml",
+  "want": "C minor",
+  "got": "C minor",
+  "cat": "ok",
+  "conf": 0.934
+ },
+ {
+  "file": "Violin Sonata no 1 Mov 1 in A.musicxml",
+  "want": "A ?",
+  "got": "A major",
+  "cat": "ok",
+  "conf": 0.823
+ },
+ {
+  "file": "Violin Viola Duet in A minor.musicxml",
+  "want": "A minor",
+  "got": "A minor",
+  "cat": "ok",
+  "conf": 0.957
+ },
+ {
+  "file": "Waltz in G minor.musicxml",
+  "want": "G minor",
+  "got": "G minor",
+  "cat": "ok",
+  "conf": 0.829
+ },
+ {
+  "file": "Waltz no 1 in B minor.musicxml",
+  "want": "B minor",
+  "got": "B minor",
+  "cat": "ok",
+  "conf": 0.792
+ },
+ {
+  "file": "Waltz no 2 in G minor.musicxml",
+  "want": "G minor",
+  "got": "G minor",
+  "cat": "ok",
+  "conf": 0.95
+ },
+ {
+  "file": "Waltz no 3 in C.musicxml",
+  "want": "C ?",
+  "got": "C major",
+  "cat": "ok",
+  "conf": 0.859
+ },
+ {
+  "file": "Waltz no 4 in E minor.musicxml",
+  "want": "E minor",
+  "got": "E minor",
+  "cat": "ok",
+  "conf": 0.876
+ },
+ {
+  "file": "Waltz no 5 in A.musicxml",
+  "want": "A ?",
+  "got": "A major",
+  "cat": "ok",
+  "conf": 0.965
+ },
+ {
+  "file": "Waltz no 6 in A minor.musicxml",
+  "want": "A minor",
+  "got": "A minor",
+  "cat": "ok",
+  "conf": 0.964
+ },
+ {
+  "file": "Waltz no 7 in G# minor.musicxml",
+  "want": "G# minor",
+  "got": "G# minor",
+  "cat": "ok",
+  "conf": 0.864
+ },
+ {
+  "file": "no 1 in C maj.musicxml",
+  "want": "C major",
+  "got": "A minor",
+  "cat": "relative",
+  "conf": 0.667
+ },
+ {
+  "file": "riff in C.musicxml",
+  "want": "C ?",
+  "got": "B minor",
+  "cat": "wrong",
+  "conf": 0.605
+ }
+]

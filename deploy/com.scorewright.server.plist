@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+  <key>Label</key><string>com.scorewright.server</string>
+  <key>ProgramArguments</key><array>
+    <string>/Users/bdogellis/miniforge3/envs/whisperer/bin/python</string>
+    <string>/Users/bdogellis/repos/scorewright/lab/app/server.py</string>
+    <string>quartet2</string>
+  </array>
+  <key>WorkingDirectory</key><string>/Users/bdogellis/repos/scorewright/lab</string>
+  <key>RunAtLoad</key><true/>
+  <key>KeepAlive</key><true/>
+  <key>StandardOutPath</key><string>/Users/bdogellis/repos/scorewright/lab/app/server.log</string>
+  <key>StandardErrorPath</key><string>/Users/bdogellis/repos/scorewright/lab/app/server.log</string>
+</dict></plist>

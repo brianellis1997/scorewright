@@ -1,0 +1,20 @@
+import os
+PATCH_STREAM = True
+PATCH_SIZE = 16
+PATCH_LENGTH = 2048
+CHAR_NUM_LAYERS = 6
+PATCH_NUM_LAYERS = 20
+HIDDEN_SIZE = 768
+PATCH_SAMPLING_BATCH_SIZE = 0
+MODELS = (os.path.join(os.environ['SW_ROOT'], '_models') + '/') if os.environ.get('SW_ROOT') else '/Users/bdogellis/Documents/Score Exports/_models/'
+INFERENCE_WEIGHTS_PATH = MODELS + 'weights_text2score_finetune_p_size_16_p_length_2048_p_layers_20_c_layers_6_h_size_768_lr_0.0001_batch_16.pth'
+WEIGHTS_OUT = os.environ.get('T2S_OUT', MODELS + 'weights_text2score_brian.pth')
+INIT_PATH = os.environ.get('T2S_INIT', INFERENCE_WEIGHTS_PATH)
+DATA_TRAIN_INDEX_PATH = '/Users/bdogellis/Documents/Score Exports/abc_augmented_train.jsonl'
+DATA_EVAL_INDEX_PATH = '/Users/bdogellis/Documents/Score Exports/abc_augmented_eval.jsonl'
+PLANS_DIR = '/Users/bdogellis/Documents/Score Exports/plans'
+MIN_INSTRUMENTS = int(os.environ.get('T2S_MIN_INST', 6))
+NUM_EPOCHS = int(os.environ.get('T2S_EPOCHS', 3))
+LEARNING_RATE = float(os.environ.get('T2S_LR', 1e-5))
+MAXP = int(os.environ.get('T2S_MAXP', 512))
+FREEZE_BELOW = int(os.environ.get('T2S_FREEZE_BELOW', 10))

@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Scorewright</title>
+<style>
+:root{--bg:#f6f4ef;--panel:#fff;--ink:#1b1a17;--ink2:#5b5850;--line:#ddd8cc;--green:#0b8a3e;--red:#c02626;--blue:#2a5bd7}
+@media(prefers-color-scheme:dark){:root{--bg:#161512;--panel:#1f1d19;--ink:#efece4;--ink2:#a9a498;--line:#34312a}}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 -apple-system,"Segoe UI",sans-serif;display:grid;grid-template-rows:auto 1fr;height:100vh;height:100dvh}
+header{display:flex;gap:10px;align-items:center;padding:8px 12px;border-bottom:1px solid var(--line);background:var(--panel)}
+header b{font-size:16px} header .s{color:var(--ink2);font-size:13px;margin-left:auto}
+main{display:grid;grid-template-columns:minmax(280px,380px) minmax(0,1fr);min-height:0;min-width:0}
+html,body{max-width:100%;overflow-x:hidden}
+#score,#chat{min-width:0}
+.m{overflow-wrap:anywhere}
+@media(max-width:800px){main{grid-template-columns:minmax(0,1fr);grid-template-rows:52vh minmax(0,1fr)} #score{order:-1;border-bottom:1px solid var(--line)} #chat{border-right:0} .desk{display:none!important} button{padding:10px 12px;font-size:16px} #ask textarea{font-size:16px} #tools{font-size:13px;gap:5px;flex-wrap:nowrap;overflow-x:auto;white-space:nowrap;padding-bottom:6px} #tools>*{flex:0 0 auto}}
+#chat{display:flex;flex-direction:column;border-right:1px solid var(--line);background:var(--panel);min-height:0}
+#log{flex:1;overflow:auto;padding:10px}
+.m{margin:0 0 8px;padding:8px 10px;border-radius:10px;max-width:92%;white-space:pre-wrap}
+.m.brian{background:#e8efff;margin-left:auto} .m.claude{background:#eef3ea} @media(prefers-color-scheme:dark){.m.brian{background:#243352}.m.claude{background:#253421}}
+.m .w{font-size:11px;color:var(--ink2);margin-bottom:2px}
+.sug{border:1px solid var(--green);border-radius:10px;padding:8px 10px;margin:6px 0;background:rgba(11,138,62,.06)}
+.sug b{color:var(--green)} .sug .st{font-size:12px;color:var(--ink2)}
+.btns{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}
+button{border:0;border-radius:8px;padding:8px 12px;font:inherit;cursor:pointer;background:#e6e2d8;color:var(--ink)}
+button.ok{background:var(--green);color:#fff} button.no{background:var(--red);color:#fff} button.go{background:var(--blue);color:#fff} button.mic.on{background:var(--red);color:#fff}
+#ask{display:flex;gap:6px;padding:8px;border-top:1px solid var(--line)}
+#takebox{border-top:1px solid var(--line);padding:8px;background:var(--panel)} #takebox .stf{background:#fff;border-radius:6px;overflow:auto;max-height:220px} #takebox .stf svg{width:100%;height:auto;display:block} #takebox textarea{width:100%;box-sizing:border-box;font:inherit;padding:6px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);margin:6px 0} #takebox .btns{display:flex;gap:6px}
+.m .stf{background:#fff;border-radius:6px;overflow:auto;margin-top:6px} .m .stf svg{width:100%;height:auto;display:block}
+#ask textarea{flex:1;font:inherit;padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);resize:none}
+#score{overflow:hidden;padding:8px;min-height:0;display:flex;flex-direction:column}
+#svg{flex:1;min-height:0;overflow:auto;-webkit-overflow-scrolling:touch;border-radius:6px}
+#score svg{width:calc(var(--zoom,1) * 100%);max-width:none;height:auto;display:block;background:#fff;border-radius:6px}
+#tools .z{min-width:40px;font-weight:600}
+#sess{margin-left:auto;max-width:60%;font:inherit;font-size:14px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)}
+#newdlg{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:flex-start;justify-content:center;z-index:20;padding-top:8vh}
+#newdlg[hidden]{display:none}
+#newform{background:var(--panel);color:var(--ink);border-radius:12px;padding:16px;width:min(420px,92vw);display:flex;flex-direction:column;gap:10px;box-shadow:0 10px 40px rgba(0,0,0,.3)}
+#newform h3{margin:0 0 4px} #newform label{display:flex;flex-direction:column;font-size:13px;color:var(--ink2);gap:4px;flex:1}
+#newform input,#newform select{font:inherit;font-size:16px;padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)}
+#newform .row{display:flex;gap:8px} #newform .hint{margin:0;font-size:12px;color:var(--ink2)}
+#tools{display:flex;gap:6px;align-items:center;padding:0 0 8px;flex-wrap:wrap;color:var(--ink2);font-size:13px}
+audio{height:32px;vertical-align:middle}
+</style></head><body>
+<header><b>Scorewright</b><span id=title hidden></span><select id=sess class=s title="switch piece or start a new one" onchange="pickSession(this.value)"><option>…</option></select></header>
+<div id=newdlg hidden><form id=newform onsubmit="return createPiece(event)">
+ <h3>New piece</h3>
+ <label>Title<input name=title required placeholder="Improvisation in D minor"></label>
+ <label>Instruments<select name=preset id=presetsel></select></label>
+ <div class=row><label>Key<input name=key value="C" placeholder="D minor"></label>
+ <label>Meter<select name=meter><option>4/4</option><option>3/4</option><option>6/8</option><option>2/4</option><option>5/4</option><option>12/8</option></select></label>
+ <label>Tempo<input name=tempo type=number value=90 min=30 max=240></label></div>
+ <div class=btns><button class=go type=submit>Create</button><button type=button onclick="document.getElementById('newdlg').hidden=true; loadSessions()">Cancel</button></div>
+ <p class=hint>Starts an empty score. Then talk, play with 🎹, or upload a recording with 📎 and I'll build from it.</p>
+</form></div>
+<main>
+ <section id=chat>
+  <div id=log></div>
+  <div id=takebox hidden></div>
+  <div id=ask>
+   <button class=mic id=mic title="talk">🎤</button>
+   <button class=mic id=hum title="hum or sing a line, press again to stop">🎵</button>
+   <button class=mic id=take title="a take: press, play the piano and talk, press again">🎹</button>
+   <button class=mic id=upbtn title="upload a recording or video of you playing" onclick="document.getElementById('upfile').click()">📎</button><input type=file id=upfile accept="audio/*,video/*" hidden>
+   <textarea id=msg rows=2 placeholder="talk or type: continue from bar 24, keep it open… / orchestrate 18-81 for band…"></textarea>
+   <button class=go onclick="send()">Send</button>
+  </div>
+ </section>
+ <section id=score>
+  <div id=tools>
+   <span id=showing>working score</span><span class=desk style="margin-left:6px">click a bar to select it · P or space plays from there · press again to stop · ← → move the selection</span>
+   <button class=z onclick="zoom(-1)" title="zoom out">−</button><button class=z onclick="zoom(1)" title="zoom in">+</button>
+   <button onclick="showScore('', true)">working</button>
+   <button id=latest onclick="showLatest()">latest suggestion</button>
+   <button id=playbtn onclick="playAudio()">▶ play</button><audio id=au controls hidden></audio>
+   <button class=go onclick="cont()" title="ask Claude to propose the next bars">▶ continue</button><button class=desk onclick="openIn('Dorico')" title="opens in Dorico with NotePerformer playback">open in Dorico</button>
+   <button class=desk onclick="openIn('MuseScore')">open in MuseScore</button>
+  </div>
+  <div id=svg></div>
+ </section>
+</main>
+<script>
+let state=null, showingId='', seenChat=0, bars=[], selBar=null;
+async function api(p, body){ const r = await fetch(p, body?{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}:{}); return r.json().catch(()=>({})); }
+function esc(s){ return (s||'').replace(/[&<>]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
+function render(){
+  const log=document.getElementById('log'); const atBottom = log.scrollTop+log.clientHeight >= log.scrollHeight-40;
+  let h='';
+  for(const m of state.chat){
+    if(m.suggestion){ const s=state.suggestions.find(x=>x.id===m.suggestion); if(!s) continue;
+      h+=`<div class=sug><b>${s.id}</b> bars ${s.lo}–${s.hi} <span class=st>${s.status}</span><div>${esc(s.note)}</div>`+
+         (s.status==='open'?`<div class=btns><button class=ok onclick="verdict('${s.id}',true)">Accept</button><button class=no onclick="verdict('${s.id}',false)">Reject</button><button onclick="showScore('${s.id}')">show</button></div>`:'')+`</div>`;
+    } else h+=`<div class="m ${m.who}"><div class=w>${m.who==='brian'?'you':'Claude'} · ${m.ts.slice(11,16)}</div>${esc(m.text)}${m.take?`<div class=stf><img src="/take_svg?id=${m.take}" alt="take"></div>`:''}</div>`;
+  }
+  log.innerHTML=h; if(atBottom) log.scrollTop=log.scrollHeight;
+  document.getElementById('title').textContent = state.working ? state.working.split('/').slice(-2).join(' / ') : 'no score yet';
+  const open=state.suggestions.filter(s=>s.status==='open'); document.getElementById('latest').hidden=!open.length;
+  npUpdate();
+}
+function npUpdate(){ const key=showingId||'working'; const np=(state.np_audio||{})[key]; const b=document.getElementById('playbtn'); if(b) b.textContent = np? '▶ NotePerformer' : ((state.np_pending||[]).includes(key)? '▶ play (NotePerformer rendering)' : '▶ play');
+  window.__np = window.__np||{}; if(window.__np[key]!==undefined && window.__np[key]!==np){ const au=document.getElementById('au'); if(au.paused){ au.removeAttribute('src'); au.hidden=true; } } window.__np[key]=np; }
+// pieces: switch, or start a new one with an empty score
+async function loadSessions(){ const r=await api('/api/sessions'); const sel=document.getElementById('sess'); if(!r.sessions) return;
+  sel.innerHTML = r.sessions.map(x=>'<option value="'+esc(x.name)+'"'+(x.name===r.current?' selected':'')+'>'+esc(x.title)+'</option>').join('') + '<option value="__new">＋ New piece…</option>';
+  document.getElementById('presetsel').innerHTML = (r.presets||[]).map(p=>'<option>'+esc(p)+'</option>').join(''); }
+async function pickSession(v){ if(v==='__new'){ document.getElementById('newdlg').hidden=false; document.querySelector('#newform input[name=title]').focus(); return; }
+  const r=await api('/api/session',{name:v}); if(r.ok) location.reload(); }
+async function createPiece(ev){ ev.preventDefault(); const f=new FormData(ev.target); const body=Object.fromEntries(f.entries()); body.tempo=parseInt(body.tempo||'90');
+  const btn=ev.target.querySelector('button[type=submit]'); btn.disabled=true; btn.textContent='Creating…';
+  const r=await api('/api/new', body); if(r.ok) location.reload(); else { btn.disabled=false; btn.textContent='Create'; alert('could not create: '+(r.error||'unknown')); } return false; }
+loadSessions();
+// upload: any audio or video file goes to the Mac as is; the audio is pulled out and transcribed there
+document.getElementById('upfile').addEventListener('change', ev=>{ const f=ev.target.files[0]; ev.target.value=''; if(!f) return;
+  const box=document.getElementById('takebox'); box.hidden=false; const mb=(f.size/1048576).toFixed(1);
+  box.innerHTML='<div class=w>uploading '+esc(f.name)+' ('+mb+' MB)… <span id=uppct>0%</span></div>';
+  const x=new XMLHttpRequest(); x.open('POST','/api/upload?name='+encodeURIComponent(f.name));
+  x.upload.onprogress=e=>{ if(e.lengthComputable){ const el=document.getElementById('uppct'); if(el) el.textContent=Math.round(100*e.loaded/e.total)+'%'; } };
+  x.onerror=()=>{ box.innerHTML='<div>upload failed. Try again on Wi-Fi.</div>'; };
+  x.onload=()=>{ let j={}; try{ j=JSON.parse(x.responseText); }catch(e){} if(!j.id){ box.innerHTML='<div>upload failed: '+esc(j.error||x.status)+'</div>'; return; }
+    const t0=Date.now(); const poll=async()=>{ const s=await api('/api/job?id='+j.id); const secs=Math.round((Date.now()-t0)/1000);
+      if(s.status==='done'){ window.__showTake(s.result); return; }
+      if(s.status==='failed'||s.status==='unknown'){ box.innerHTML='<div>could not transcribe that: '+esc(s.error||s.status)+'</div><div class=btns><button onclick="document.getElementById(\'takebox\').hidden=true">close</button></div>'; return; }
+      box.innerHTML='<div class=w>'+esc(s.status)+'… '+secs+' s. A recording takes about two thirds of its own length to transcribe.</div>'; setTimeout(poll, 2500); };
+    poll(); };
+  x.send(f); });
+async function refresh(){ const st=await api('/api/state'); if(window.__session && (st.session!==window.__session || st.page_version!==window.__pv)){ if(!window.__rec && !document.getElementById('hum').classList.contains('on')) location.reload(); return; } window.__session=st.session; window.__pv=st.page_version; const changed=!state||JSON.stringify(st.chat)!==JSON.stringify(state.chat)||JSON.stringify(st.suggestions)!==JSON.stringify(state.suggestions); state=st; if(changed){ render(); const open=st.suggestions.filter(s=>s.status==='open'); const newest=open.length?open[open.length-1].id:''; if(newest && newest!==window.__lastSeen && window.__lastSeen!==undefined){ document.getElementById('latest').textContent='new: '+newest+' (click to show)'; document.getElementById('latest').style.background='#0b8a3e'; document.getElementById('latest').style.color='#fff'; } window.__lastSeen=newest; } }   // never switch what he is looking at; a new suggestion only lights the button
+async function showScore(id, manual){ showingId=id; if(manual) window.__manual=true; document.getElementById('showing').textContent = id?('suggestion '+id+' (green = new)'):'working score'; const r=await fetch('/svg?id='+encodeURIComponent(id)); document.getElementById('svg').innerHTML = r.ok? await r.text() : '<p style="padding:20px;color:#888">nothing to show yet</p>'; bars = await (await fetch('/bars?id='+encodeURIComponent(id))).json(); wireBars(); if(id){ const sg=(state&&state.suggestions||[]).find(x=>x.id===id); if(sg) setTimeout(()=>scrollToBar(sg.lo), 60); } const au=document.getElementById('au'); au.pause(); au.removeAttribute('src'); au.hidden=true; }
+// score zoom: fit to the pane by default, − / + step through larger sizes; the pane scrolls, the page never does
+const ZOOMS=[1,1.5,2,3]; let zi=0; try{ zi=Math.max(0,Math.min(ZOOMS.length-1,parseInt(localStorage.getItem('sw_zoom')||'0')||0)); }catch(e){}
+function applyZoom(){ document.getElementById('score').style.setProperty('--zoom', ZOOMS[zi]); try{ localStorage.setItem('sw_zoom', String(zi)); }catch(e){} }
+function currentBar(){ if(selBar) return selBar; const sg=(state&&state.suggestions||[]).find(x=>x.id===showingId); return sg? sg.lo : null; }
+function zoom(d){ const n=currentBar(); zi=Math.max(0,Math.min(ZOOMS.length-1,zi+d)); applyZoom(); if(n) setTimeout(()=>scrollToBar(n), 30); }
+function scrollToBar(n){ const g=[...document.querySelectorAll('#svg g.measure')].find(x=>parseInt(x.getAttribute('data-n')||'0')===n); if(!g) return; const pane=document.getElementById('svg'); const r=g.getBoundingClientRect(), pr=pane.getBoundingClientRect(); pane.scrollTop += r.top-pr.top-60; pane.scrollLeft += r.left-pr.left-12; }
+applyZoom();
+function pageSvgOf(el){ let e=el; let svg=null; while(e){ if(e.tagName&&e.tagName.toLowerCase()==='svg') svg=e; e=e.parentElement; if(e && e.id==='svg') break; } return svg; }
+function wireBars(){
+  const box=document.getElementById('svg'); if(box.__wired) return; box.__wired=true;
+  box.addEventListener('click', ev=>{
+    // hit-test every bar in ITS OWN coordinate system (verovio nests a scaled svg inside the page svg)
+    let best=null, bestD=1e12;
+    box.querySelectorAll('g.measure').forEach(g=>{ const n=parseInt(g.getAttribute('data-n')||'0'); if(!n) return; let b, ctm; try{ b=g.getBBox(); ctm=g.getScreenCTM(); }catch(e){ return; } if(!b.width||!ctm) return;
+      const pt=g.ownerSVGElement.createSVGPoint(); pt.x=ev.clientX; pt.y=ev.clientY; const p=pt.matrixTransform(ctm.inverse());
+      const inside = p.x>=b.x && p.x<=b.x+b.width && p.y>=b.y-60 && p.y<=b.y+b.height+60; const d = inside? b.width : 1e6+(Math.hypot(Math.max(b.x-p.x,0,p.x-b.x-b.width), Math.max(b.y-p.y,0,p.y-b.y-b.height)));   // the tightest bar under the click wins (slurs and hairpins inflate other bars' boxes)
+      if(d<bestD){ bestD=d; best={n,g,b}; } });
+    if(best && bestD<1e6+900) selectBar(best.n);
+  });
+  box.style.cursor='pointer';
+}
+function selectBar(n){
+  selBar=n; const box=document.getElementById('svg');
+  box.querySelectorAll('rect.sw-sel').forEach(r=>r.remove());
+  box.querySelectorAll('g.measure').forEach(g=>{ if(parseInt(g.getAttribute('data-n')||'0')!==n) return; let b; try{ b=g.getBBox(); }catch(e){ return; } if(!b.width) return;
+    const r=document.createElementNS('http://www.w3.org/2000/svg','rect'); r.setAttribute('class','sw-sel'); r.setAttribute('x',b.x-8); r.setAttribute('y',b.y-40); r.setAttribute('width',b.width+16); r.setAttribute('height',b.height+80); r.setAttribute('fill','#2a5bd7'); r.setAttribute('fill-opacity','0.12'); r.setAttribute('stroke','#2a5bd7'); r.setAttribute('stroke-width','3'); r.setAttribute('rx','6'); r.style.pointerEvents='none'; g.parentNode.insertBefore(r, g); });
+  document.getElementById('showing').textContent=(showingId?('suggestion '+showingId+' (green = new)'):'working score')+' · bar '+n+' selected';
+}
+async function playFrom(n){ const au=document.getElementById('au'); if(!au.src || au.hidden){ const r=await fetch('/audio?id='+encodeURIComponent(showingId)); const uri=await r.text(); if(!uri){ alert('audio still rendering, try again in a few seconds'); return; } au.src=uri; au.hidden=false; } const b=bars.find(x=>x[0]===n); au.currentTime = b? b[1] : 0; au.play(); }
+document.addEventListener('keydown', e=>{ if(e.target.tagName==='TEXTAREA'||e.target.tagName==='INPUT') return; const au=document.getElementById('au');
+  if(e.key==='p'||e.key==='P'||e.key===' '){ e.preventDefault(); if(!au.paused){ au.pause(); return; } playFrom(selBar||1); }
+  if(e.key==='Escape'){ au.pause(); }
+  if(e.key==='ArrowRight'&&selBar){ selectBar(selBar+1); } if(e.key==='ArrowLeft'&&selBar>1){ selectBar(selBar-1); } });
+function showLatest(){ const open=state.suggestions.filter(s=>s.status==='open'); if(open.length) showScore(open[open.length-1].id, true); const b=document.getElementById('latest'); b.textContent='latest suggestion'; b.style.background=''; b.style.color=''; }
+async function playAudio(){ playFrom(selBar||1); }
+async function cont(){ await api('/api/message',{text:'[CONTINUE] propose the next bars from where the working score stops'}); refresh(); }
+async function openIn(app){ await fetch('/open?app='+app+'&id='+encodeURIComponent(showingId)); }
+async function send(){ const t=document.getElementById('msg'); const text=t.value.trim(); if(!text) return; if(window.__rec){ try{ window.__rec.abort(); }catch(e){} window.__rec=null; mic.classList.remove('on'); } t.value=''; try{ localStorage.removeItem('sw_draft'); }catch(e){} if(pending){ const p=pending; pending=null; t.placeholder='talk or type…'; await api('/api/verdict_note',{id:p.id,text}); } else await api('/api/message',{text}); refresh(); }
+let pending=null;
+async function verdict(id, ok){ await api(ok?'/api/accept':'/api/reject',{id,text:''}); pending={id,ok}; const t=document.getElementById('msg'); t.placeholder = ok? 'Accepted '+id+'. Talk or type what you want next, or press ▶ continue to let Claude propose' : 'Rejected '+id+'. Why not? talk or type'; t.focus(); if(!ok && mic && !mic.disabled) mic.click(); refresh(); }
+// the text box survives reloads: every keystroke is saved, restored on load, cleared on send
+(function(){ const t=document.getElementById('msg'); try{ const d=localStorage.getItem('sw_draft'); if(d && !t.value) t.value=d; }catch(e){}
+  t.addEventListener('input',()=>{ try{ localStorage.setItem('sw_draft', t.value); }catch(e){} }); })();
+// hum: record, decode to PCM in the browser, send WAV, get back the notes
+(function(){ const b=document.getElementById('hum'); let rec=null, chunks=[];
+  function wav(buf){ const ch=buf.getChannelData(0), n=ch.length, sr=buf.sampleRate, out=new ArrayBuffer(44+n*2), v=new DataView(out);
+    const S=(o,s)=>{ for(let i=0;i<s.length;i++) v.setUint8(o+i, s.charCodeAt(i)); };
+    S(0,'RIFF'); v.setUint32(4,36+n*2,true); S(8,'WAVE'); S(12,'fmt '); v.setUint32(16,16,true); v.setUint16(20,1,true); v.setUint16(22,1,true); v.setUint32(24,sr,true); v.setUint32(28,sr*2,true); v.setUint16(32,2,true); v.setUint16(34,16,true); S(36,'data'); v.setUint32(40,n*2,true);
+    for(let i=0;i<n;i++){ const x=Math.max(-1,Math.min(1,ch[i])); v.setInt16(44+i*2, x<0?x*32768:x*32767, true); } return out; }
+  b.onclick=async()=>{ if(rec){ rec.stop(); return; }
+    try{ const stream=await navigator.mediaDevices.getUserMedia({audio:true}); rec=new MediaRecorder(stream); chunks=[];
+      rec.ondataavailable=e=>chunks.push(e.data);
+      rec.onstop=async()=>{ stream.getTracks().forEach(t=>t.stop()); b.classList.remove('on'); rec=null; const t=document.getElementById('msg'); const ph=t.placeholder; t.placeholder='hearing…';
+        try{ const blob=new Blob(chunks); const ac=new (window.AudioContext||window.webkitAudioContext)(); const buf=await ac.decodeAudioData(await blob.arrayBuffer());
+          const r=await fetch('/api/hum',{method:'POST',body:wav(buf)}); const j=await r.json();
+          if(j.error){ t.placeholder=ph; alert('could not hear that: '+j.error); return; }
+          t.value=(t.value?t.value+' ':'')+'[HUM] I heard: '+(j.heard||'nothing')+' | '; t.placeholder=ph; t.focus(); }
+        catch(e){ t.placeholder=ph; alert('hum failed: '+e); } };
+      rec.start(); b.classList.add('on'); }
+    catch(e){ alert('no microphone: '+e); rec=null; } }; })();
+// take: press, play and talk, press again. audio goes to the server; MIDI (if a keyboard is plugged into the Mac) is captured there.
+(function(){ const b=document.getElementById('take'); const box=document.getElementById('takebox'); let rec=null, chunks=[];
+  function wav(buf){ const ch=buf.getChannelData(0), n=ch.length, sr=buf.sampleRate, out=new ArrayBuffer(44+n*2), v=new DataView(out);
+    const S=(o,s)=>{ for(let i=0;i<s.length;i++) v.setUint8(o+i, s.charCodeAt(i)); };
+    S(0,'RIFF'); v.setUint32(4,36+n*2,true); S(8,'WAVE'); S(12,'fmt '); v.setUint32(16,16,true); v.setUint16(20,1,true); v.setUint16(22,1,true); v.setUint32(24,sr,true); v.setUint32(28,sr*2,true); v.setUint16(32,2,true); v.setUint16(34,16,true); S(36,'data'); v.setUint32(40,n*2,true);
+    for(let i=0;i<n;i++){ const x=Math.max(-1,Math.min(1,ch[i])); v.setInt16(44+i*2, x<0?x*32768:x*32767, true); } return out; }
+  function show(j){ box.hidden=false; if(j.error && !j.abc){ box.innerHTML='<div>could not hear that: '+esc(j.error)+'</div><div class=btns><button onclick="document.getElementById(\'takebox\').hidden=true">close</button></div>'; return; }
+    const stats = j.n_notes ? '<div class=w>'+j.n_notes+' notes, '+(j.bars||'?')+' bars at quarter = '+(j.tempo||'?')+' · first 16 bars below · <a href="/file?name='+encodeURIComponent(j.id+'.mid')+'">MIDI</a></div>' : '';
+    box.innerHTML='<div class=w>I heard ('+esc(j.source||'')+'): '+esc(j.heard||'no notes')+'</div>'+stats+(j.svg?'<div class=stf>'+j.svg+'</div>':(j.svg_url?'<div class=stf><img alt="what I heard" style="width:100%;display:block" src="'+j.svg_url+'"></div>':''))+
+      '<textarea id=takewords rows=2 placeholder="what you said (edit if wrong)">'+esc(j.words||'')+'</textarea>'+
+      '<div class=btns><button class=go id=takeuse>use it</button><button onclick="document.getElementById(\'takebox\').hidden=true">discard</button></div>';
+    document.getElementById('takeuse').onclick=async()=>{ await api('/api/take/use',{id:j.id, words:document.getElementById('takewords').value}); box.hidden=true; refresh(); }; }
+  window.__showTake = show;
+  b.onclick=async()=>{ if(rec){ rec.stop(); return; }
+    try{ const st=await api('/api/take/start',{}); const stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false,channelCount:1}}); rec=new MediaRecorder(stream, (MediaRecorder.isTypeSupported&&MediaRecorder.isTypeSupported('audio/webm;codecs=opus'))?{mimeType:'audio/webm;codecs=opus',audioBitsPerSecond:128000}:{audioBitsPerSecond:128000}); chunks=[];
+      rec.ondataavailable=e=>chunks.push(e.data);
+      rec.onstop=async()=>{ stream.getTracks().forEach(t=>t.stop()); b.classList.remove('on'); rec=null; box.hidden=false; box.innerHTML='<div class=w>listening back… (speech and piano, up to a minute)</div>';
+        try{ const blob=new Blob(chunks); const ac=new (window.AudioContext||window.webkitAudioContext)(); const buf=await ac.decodeAudioData(await blob.arrayBuffer());
+          const r=await fetch('/api/take/stop',{method:'POST',body:wav(buf)}); show(await r.json()); }
+        catch(e){ box.innerHTML='<div>take failed: '+esc(String(e))+'</div>'; } };
+      rec.start(); b.classList.add('on'); b.title=(st.midi_ports&&st.midi_ports.length)?('MIDI: '+st.midi_ports.join(', ')):'no MIDI keyboard seen, using the piano model on the audio'; }
+    catch(e){ alert('no microphone: '+e); rec=null; } }; })();
+// voice: browser speech recognition (Chrome, Safari on iPhone)
+var mic=document.getElementById('mic'); const SR = window.SpeechRecognition||window.webkitSpeechRecognition;
+if(!SR){ mic.disabled=true; mic.title='no speech recognition in this browser'; }
+else { let rec=null; mic.onclick=()=>{ if(rec){ rec.stop(); return; } rec=new SR(); window.__rec=rec; rec.continuous=true; rec.interimResults=true; rec.lang='en-US'; const t=document.getElementById('msg'); let base=t.value?t.value+' ':'';
+  rec.onresult=e=>{ let fin='',tmp=''; for(let i=0;i<e.results.length;i++){ (e.results[i].isFinal?fin+=e.results[i][0].transcript+' ':tmp+=e.results[i][0].transcript); } t.value=base+fin+tmp; };
+  rec.onend=()=>{ mic.classList.remove('on'); rec=null; window.__rec=null; }; rec.onerror=()=>{ mic.classList.remove('on'); rec=null; window.__rec=null; }; mic.classList.add('on'); rec.start(); }; }
+document.getElementById('msg').addEventListener('keydown', e=>{ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); send(); } });
+refresh().then(()=>{ const open=(state&&state.suggestions||[]).filter(s=>s.status==='open'); showScore(open.length?open[open.length-1].id:''); }); setInterval(refresh, 2000);
+</script></body></html>

@@ -1,0 +1,10 @@
+X:1
+T:perc test
+%%score 1 2
+L:1/8
+M:4/4
+K:Bb
+V:1 treble nm="Trumpet" snm="Tpt."
+V:2 perc nm="Snare Drum" snm="S. Dr."
+[V:1]!f! d3 c c2 z2|[V:2]!f! z2 z c/c/ c z c/c/|
+[V:1]d3 c c2 z2|[V:2]z2 z c/c/ c z c/c/|
