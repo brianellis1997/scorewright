@@ -210,6 +210,7 @@ Used only by the MuseScore panel; the page polls HTTP instead. Client to server:
 | `log_verdict.py` | `<tag> <score> "<verdict>" ["<task>"]`: manual verdict logging (pre-surface) |
 | `open_in_sibelius.sh` | open a file in Sibelius and press Return on the import dialog (Sibelius is gone) |
 | `band/orchestrate_bv.py` | Bright Valley 18-81 sketch to 24 concert-band parts (23 pitched plus snare), concert pitch |
+| `songs/where_i_left_it.py` | a whole song built from tables (harmony per beat, concert melody, lyrics as `w:` lines, piano textures), converted with `abc2xml.py` into `$E/_scorewright_out/songs/`; the worked example for COMPOSING.md section 10 |
 | `PREFLIGHT.md` | the checklist before any paid run |
 
 Repo root:

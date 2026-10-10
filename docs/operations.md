@@ -17,6 +17,16 @@ The plist is `deploy/com.scorewright.server.plist`; the installed copy is `~/Lib
 
 Ports 8790 (HTTP) and 8791 (WebSocket) listen on all interfaces with no authentication, so anything on the same network can reach them. Phone access is meant to go through Tailscale. Only 8790 is proxied; the MuseScore panel is local to the Mac. The Tailscale command line is not on the PATH; it lives at `/Applications/Tailscale.app/Contents/MacOS/Tailscale`.
 
+## On a fresh clone
+
+The repo is private on GitHub (`brianellis1997/scorewright`), but it only runs on this Mac as set up.
+
+- `git submodule update --init lab/NotaGen`, then `cp lab/notagen_prep_corpus.py lab/NotaGen/data/prep_corpus.py`. Upstream NotaGen does not ship `prep_corpus.py`, and `t2s_edit_apply.py` expects it there.
+- The code uses absolute paths: the three interpreters, `~/Documents/Score Exports`, `/Applications/MuseScore 4.app`, Dorico 4. None of that comes with the repo.
+- The server: copy `deploy/com.scorewright.server.plist` to `~/Library/LaunchAgents/` and bootstrap it (commands under "Restarting the server").
+- The MuseScore panel: copy `lab/app/Scorewright.qml` to `~/Documents/MuseScore4/Plugins/Scorewright/` and enable it once in MuseScore's plugin manager.
+- The phone: Tailscale serve mapping `/` to `http://127.0.0.1:8790`.
+
 ## Health check
 
     launchctl list | grep scorewright                         # PID, last exit status, label
@@ -105,6 +115,10 @@ Go down the list: Is `np_agent.py` running? Does Dorico have a project open, per
 ### "failed: Dorico did not open the file in time"
 
 Dorico can be slow to start, and once missed the timeout while a transcription ran. The job is dropped. The next render of that score queues it again, and at server start `np_catch_up` queues missing audio for the working score and open suggestions.
+
+### Dorico shows "fatal error" popups when it opens
+
+Seen on Oct 9 2026, after the Mac moved to macOS 26.7.1. Nothing shows in Dorico's log or the system log. Suspects (PROJECT.md section 57): the EastWest Play and Opus plugins the audio engine loads, or the old 4.0.31 build on the new OS, where the free 4.3 update is the advised fix. Unresolved at the time of writing. While a popup like that is on screen, `dorico_render.py` will most likely see it as a dialog and refuse or fail the render; check `_bridge/dorico_debug_*.png`.
 
 ### Dorico is left with a dialog or project open
 

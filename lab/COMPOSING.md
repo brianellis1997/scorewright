@@ -192,10 +192,9 @@ same measurement for any idiom question before guessing (pedalling, doubling, vo
     open -a "Dorico 4" "<file>"               # Dorico keeps the green note colour and plays through NotePerformer
 
 `human_apply.py` splices the lines into the score through the same path as the model pages
-(ABC to MusicXML, then into the original engraving so his bars are untouched), and reports
-range violations from `ranges.py` (textbook instrument ranges; the report is information, never
-a mask). The whole-piece web page has a play-from-any-bar control and general MIDI audio with
-ties held. The green MusicXML opens in Dorico (colour kept, NotePerformer playback) or MuseScore. Sibelius was cancelled on Sept 22 2026 and dropped the colour anyway.
+(ABC to MusicXML, then into the original engraving so his bars are untouched). `apply_page.py`
+reports range violations in the edited bars from `ranges.py` (textbook instrument ranges; the
+report is information, never a mask). The green MusicXML opens in Dorico (colour kept, NotePerformer playback) or MuseScore. Sibelius was cancelled on Sept 22 2026 and dropped the colour anyway.
 NotePerformer in Dorico is the listening he trusts.
 
 Before opening anything for him: the duration check passed, zero unexplained range violations,
@@ -325,7 +324,7 @@ wants next (talk or type) or presses ▶ continue, which sends "[CONTINUE]". Com
 bars on your own after an accept produced two open suggestions for the same bars and a
 confused user. One open suggestion per region at a time.
 
-    python app/server.py <session>          # whisperer env; http://localhost:8790, ws://localhost:8791
+    # server.py runs under launchd (com.scorewright.server): http://localhost:8790, ws://localhost:8791; never start a second copy
     python app/sw_working.py <score.musicxml>
     python app/sw_suggest.py <final.xml> <lo> <hi> "note" [lines.txt]    # after human_apply
     python app/sw_say.py "reply text" <session>
@@ -344,13 +343,15 @@ compete for CPU (Dorico timed out opening a file while a transcription ran).
 **Pieces.** The header menu switches pieces (sessions) or opens "New piece" (title, instruments
 preset, key, meter, tempo): the server builds an empty score from ABC through abc2xml, switches to
 it, and writes `[NEW PIECE <name>] ...` to the inbox. The current piece is remembered in
-`_bridge/current_session.txt`, so restarts come back to it.
+`_bridge/current_session.txt`, so restarts come back to it; it overrides the session named in the
+launchd plist.
 
 **Uploads.** 📎 takes any audio or video file from the phone, streams it to the Mac, pulls the
 audio out with PyAV (`app/media.py`), and transcribes it in the background (`listen.py --upload`:
 tempo from beat tracking, strict speech filter, a 16-bar preview, a MIDI file of everything). The
 card offers "use it", which sends `[TAKE upload_HHMMSS] <his words>` with the notes attached.
-Measured: 2 min 22 s of clean piano took about 90 s and matched 828 of 832 notes of the score.
+Measured on a MuseScore rendering of Nocturne no 6 (2 min 22 s, not a real piano): about 90 s,
+828 of 832 notes matched the score.
     python app/hum.py <audio.wav> [bpm]       # anaconda base python (HUM_PY in server.py): librosa pyin -> notes
 
 The 🎹 button is a take from the piano: press, play and talk, press again. The page records the
@@ -358,14 +359,14 @@ mic; the server captures MIDI from any keyboard plugged into the Mac the whole t
 midi_listen, mido) and pairs it with the take; app/listen.py then runs whisper (base, word
 timestamps) for the words and, when no MIDI arrived, the ByteDance piano transcription model on
 the audio (notes heard inside speech spans are dropped, so talk before or after playing). Notes are
-quantized to eighths at the working score's tempo, top note of each onset = melody (V:1), the rest
-= chords (V:2), rendered as a small staff he confirms with "use it". That writes
+quantized to eighths at the working score's tempo, notes at or above the hand split = right hand
+(V:1), below it = left hand (V:2), rendered as a small staff he confirms with "use it". That writes
 `[TAKE take_HHMMSS] <words>` to the inbox; the notes are in
 `session/<name>/take_HHMMSS.abc` (per-bar `[b:i][V:1]...|[V:2]...|` lines, K:C with explicit
 accidentals), the audio and MIDI beside it. MIDI is exact. The audio model on a phone recording of his real piano (Sept 7 2026 take) needs:
 onsets clustered within 100 ms (chord notes arrive jittered), ghosts dropped (under 120 ms or
 velocity under 30: attack harmonics, high spurious notes), and an adaptive hand split (the
-emptiest pitch between G#3 and C5) so the top of a left-hand chord is not called melody. The
+emptiest pitch between G#3 and G#4) so the top of a left-hand chord is not called melody. The
 page records with echo cancellation, noise suppression and gain control off. It is useless on
 hummed or synthetic tones. Rhythm is his "future problem": trust pitches and
 register, treat durations as a sketch.

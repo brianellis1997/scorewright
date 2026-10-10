@@ -19,7 +19,7 @@ Code, in this repo (`/Users/bdogellis/repos/scorewright`):
 - `lab/*.py`: the composing tools (below), plus many scripts from the training phase that the loop does not use.
 - `lab/band/orchestrate_bv.py`: worked example of orchestrating a two-stave sketch for concert band.
 - Root modules the loop uses: `xmledit.py` (MusicXML text surgery, excerpts), `diffview.py` (Verovio rendering), `retrieve.py` (corpus index), `ranges.py` (instrument ranges). `analyze.py` is the Aug 28 analysis layer. Most other root files belong to the Aug 28-29 OpenRouter phase.
-- `lab/NotaGen`: git submodule (ElectricAlexis/NotaGen). The pipeline uses its `data/xml2abc.py`, `data/abc2xml.py`, `data/prep_corpus.py`, and `rest_unreduce` from `inference/inference.py`.
+- `lab/NotaGen`: git submodule (ElectricAlexis/NotaGen). The pipeline uses its `data/xml2abc.py`, `data/abc2xml.py`, `data/prep_corpus.py`, and `rest_unreduce` from `inference/inference.py`. `data/prep_corpus.py` is ours, not upstream: on a fresh clone copy `lab/notagen_prep_corpus.py` there, or `t2s_edit_apply.py` (and so `dump_abc.py` and `human_apply.py`) cannot convert anything.
 - `deploy/com.scorewright.server.plist`: the launchd job. The installed copy is `~/Library/LaunchAgents/com.scorewright.server.plist`.
 
 Data, outside the repo in `~/Documents/Score Exports` (`$E` below):
