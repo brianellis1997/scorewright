@@ -14,6 +14,14 @@ def abc_pitch(m):
     o = m // 12 - 1; s = ABC[m % 12]
     return (s.lower() + "'" * (o - 5)) if o >= 5 else (s + ',' * (4 - o))
 def dur_s(d): return '' if d == 1 else str(d)
+def naturals(bar):
+    seen = {}
+    def fix(m):
+        acc, p = m.group(1), m.group(2)
+        if acc: seen[p] = acc
+        elif seen.get(p) == '^': seen[p] = '='; return '=' + p
+        return m.group(0)
+    return re.sub(r"(\^|=)?([A-Ga-g][,']*)", fix, bar)
 
 def words_from(wav, strict=False):
     """-> (text, [(start, end)] speech spans) so notes the piano model hears inside speech can be dropped.
@@ -81,7 +89,7 @@ def quantize(notes, bpm):
                 bars[b] += f'{tok}{dur_s(step)}{"-" if d > step else ""} '; pos += step; d -= step
         while pos < nbars * 8:
             b, off = divmod(pos, 8); step = 8 - off; bars[b] += f'z{dur_s(step)} '; pos += step
-        return [x.strip() for x in bars]
+        return [naturals(x.strip()) for x in bars]
     pitches = [m for q in qs for m, _ in ons[q]]             # hand split: the emptiest pitch in the middle register
     SPLIT = min(range(56, 69), key=lambda c: (sum(1 for m in pitches if abs(m - c) <= 1), abs(c - 62)))
     mel, acc = [], []

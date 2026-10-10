@@ -70,6 +70,6 @@ Upload job status lives in the server's memory. If the server restarts mid-job, 
 ## Using a take or upload (for Claude)
 
 - The inbox line gives the paths. The session's `.abc` file holds only the per-bar lines, no header: units are eighths (`L:1/8`), bars are 4/4, key C with sharps written out, V:1 right hand, V:2 left hand.
-- `listen.py` never writes a natural (`=`). Under ABC rules an accidental lasts to the end of the bar, so in `^C C` the second note reads as C sharp, in the rendered staff too. When a bar mixes a sharp and its natural, check the pitches elsewhere: the `.midi.json` is exact for MIDI takes and for uploads; for a take transcribed from audio, the ABC is the only file saved.
+- `listen.py` writes a natural (`=`) when a bar returns to a pitch it sharpened earlier, since under ABC rules an accidental lasts to the end of the bar. Takes made before Oct 9 2026 lack these: in their `^C C` the second note reads as C sharp.
 - Move it into the piece yourself: re-bar it to the piece's meter if it is not 4/4, respell it in the piece's key, put it in the right register and voices.
 - MIDI takes are exact. For the audio model, trust pitches and register and treat rhythm as a sketch. His words in the same message say what he means by it.
