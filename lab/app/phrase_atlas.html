@@ -52,7 +52,13 @@ canvas#map{width:100%;height:100%;display:block;touch-action:none;cursor:crossha
 .legend .lab{min-width:0;overflow-wrap:anywhere}
 .legend .n{color:var(--ink-3);font-size:12px;font-variant-numeric:tabular-nums}
 .nn{display:flex;flex-direction:column;gap:6px}
-.nn button{display:grid;grid-template-columns:96px minmax(0,1fr);gap:10px;align-items:center;text-align:left;border:0;background:var(--margin);color:var(--ink);padding:6px;border-radius:8px;cursor:pointer;font:13px var(--ui)}
+.nnrow{display:grid;grid-template-columns:44px minmax(0,1fr);gap:6px}
+.nnplay{border:0;background:var(--margin);color:var(--ink);border-radius:8px;font:15px var(--ui);cursor:pointer}
+.nnrow.now .nnplay{background:var(--ink);color:var(--paper)}
+.nnrow.now .nnsel{box-shadow:inset 3px 0 0 var(--focus)}
+.nn .nnsel{display:grid;grid-template-columns:96px minmax(0,1fr);gap:10px;align-items:center;text-align:left;border:0;background:var(--margin);color:var(--ink);padding:6px;border-radius:8px;cursor:pointer;font:13px var(--ui);min-width:0}
+.lh{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:18px 0 8px}
+.lh h2{margin:0}
 .nn canvas{width:96px;height:34px;display:block}
 .nn .t{font-weight:600;overflow-wrap:anywhere;line-height:1.25}
 .nn .m{color:var(--ink-2);font-size:12px}
@@ -101,9 +107,9 @@ button:focus-visible,input:focus-visible,canvas:focus-visible{outline:2px solid 
   <aside class="panel">
     <h2>The phrase</h2>
     <div class="card" id="card"><div class="meta">Tap a mark on the map.</div></div>
-    <h2 id="nnh">Closest phrases in other pieces</h2>
+    <div class="lh"><h2 id="nnh">Closest phrases in other pieces</h2><button class="chip" data-all="nn">▶ Play all</button></div>
     <div class="nn" id="nn"></div>
-    <div id="nrbox" hidden><h2>Closest in other composers</h2><div class="nn" id="nr"></div></div>
+    <div id="nrbox" hidden><div class="lh"><h2>Closest in other composers</h2><button class="chip" data-all="nr">▶ Play all</button></div><div class="nn" id="nr"></div></div>
     <h2 id="songh">Your piece on this map</h2>
     <div class="song" id="song"></div>
     <div id="compbox" hidden>
@@ -207,8 +213,13 @@ const fmt = n => n.toLocaleString('en-US');
 function bars(i){ return D.bar[i] === D.end[i] ? 'bar ' + D.bar[i] : 'bars ' + D.bar[i] + '–' + D.end[i]; }
 function pieceLine(i){ const p = D.pieces[D.piece[i]]; return (p.c ? [bars(i), p.p] : [bars(i), p.y, p.p]).filter(Boolean).join(' · '); }
 function nnList(el, list){
-  el.innerHTML = list.map(j => `<button data-i="${j}"><canvas></canvas><span><span class="t">${esc(titleOf(j))}</span><br><span class="m">${esc(pieceLine(j))}</span></span></button>`).join('');
-  el.querySelectorAll('button').forEach(b => { const j = +b.dataset.i; roll(b.querySelector('canvas'), noteOf(j), {color: isRef(j) ? colors.ref : colors.ink}); b.onclick = () => { if(isRef(j) && !S.comp){ S.comp = compOf(j); comps(); } select(j); }; }); }
+  el.innerHTML = list.map(j => `<div class="nnrow" data-i="${j}"><button class="nnplay" data-p="${j}" aria-label="Play this phrase">▶</button>` +
+    `<button class="nnsel" data-i="${j}"><canvas></canvas><span><span class="t">${esc(titleOf(j))}</span><br><span class="m">${esc(pieceLine(j))}</span></span></button></div>`).join('');
+  el.querySelectorAll('.nnsel').forEach(b => { const j = +b.dataset.i; roll(b.querySelector('canvas'), noteOf(j), {color: isRef(j) ? colors.ref : colors.ink});
+    b.onclick = () => { if(isRef(j) && !S.comp){ S.comp = compOf(j); comps(); } select(j); }; });
+  el.querySelectorAll('.nnplay').forEach(b => { const j = +b.dataset.p;
+    b.onclick = () => { if(playing && S.playKey === 'row:' + j){ stopAll(); return; } playSeq([j], 'row:' + j, k => { S.nowRow = k; }); }; });
+  playLabels(); }
 
 function roll(c, notes, opt){
   const r = c.getBoundingClientRect(), w = r.width, h = r.height; c.width = Math.round(w * DPR); c.height = Math.round(h * DPR);
@@ -231,13 +242,13 @@ function card(){
     <span class="row meta"><span class="mark">${LETTERS[c]}</span>${esc(lab.label)}</span></div>
     <div class="meta" id="audiomsg" hidden style="margin-top:8px"></div>`;
   roll(document.getElementById('roll'), notes, {staff:true, color:isSong(i) ? colors.song : isRef(i) ? colors.ref : colors.ink});
-  document.getElementById('play').onclick = () => { if(playing){ stopAll(); return; } if(noteOf(i)) playSeq([i]); else document.getElementById('play').textContent = 'Loading notes…'; };
-  if(playing) playLabels(true);
+  document.getElementById('play').onclick = () => { if(playing && S.playKey === 'card'){ stopAll(); return; } if(noteOf(i)) playSeq([i], 'card'); else document.getElementById('play').textContent = 'Loading notes…'; };
   document.getElementById('nnh').textContent = (isRef(i) || isSong(i) ? 'Closest in your music · ' : 'Closest in your other pieces · ') + S.view;
   nnList(document.getElementById('nn'), D.nn[S.view][i]);
   const nr = D.nr && D.nr[S.view] ? D.nr[S.view][i] : [];
   document.getElementById('nrbox').hidden = !nr.length;
   nnList(document.getElementById('nr'), nr);
+  playLabels();
 }
 function comps(){
   const box = document.getElementById('compbox'); if(!D.composers || !D.composers.length){ box.hidden = true; return; } box.hidden = false;
@@ -283,24 +294,36 @@ function wav(list){
   let bin = ''; for(let k = 0; k < b.length; k += 0x8000) bin += String.fromCharCode.apply(null, b.subarray(k, k + 0x8000));
   return {uri: 'data:audio/wav;base64,' + btoa(bin), starts};
 }
-function playLabels(on){ const p = document.getElementById('play'); if(p) p.textContent = on ? '■ Stop' : '▶ Play';
-  const l = document.getElementById('listen'); l.textContent = on && S.listening ? '■ Stop' : '▶ Listen to 4 from the region'; }
+// what is sounding: S.playKey names the control that started it ('card', 'listen', 'row:<i>',
+// 'all:nn', 'all:nr'); S.nowRow is the neighbour being heard, highlighted in its list
+function playLabels(){
+  const on = !!playing, k = on ? S.playKey : null;
+  const p = document.getElementById('play'); if(p) p.textContent = k === 'card' ? '■ Stop' : '▶ Play';
+  document.getElementById('listen').textContent = k === 'listen' ? '■ Stop' : '▶ Listen to 4 from the region';
+  document.querySelectorAll('[data-all]').forEach(b => b.textContent = k === 'all:' + b.dataset.all ? '■ Stop' : '▶ Play all');
+  document.querySelectorAll('.nnrow').forEach(r => { const j = +r.dataset.i, now = on && S.nowRow === j && (k === 'row:' + j || (k || '').startsWith('all:'));
+    r.classList.toggle('now', now); r.querySelector('.nnplay').textContent = now ? '■' : '▶'; });
+}
 function sayAudio(t){ const el = document.getElementById('audiomsg'); if(el){ el.textContent = t; el.hidden = !t; } }
-function stopAll(){ player.pause(); if(playing) playing.forEach(clearTimeout); playing = null; S.listening = false; playLabels(false); }
-function playSeq(list, listening){
+function stopAll(){ player.pause(); if(playing) playing.forEach(clearTimeout); playing = null; S.playKey = null; S.nowRow = -1; playLabels(); }
+function playSeq(list, key, each){
   list = list.filter(noteOf); if(!list.length) return;
-  stopAll(); S.listening = !!listening; sayAudio('');
+  stopAll(); S.playKey = key; sayAudio('');
   const {uri, starts} = wav(list);
   player.src = uri;
   const go = player.play();
-  playing = []; playLabels(true);
-  const timers = () => { playing = starts.map((s, k) => setTimeout(() => { if(list.length > 1) select(list[k]); playLabels(true); }, s * 1000)); };
-  if(go && go.then) go.then(timers).catch(e => { playing = null; S.listening = false; playLabels(false); sayAudio('This phone refused to play it (' + ((e && e.name) || 'error') + ').'); });
+  playing = []; playLabels();
+  const timers = () => { playing = starts.map((s, k) => setTimeout(() => { if(each) each(list[k], k); playLabels(); }, s * 1000)); };
+  if(go && go.then) go.then(timers).catch(e => { playing = null; S.playKey = null; playLabels(); sayAudio('This phone refused to play it (' + ((e && e.name) || 'error') + ').'); });
   else timers();
 }
-player.addEventListener('ended', () => { if(playing) playing.forEach(clearTimeout); playing = null; S.listening = false; playLabels(false); });
-document.getElementById('listen').onclick = () => { if(S.listening){ stopAll(); return; } if(S.focus < 0) return; const m = []; for(let i = 0; i < D.n_main; i++) if(cl(i) === S.focus) m.push(i);
-  const pick = []; for(let k = 0; k < 4 && m.length; k++) pick.push(m.splice(Math.floor(Math.random() * m.length), 1)[0]); playSeq(pick, true); };
+player.addEventListener('ended', () => { if(playing) playing.forEach(clearTimeout); playing = null; S.playKey = null; S.nowRow = -1; playLabels(); });
+document.getElementById('listen').onclick = () => { if(playing && S.playKey === 'listen'){ stopAll(); return; } if(S.focus < 0) return; const m = []; for(let i = 0; i < D.n_main; i++) if(cl(i) === S.focus) m.push(i);
+  const pick = []; for(let k = 0; k < 4 && m.length; k++) pick.push(m.splice(Math.floor(Math.random() * m.length), 1)[0]); playSeq(pick, 'listen', j => select(j)); };
+document.querySelectorAll('[data-all]').forEach(b => b.onclick = () => { const which = b.dataset.all, key = 'all:' + which;
+  if(playing && S.playKey === key){ stopAll(); return; } if(S.sel < 0) return;
+  const list = which === 'nn' ? D.nn[S.view][S.sel] : (D.nr && D.nr[S.view] ? D.nr[S.view][S.sel] : []);
+  playSeq([S.sel, ...list], key, j => { S.nowRow = j; }); });
 
 // pan, zoom, tap, hover
 const pts = new Map(); let down = null, moved = false, pinch = null;

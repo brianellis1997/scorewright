@@ -76,12 +76,15 @@ def music21_corpus():
     from music21 import corpus
     keep = {'bach': 'Bach', 'mozart': 'Mozart', 'beethoven': 'Beethoven', 'haydn': 'Haydn', 'schumann_robert': 'Schumann',
             'schumann_clara': 'Clara Schumann', 'chopin': 'Chopin', 'schubert': 'Schubert', 'handel': 'Handel', 'corelli': 'Corelli', 'joplin': 'Joplin'}
-    for p in corpus.getPaths():
-        p = str(p)
-        folder = p.split('/corpus/')[-1].split('/')[0]
-        if folder not in keep:
+    paths = [str(p) for p in corpus.getPaths()]
+    as_xml = {p.rsplit('.', 1)[0] for p in paths if p.endswith(('.mxl', '.xml', '.musicxml'))}
+    for p in paths:
+        rel = p.split('/corpus/')[-1]
+        folder = rel.split('/')[0]
+        stem, ext = p.rsplit('.', 1)
+        if folder not in keep or 'choraleAnalyses' in rel or (ext not in ('mxl', 'xml', 'musicxml') and stem in as_xml):
             continue
-        name, ext = os.path.basename(p).rsplit('.', 1)
+        name = rel[len(folder) + 1:].rsplit('.', 1)[0].replace('/', ' ')
         yield save(keep[folder], f'{folder} {name}', ext, open(p, 'rb').read())
 
 
@@ -98,13 +101,17 @@ def work(path):
 if __name__ == '__main__':
     ap = argparse.ArgumentParser()
     ap.add_argument('--jobs', type=int, default=4)
+    ap.add_argument('--only', help='one source: asap, chopin, mozart or music21')
     a = ap.parse_args()
     os.makedirs(DST, exist_ok=True)
     os.makedirs(IDX, exist_ok=True)
     files = []
-    for name, gen in (('ASAP', asap()), ('Chopin', humdrum('craigsapp/chopin-humdrum-nifc', 'Chopin', True)),
-                      ('Mozart sonatas', humdrum('craigsapp/mozart-piano-sonatas', 'Mozart', False)), ('music21', music21_corpus())):
-        got = list(gen)
+    sources = {'asap': lambda: asap(), 'chopin': lambda: humdrum('craigsapp/chopin-humdrum-nifc', 'Chopin', True),
+               'mozart': lambda: humdrum('craigsapp/mozart-piano-sonatas', 'Mozart', False), 'music21': lambda: music21_corpus()}
+    for name, make in sources.items():
+        if a.only and name != a.only:
+            continue
+        got = list(make())
         print(name, len(got), 'files', flush=True)
         files += got
     with Pool(a.jobs, maxtasksperchild=20) as pool:

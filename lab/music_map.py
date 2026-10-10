@@ -17,7 +17,7 @@ and every phrase also gets its nearest phrases by those composers.
 usage (whisperer env): python music_map.py [--index DIR] [--ref DIR] [--extra "Name=score.musicxml" ...] [--out DIR] [--respread]
 writes map.json (pieces, coordinates, regions, neighbours), notes.json (own and extra phrases' notes
 and chords) and notes_ref.json (the reference composers') to --out (default: Score Exports/_logs/music_map)"""
-import argparse, glob, json, math, os, sys, tempfile
+import argparse, glob, json, math, os, re, sys, tempfile
 import numpy as np
 
 E = '/Users/bdogellis/Documents/Score Exports'
@@ -81,7 +81,40 @@ def load(path):
         for i, (r, q, bass) in enumerate(b['w']):
             wins.append((t + i * wl, wl, r, q, bass, b['ks']))
         t += L
-    return d, notes, wins, bars
+    return d, skyline(notes), wins, bars
+
+
+def skyline(notes):
+    """the top voice only: a note that starts while a higher note is still sounding belongs to an inner
+    voice and is dropped; a held note is cut where the next melody note starts"""
+    out = []
+    for n in notes:
+        if out and n[0] < out[-1][0] + out[-1][1] - 1e-6:
+            if n[2] < out[-1][2]:
+                continue
+            out[-1] = (out[-1][0], n[0] - out[-1][0]) + out[-1][2:]
+        out.append(n)
+    return out
+
+
+def nice_title(t, composer=''):
+    t = re.sub(r'^(bach|mozart|beethoven|haydn|schumann robert|schumann clara|chopin|schubert|handel|corelli|joplin)\s+', '', t, flags=re.I)
+    if composer == 'Chopin':
+        t = re.sub(r'\s\d{3}(\s.*)?$', '', t)
+    t = re.sub(r'\bbwv\s*(\d+(?:\.\d+)?)', r'BWV \1', t, flags=re.I)
+    t = re.sub(r'\bopus\s*(\d+)\s*no\s*(\d+)', r'Op. \1 No. \2', t, flags=re.I)
+    t = re.sub(r'\bopus\s*(\d+)', r'Op. \1', t, flags=re.I)
+    t = re.sub(r'\s*\bmovement\s*(\d+)', r', mvt \1', t, flags=re.I)
+    t = re.sub(r'\bk\s?(\d+)\b', r'K. \1', t)
+    t = re.sub(r'\bno\s?(\d+)\b', r'No. \1', t, flags=re.I)
+    t = re.sub(r'\b(Preludes|Etudes|Prelude|Etude)\s+op\s+(\d+)\s+(\d+)\b', lambda m: f'{m.group(1).rstrip("s")} Op. {m.group(2)} No. {m.group(3)}', t, flags=re.I)
+    t = re.sub(r'\bPiano Sonatas\s+(\d+)\s+(\d+)', r'Piano Sonata ' + ('D. ' if composer == 'Schubert' else 'No. ') + r'\1, mvt \2', t)
+    t = re.sub(r'\s+sonata\d+\s+(\d+)\w*$', r', mvt \1', t)
+    t = re.sub(r'\bop(\d+)n(\d+)\b', r'Op. \1 No. \2', t, flags=re.I)
+    t = re.sub(r'\bOp\.\s*Op\.', 'Op.', t, flags=re.I)
+    t = re.sub(r'\b([A-Z]{4,})\b', lambda m: m.group(1).capitalize(), t)
+    t = re.sub(r'\s+', ' ', t).strip(' .')
+    return t[:1].upper() + t[1:]
 
 
 def split_long(ph, max_q):
@@ -262,7 +295,7 @@ def build(index_paths, extra, ref_paths=()):
     rp, rr = phrase_rows(ref_paths)
     for d in rp:
         comp, _, title = d['stem'].partition('__')
-        d.update(kind=2, composer=comp.replace('_', ' '), title=title.replace('_', ' '))
+        d.update(kind=2, composer=comp.replace('_', ' '), title=nice_title(title.replace('_', ' '), comp))
     add(pieces, rows, rp, rr)
     n_fit = len(rows)
     xp, xr = phrase_rows(list(extra.values()))
@@ -359,7 +392,7 @@ if __name__ == '__main__':
     tmp = tempfile.mkdtemp()
     extra = dict(index_extra(s, tmp) for s in a.extra)
     paths = sorted(glob.glob(f'{a.index}/*.json'))
-    refs = sorted(glob.glob(f'{a.ref}/*.json')) if a.ref else []
+    refs = sorted(p for p in glob.glob(f'{a.ref}/*.json') if 'choraleAnalyses' not in p) if a.ref else []
     m, own, others = build(paths, extra, refs)
     json.dump(m, open(f'{a.out}/map.json', 'w'), separators=(',', ':'))
     json.dump(own, open(f'{a.out}/notes.json', 'w'), separators=(',', ':'))
