@@ -136,6 +136,13 @@ his style instead of from his pieces. Section 12 has the song-study grammar, rea
   repeated over moving harmony, and his triplet turn (E5, then E D E, in no 1) on held notes.
   Leaning tones come from the ninths and fourths of the sus and add9 chords. Textbook
   appoggiaturas on every stressed syllable (S2) did not land.
+- **No stock "inspirational" progressions.** S3, in the right grammar, was "better" but still
+  "pop-music-y, generic inspirational, slightly corny, probably your training data". Its chorus ran
+  G(add9), D/F#, Em9, Asus4, A (IV, I6, ii, Vsus4, V), the stock worship-song progression, and the
+  tune climbed to a bright peak. Watch for that progression, I to IV vamps, the minor "axis" loop
+  (Bm, G, D, A) and choruses that soar. Most of his studies are minor or modal. When the words
+  are bittersweet, take the minor side: a minor v, sus dominants that never resolve to the major,
+  a low and narrow tune.
 - **Change key on a held common tone.** "I'm more subtle when transitioning to different keys."
   No 10 goes from Fm to E major on a held Ab = G#.
 - **A fade on a held note runs to the end of the note.** End the hairpin on the event after the
