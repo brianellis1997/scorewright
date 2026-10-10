@@ -53,6 +53,30 @@ While reading, write down, in words, before touching a note:
   three-note chords in a quartet) are shorthand for lines that belong to other instruments.
   Spreading them is an edit he wants, one line per instrument.
 
+### Every time: re-read the piece so far, as pages, before writing
+
+Brian, Oct 10 2026: "Whenever I tell you to continue or to adjust something, first visually
+inspect what's been written so far, then read through the whole piece line by line, not
+mathematically but like a human: the melody, the harmony, the motifs. Then start composing. If
+you just pick up where you left off, especially while referencing other material, the piece can
+lose its continuity. When I compose, I always re-listen to everything before I start writing
+again."
+
+This holds for every ▶ continue, every revision and every rejection reason, even when the piece
+is already in your context:
+
+1. `python engrave_pages.py <working.musicxml>` and read every page with the Read tool.
+2. Write the read down in words: the melody's shape and rhythm, the harmony bar by bar, the motifs
+   (the accompaniment's too: its fills, its answers), texture and register per section, dynamics,
+   the peaks used so far, and what is still open.
+3. Only then the reference material (his pages, the archive), then compose. Say in the note
+   which ideas from the piece itself the new bars pick up.
+
+On S10 of "Where I Left It" the re-read produced the three ideas that tie the second half to the
+first. The bridge sings "the first note came back" to the song's first notes, over the intro's
+piano. The last line, "so I'll leave the light on", is set to the "light in the window" tune.
+Verse 2 has the false resolution where verse 1 had the real one.
+
 ## 2. Decide the structural move before writing
 
 Every well-rated take made one deliberate move about the whole piece:

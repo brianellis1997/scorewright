@@ -92,7 +92,7 @@ Rules, from COMPOSING.md section 9 and from what went wrong in earlier sessions:
 
 Follow `lab/COMPOSING.md` in order. The tools, in the order you reach for them (run from `lab/`):
 
-1. Read the whole piece, never just the last four bars.
+1. Read the whole piece, never just the last four bars. Every continue, revision or rejection starts here, even when the piece is already in your context: `$W engrave_pages.py <working.musicxml>`, read every page with the Read tool, and write down the melody, harmony, motifs, texture and what is still open before you look at anything else (COMPOSING.md section 1, "Every time"). Brian, Oct 10 2026: "I always re-listen to everything before I start writing again."
    - `$T dump_abc.py <score.musicxml> <tag>`: the score as rest-reduced interleaved ABC, header first, one line per bar. For a piece in progress, point it at the session's `working.musicxml`. Printed line numbers are 1-based; the `[b:i]` you write is 0-based.
    - `$W brief.py "<archive stem>" [last_bar] [part] ["violin|viola|cello"]`: form map (empty bars, tempo and text changes), the last written bars, and retrieval exemplars from his corpus with his slurs and dynamics. Archive pieces only; it reads `$E/MusicXML/<stem>.musicxml`.
    - `$W corpus_find.py "<instrument regex>" [key] [meter] [since YYYY-MM-DD] [max]`: his scores by instrumentation, key, meter and date, for a new piece. Then `dump_abc.py` two or three of them.
