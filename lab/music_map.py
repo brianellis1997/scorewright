@@ -11,9 +11,12 @@ classes and contour for melody; note values, triplets, syncopation and rests for
 colours, root motion and harmonic rhythm for harmony. Each view: z-scores, PCA, k-means clusters
 (fit in the PCA space, not the picture), UMAP to 2D, and neighbours from other pieces.
 
-usage (whisperer env): python music_map.py [--index DIR] [--extra "Name=score.musicxml" ...] [--out DIR] [--respread]
-writes map.json (pieces, coordinates, clusters, neighbours) and notes.json (each phrase's notes and
-chords) to --out (default: Score Exports/_logs/music_map)"""
+With --ref (an index of other composers, from fetch_reference.py) their phrases share the layout,
+and every phrase also gets its nearest phrases by those composers.
+
+usage (whisperer env): python music_map.py [--index DIR] [--ref DIR] [--extra "Name=score.musicxml" ...] [--out DIR] [--respread]
+writes map.json (pieces, coordinates, regions, neighbours), notes.json (own and extra phrases' notes
+and chords) and notes_ref.json (the reference composers') to --out (default: Score Exports/_logs/music_map)"""
 import argparse, glob, json, math, os, sys, tempfile
 import numpy as np
 
@@ -236,23 +239,37 @@ def respread(path):
     json.dump(m, open(path, 'w'), separators=(',', ':'))
 
 
-def build(index_paths, extra):
+def add(pieces, rows, more, more_rows):
+    base = len(pieces)
+    for r in more_rows:
+        r['piece'] += base
+    pieces += more
+    rows += more_rows
+
+
+def build(index_paths, extra, ref_paths=()):
+    """rows: the composer's own phrases [0, n_main), reference composers' [n_main, n_fit), extra pieces after.
+    Scaling, PCA and regions come from the composer's own phrases; the layout from own + reference."""
     from sklearn.cluster import KMeans
     from sklearn.decomposition import PCA
     from sklearn.neighbors import NearestNeighbors
     import umap
 
     pieces, rows = phrase_rows(index_paths)
+    for d in pieces:
+        d['kind'] = 0
+    n_main = len(rows)
+    rp, rr = phrase_rows(ref_paths)
+    for d in rp:
+        comp, _, title = d['stem'].partition('__')
+        d.update(kind=2, composer=comp.replace('_', ' '), title=title.replace('_', ' '))
+    add(pieces, rows, rp, rr)
+    n_fit = len(rows)
     xp, xr = phrase_rows(list(extra.values()))
     for d, name in zip(xp, extra):
-        d['title'] = name
-    base = len(pieces)
-    for r in xr:
-        r['piece'] += base
-    pieces += xp
-    n_main = len(rows)
-    rows += xr
-    print(f'{len(pieces)} pieces, {len(rows)} phrases ({len(xr)} from {", ".join(extra) or "no extra"})', flush=True)
+        d.update(kind=1, title=name)
+    add(pieces, rows, xp, xr)
+    print(f'{len(pieces)} pieces, {len(rows)} phrases: {n_main} own, {n_fit - n_main} reference, {len(xr)} from {", ".join(extra) or "no extra"}', flush=True)
 
     blocks = {}
     for key, view, words in (('m', 'melody', MEL), ('r', 'rhythm', RHY), ('h', 'harmony', HAR)):
@@ -262,7 +279,7 @@ def build(index_paths, extra):
         blocks[view] = (names, words, raw, np.clip((raw - mu) / sd, -4, 4))
     blocks['overall'] = (None, None, None, np.hstack([z / math.sqrt(z.shape[1]) for _, _, _, z in (blocks[v] for v in ('melody', 'rhythm', 'harmony'))]))
 
-    out = dict(views=VIEWS, n_main=n_main, x={}, y={}, c={}, nn={}, clusters={})
+    out = dict(views=VIEWS, n_main=n_main, n_fit=n_fit, x={}, y={}, c={}, nn={}, nr={}, clusters={})
     for view in VIEWS:
         names, words, raw, z = blocks[view]
         pca = PCA(n_components=min(12, z.shape[1]), random_state=7).fit(z[:n_main])
@@ -272,26 +289,25 @@ def build(index_paths, extra):
         remap = np.empty(K, int)
         remap[order] = np.arange(K)
         lab = remap[km.predict(p)]
-        um = umap.UMAP(n_neighbors=25, min_dist=0.08, random_state=7).fit(p[:n_main])
-        xy = np.vstack([um.embedding_, um.transform(p[n_main:])]) if len(p) > n_main else um.embedding_
+        um = umap.UMAP(n_neighbors=25, min_dist=0.08, random_state=7).fit(p[:n_fit])
+        xy = np.vstack([um.embedding_, um.transform(p[n_fit:])]) if len(p) > n_fit else um.embedding_
         g = spread(xy, n_main)
         out['x'][view] = [int(v) for v in np.round(g[:, 0] * 999)]
         out['y'][view] = [int(v) for v in np.round(g[:, 1] * 999)]
         out['c'][view] = ''.join(str(int(v)) for v in lab)
-        nn = NearestNeighbors(n_neighbors=40).fit(p[:n_main])
-        _, idx = nn.kneighbors(p)
-        near = []
-        for i, cand in enumerate(idx):
-            mine = rows[i]['piece']
-            near.append([int(j) for j in cand if j != i and rows[j]['piece'] != mine][:5])
-        out['nn'][view] = near
+        for key, lo, hi in (('nn', 0, n_main), ('nr', n_main, n_fit)):
+            if hi <= lo:
+                out[key][view] = [[] for _ in rows]
+                continue
+            _, idx = NearestNeighbors(n_neighbors=40).fit(p[lo:hi]).kneighbors(p)
+            out[key][view] = [[int(j + lo) for j in cand if rows[j + lo]['piece'] != rows[i]['piece']][:5] for i, cand in enumerate(idx)]
         if view == 'overall':
             descs = []
             for c in range(K):
                 parts = []
                 for v in ('melody', 'rhythm', 'harmony'):
                     nm, wd, rw, _ = blocks[v]
-                    parts.append(describe(rw, lab, nm, wd, K)[c]['label'])
+                    parts.append(describe(rw[:n_main], lab[:n_main], nm, wd, K)[c]['label'])
                 descs.append(dict(label='; '.join(x for x in parts if x != 'in between') or 'in between', n=int((lab[:n_main] == c).sum())))
             out['clusters'][view] = descs
         else:
@@ -301,12 +317,22 @@ def build(index_paths, extra):
     years = {}
     for path in glob.glob(f'{E}/_source_sib/*.sib'):
         years[os.path.basename(path)[:-4]] = int(__import__('datetime').date.fromtimestamp(os.path.getmtime(path)).year)
-    out['pieces'] = [dict(t=d.get('title') or d['stem'], y=years.get(d['stem']), p=' + '.join(dict.fromkeys(d.get('parts') or []))[:60]) for d in pieces]
+    out['pieces'] = [dict(t=d.get('title') or d['stem'], y=years.get(d['stem']), k=d['kind'], c=d.get('composer'),
+                          p=' + '.join(dict.fromkeys(d.get('parts') or []))[:60]) for d in pieces]
     out['piece'] = [r['piece'] for r in rows]
     out['bar'] = [r['bar'] for r in rows]
     out['end'] = [r['end'] for r in rows]
-    notes = dict(notes=[r['notes'] for r in rows], chords=[' '.join(r['chords'][:12]) for r in rows])
-    return out, notes
+    comp = {}
+    for r in rows[n_main:n_fit]:
+        c = pieces[r['piece']]['composer']
+        comp.setdefault(c, [set(), 0])
+        comp[c][0].add(r['piece'])
+        comp[c][1] += 1
+    out['composers'] = [dict(name=c, pieces=len(v[0]), phrases=v[1]) for c, v in sorted(comp.items(), key=lambda kv: -kv[1][1])]
+    ref = lambda i: n_main <= i < n_fit
+    own = dict(notes=[None if ref(i) else r['notes'] for i, r in enumerate(rows)], chords=[None if ref(i) else ' '.join(r['chords'][:12]) for i, r in enumerate(rows)])
+    others = dict(notes=[r['notes'] if ref(i) else None for i, r in enumerate(rows)], chords=[' '.join(r['chords'][:12]) if ref(i) else None for i, r in enumerate(rows)])
+    return out, own, others
 
 
 def index_extra(spec, tmp):
@@ -322,6 +348,7 @@ if __name__ == '__main__':
     ap = argparse.ArgumentParser()
     ap.add_argument('--index', default=f'{E}/_logs/harmony_index')
     ap.add_argument('--extra', action='append', default=[])
+    ap.add_argument('--ref', help='index folder of other composers to compare with (fetch_reference.py)')
     ap.add_argument('--out', default=f'{E}/_logs/music_map')
     ap.add_argument('--respread', action='store_true', help='only redo the 2D spacing of an existing map.json')
     a = ap.parse_args()
@@ -332,8 +359,10 @@ if __name__ == '__main__':
     tmp = tempfile.mkdtemp()
     extra = dict(index_extra(s, tmp) for s in a.extra)
     paths = sorted(glob.glob(f'{a.index}/*.json'))
-    m, n = build(paths, extra)
+    refs = sorted(glob.glob(f'{a.ref}/*.json')) if a.ref else []
+    m, own, others = build(paths, extra, refs)
     json.dump(m, open(f'{a.out}/map.json', 'w'), separators=(',', ':'))
-    json.dump(n, open(f'{a.out}/notes.json', 'w'), separators=(',', ':'))
-    for f in ('map.json', 'notes.json'):
+    json.dump(own, open(f'{a.out}/notes.json', 'w'), separators=(',', ':'))
+    json.dump(others, open(f'{a.out}/notes_ref.json', 'w'), separators=(',', ':'))
+    for f in ('map.json', 'notes.json', 'notes_ref.json'):
         print(f, round(os.path.getsize(f'{a.out}/{f}') / 1e6, 1), 'MB')

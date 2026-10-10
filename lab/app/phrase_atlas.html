@@ -6,16 +6,16 @@
 /* layout: the map is a page of manuscript, ink noteheads on paper with rehearsal letters for its regions; the panel is the margin where you read one phrase closely */
 :root{
   --paper:#fbfbf9; --margin:#f3f2ee; --ink:#1c1b19; --ink-2:#56544e; --ink-3:#8b887f; --rule:#e2e0d8;
-  --focus:#2a78d6; --song:#eb6834; --old:#86b6ef; --new:#0d366b;
+  --focus:#2a78d6; --song:#eb6834; --ref:#1baf7a; --old:#86b6ef; --new:#0d366b;
   --display:"Old Standard TT","Iowan Old Style",Georgia,serif;
   --ui:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
   --paper:#161615; --margin:#1e1d1b; --ink:#ece9e1; --ink-2:#b8b4a9; --ink-3:#86837a; --rule:#2c2b28;
-  --focus:#3987e5; --song:#d95926; --old:#184f95; --new:#cde2fb; color-scheme:dark}}
+  --focus:#3987e5; --song:#d95926; --ref:#199e70; --old:#184f95; --new:#cde2fb; color-scheme:dark}}
 :root[data-theme="dark"]{
   --paper:#161615; --margin:#1e1d1b; --ink:#ece9e1; --ink-2:#b8b4a9; --ink-3:#86837a; --rule:#2c2b28;
-  --focus:#3987e5; --song:#d95926; --old:#184f95; --new:#cde2fb; color-scheme:dark}
+  --focus:#3987e5; --song:#d95926; --ref:#199e70; --old:#184f95; --new:#cde2fb; color-scheme:dark}
 [hidden]{display:none!important}
 html,body{height:100%}
 body{background:var(--paper);color:var(--ink);font:14px/1.45 var(--ui);margin:0}
@@ -57,6 +57,9 @@ canvas#map{width:100%;height:100%;display:block;touch-action:none;cursor:crossha
 .nn .t{font-weight:600;overflow-wrap:anywhere;line-height:1.25}
 .nn .m{color:var(--ink-2);font-size:12px}
 .song{display:flex;flex-wrap:wrap;gap:6px}
+.comps{display:flex;flex-wrap:wrap;gap:6px}
+.comps .chip[aria-pressed="true"]{border-color:var(--ref);box-shadow:inset 0 0 0 1px var(--ref)}
+.comps .n{color:var(--ink-3);font-variant-numeric:tabular-nums;margin-left:4px}
 .song span{background:var(--margin);border-radius:6px;padding:3px 7px;font-size:12.5px;font-variant-numeric:tabular-nums}
 input[type=search]{width:100%;box-sizing:border-box;font:14px var(--ui);padding:8px 10px;border:1px solid var(--rule);border-radius:8px;background:var(--paper);color:var(--ink)}
 .hits{display:flex;flex-direction:column;gap:2px;margin-top:6px}
@@ -100,8 +103,14 @@ button:focus-visible,input:focus-visible,canvas:focus-visible{outline:2px solid 
     <div class="card" id="card"><div class="meta">Tap a mark on the map.</div></div>
     <h2 id="nnh">Closest phrases in other pieces</h2>
     <div class="nn" id="nn"></div>
+    <div id="nrbox" hidden><h2>Closest in other composers</h2><div class="nn" id="nr"></div></div>
     <h2 id="songh">Your piece on this map</h2>
     <div class="song" id="song"></div>
+    <div id="compbox" hidden>
+      <h2>Other composers</h2>
+      <div class="comps" id="comps"></div>
+      <div class="song" id="compmap" style="margin-top:8px"></div>
+    </div>
     <h2>Regions</h2>
     <div class="legend" id="legend"></div>
     <div class="row" style="margin-top:8px"><button class="play" id="listen" disabled>▶ Listen to 4 from the region</button></div>
@@ -115,13 +124,15 @@ button:focus-visible,input:focus-visible,canvas:focus-visible{outline:2px solid 
 
 <script>
 const LETTERS = 'ABCDEFGH';
-const S = {view:'overall', focus:-1, sel:-1, q:'', hits:null, year:false, song:true, k:1, tx:0, ty:0};
-let D = null, N = null, ac = null, playing = null;
+const S = {view:'overall', focus:-1, sel:-1, q:'', hits:null, year:false, song:true, comp:null, k:1, tx:0, ty:0};
+let D = null, N = null, NR = null, ac = null, playing = null;
+const noteOf = i => (N && N.notes[i]) || (NR && NR.notes[i]) || null;
+const chordOf = i => (N && N.chords[i]) || (NR && NR.chords[i]) || '';
 const cv = document.getElementById('map'), ctx = cv.getContext('2d');
 let W = 0, H = 0, DPR = 1, sx = 1, sy = 1, PAD = 20, sprites = {}, colors = {}, labelPos = {};
 
 function css(n){ return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
-function readColors(){ for(const n of ['paper','ink','ink-2','ink-3','rule','focus','song','old','new']) colors[n] = css('--' + n); makeSprites(); }
+function readColors(){ for(const n of ['paper','ink','ink-2','ink-3','rule','focus','song','ref','old','new']) colors[n] = css('--' + n); makeSprites(); }
 function sprite(color, alpha, r){
   const s = Math.ceil(r * 2 + 4) * DPR, c = document.createElement('canvas'); c.width = c.height = s;
   const g = c.getContext('2d'); g.translate(s / 2, s / 2); g.rotate(-0.35); g.scale(DPR, DPR);
@@ -132,13 +143,19 @@ function hexmix(a, b, t){ const p = h => [1, 3, 5].map(i => parseInt(h.slice(i, 
 function makeSprites(){
   sprites.ink = sprite(colors.ink, 0.30, 3); sprites.faint = sprite(colors.ink, 0.09, 3);
   sprites.focus = sprite(colors.focus, 0.85, 3.2); sprites.song = sprite(colors.song, 1, 4.2);
+  sprites.ref = sprite(colors.ref, 0.85, 3.2); sprites.refaint = sprite(colors.ref, 0.3, 3);
   sprites.year = []; for(let i = 0; i < 12; i++) sprites.year.push(sprite(hexmix(colors.old, colors.new, i / 11), 0.75, 3));
 }
 function size(){ const r = cv.getBoundingClientRect(); DPR = window.devicePixelRatio || 1; W = r.width; H = r.height;
   cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR); sx = (W - 2 * PAD) / 999; sy = (H - 2 * PAD) / 999; makeSprites(); draw(); }
 const X = i => (PAD + D.x[S.view][i] * sx) * S.k + S.tx, Y = i => (PAD + D.y[S.view][i] * sy) * S.k + S.ty;
 const cl = i => +D.c[S.view][i];
-const isSong = i => i >= D.n_main;
+const nFit = () => D.n_fit || D.n_main;
+const isSong = i => i >= nFit();
+const isRef = i => i >= D.n_main && i < nFit();
+const compOf = i => D.pieces[D.piece[i]].c;
+const refShown = i => S.comp && (S.comp === '*' || compOf(i) === S.comp);
+const titleOf = i => { const p = D.pieces[D.piece[i]]; return p.c ? p.c + ' · ' + p.t : p.t; };
 function lit(i){ if(S.hits) return S.hits.has(D.piece[i]); if(S.focus >= 0) return cl(i) === S.focus; return null; }
 
 let raf = 0; function draw(){ if(!raf) raf = requestAnimationFrame(paint); }
@@ -152,15 +169,18 @@ function paint(){
     else put(anyLit ? sprites.faint : sprites.ink, i);
   }
   if(anyLit) for(let i = 0; i < D.n_main; i++) if(lit(i)) put(sprites.focus, i);
+  if(S.comp) for(let i = D.n_main; i < nFit(); i++) if(refShown(i)) put(S.comp === '*' ? sprites.refaint : sprites.ref, i);
   if(S.sel >= 0){
-    ctx.strokeStyle = colors.focus; ctx.lineWidth = 1.5; ctx.globalAlpha = 0.9;
-    for(const j of D.nn[S.view][S.sel]){ ctx.beginPath(); ctx.moveTo(X(S.sel), Y(S.sel)); ctx.lineTo(X(j), Y(j)); ctx.stroke(); }
-    ctx.globalAlpha = 1;
-    for(const j of D.nn[S.view][S.sel]){ ctx.beginPath(); ctx.arc(X(j), Y(j), 5.5, 0, Math.PI * 2); ctx.stroke(); }
+    for(const [list, col] of [[D.nn[S.view][S.sel], colors.focus], [(D.nr || {})[S.view] ? D.nr[S.view][S.sel] : [], colors.ref]]){
+      ctx.strokeStyle = col; ctx.lineWidth = 1.5; ctx.globalAlpha = 0.9;
+      for(const j of list){ ctx.beginPath(); ctx.moveTo(X(S.sel), Y(S.sel)); ctx.lineTo(X(j), Y(j)); ctx.stroke(); }
+      ctx.globalAlpha = 1;
+      for(const j of list){ ctx.beginPath(); ctx.arc(X(j), Y(j), 5.5, 0, Math.PI * 2); ctx.stroke(); }
+    }
   }
-  if(S.song) for(let i = D.n_main; i < n; i++){ put(sprites.song, i, 1); }
+  if(S.song) for(let i = nFit(); i < n; i++){ put(sprites.song, i, 1); }
   if(S.sel >= 0){ ctx.strokeStyle = colors.ink; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(X(S.sel), Y(S.sel), 8, 0, Math.PI * 2); ctx.stroke();
-    ctx.fillStyle = isSong(S.sel) ? colors.song : colors.focus; ctx.beginPath(); ctx.arc(X(S.sel), Y(S.sel), 4.5, 0, Math.PI * 2); ctx.fill(); }
+    ctx.fillStyle = isSong(S.sel) ? colors.song : isRef(S.sel) ? colors.ref : colors.focus; ctx.beginPath(); ctx.arc(X(S.sel), Y(S.sel), 4.5, 0, Math.PI * 2); ctx.fill(); }
   ctx.font = '700 14px ' + css('--display'); ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   const placed = [], free = (x, y) => !placed.some(q => Math.abs(q[0] - x) < 24 && Math.abs(q[1] - y) < 24);
   for(let c = 0; c < LETTERS.length; c++){ const p = labelPos[S.view][c]; if(p < 0) continue; let x = X(p), y = Y(p);
@@ -172,7 +192,7 @@ function paint(){
 }
 
 function nearest(px, py, r){ let best = -1, bd = r * r; const n = D.piece.length;
-  for(let i = 0; i < n; i++){ if(isSong(i) && !S.song) continue; const dx = X(i) - px, dy = Y(i) - py, d = dx * dx + dy * dy; if(d < bd){ bd = d; best = i; } } return best; }
+  for(let i = 0; i < n; i++){ if(isSong(i) && !S.song) continue; if(isRef(i) && !refShown(i)) continue; const dx = X(i) - px, dy = Y(i) - py, d = dx * dx + dy * dy; if(d < bd){ bd = d; best = i; } } return best; }
 
 function labelsFor(view){ const out = [];
   for(let c = 0; c < LETTERS.length; c++){ let mx = 0, my = 0, m = 0;
@@ -185,7 +205,10 @@ function labelsFor(view){ const out = [];
 const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const fmt = n => n.toLocaleString('en-US');
 function bars(i){ return D.bar[i] === D.end[i] ? 'bar ' + D.bar[i] : 'bars ' + D.bar[i] + '–' + D.end[i]; }
-function pieceLine(i){ const p = D.pieces[D.piece[i]]; return [bars(i), p.y, p.p].filter(Boolean).join(' · '); }
+function pieceLine(i){ const p = D.pieces[D.piece[i]]; return (p.c ? [bars(i), p.p] : [bars(i), p.y, p.p]).filter(Boolean).join(' · '); }
+function nnList(el, list){
+  el.innerHTML = list.map(j => `<button data-i="${j}"><canvas></canvas><span><span class="t">${esc(titleOf(j))}</span><br><span class="m">${esc(pieceLine(j))}</span></span></button>`).join('');
+  el.querySelectorAll('button').forEach(b => { const j = +b.dataset.i; roll(b.querySelector('canvas'), noteOf(j), {color: isRef(j) ? colors.ref : colors.ink}); b.onclick = () => { if(isRef(j) && !S.comp){ S.comp = compOf(j); comps(); } select(j); }; }); }
 
 function roll(c, notes, opt){
   const r = c.getBoundingClientRect(), w = r.width, h = r.height; c.width = Math.round(w * DPR); c.height = Math.round(h * DPR);
@@ -201,17 +224,29 @@ function roll(c, notes, opt){
 function card(){
   const el = document.getElementById('card'), i = S.sel;
   if(i < 0){ el.innerHTML = '<div class="meta">Tap a mark on the map.</div>'; document.getElementById('nn').innerHTML = ''; return; }
-  const p = D.pieces[D.piece[i]], c = cl(i), lab = D.clusters[S.view][c];
-  el.innerHTML = `<p class="title">${esc(p.t)}</p><div class="meta">${esc(pieceLine(i))}</div>
-    <canvas class="roll" id="roll"></canvas><div class="chords" id="chords">${N ? esc(N.chords[i] || 'no chords') : '…'}</div>
+  const c = cl(i), lab = D.clusters[S.view][c], notes = noteOf(i);
+  el.innerHTML = `<p class="title">${esc(titleOf(i))}</p><div class="meta">${esc(pieceLine(i))}</div>
+    <canvas class="roll" id="roll"></canvas><div class="chords" id="chords">${notes ? esc(chordOf(i) || 'no chords') : '…'}</div>
     <div class="row" style="margin-top:10px;justify-content:space-between"><button class="play" id="play">▶ Play</button>
-    <span class="row meta"><span class="mark">${LETTERS[c]}</span>${esc(lab.label)}</span></div>`;
-  roll(document.getElementById('roll'), N && N.notes[i], {staff:true, color:isSong(i) ? colors.song : colors.ink});
-  document.getElementById('play').onclick = () => { if(playing){ stopAll(); return; } if(N) playSeq([i]); else document.getElementById('play').textContent = 'Loading notes…'; };
+    <span class="row meta"><span class="mark">${LETTERS[c]}</span>${esc(lab.label)}</span></div>
+    <div class="meta" id="audiomsg" hidden style="margin-top:8px"></div>`;
+  roll(document.getElementById('roll'), notes, {staff:true, color:isSong(i) ? colors.song : isRef(i) ? colors.ref : colors.ink});
+  document.getElementById('play').onclick = () => { if(playing){ stopAll(); return; } if(noteOf(i)) playSeq([i]); else document.getElementById('play').textContent = 'Loading notes…'; };
   if(playing) playLabels(true);
-  document.getElementById('nnh').textContent = 'Closest phrases in other pieces · ' + S.view;
-  document.getElementById('nn').innerHTML = D.nn[S.view][i].map(j => `<button data-i="${j}"><canvas></canvas><span><span class="t">${esc(D.pieces[D.piece[j]].t)}</span><br><span class="m">${esc(pieceLine(j))}</span></span></button>`).join('');
-  document.querySelectorAll('#nn button').forEach(b => { const j = +b.dataset.i; roll(b.querySelector('canvas'), N && N.notes[j]); b.onclick = () => select(j); });
+  document.getElementById('nnh').textContent = (isRef(i) || isSong(i) ? 'Closest in your music · ' : 'Closest in your other pieces · ') + S.view;
+  nnList(document.getElementById('nn'), D.nn[S.view][i]);
+  const nr = D.nr && D.nr[S.view] ? D.nr[S.view][i] : [];
+  document.getElementById('nrbox').hidden = !nr.length;
+  nnList(document.getElementById('nr'), nr);
+}
+function comps(){
+  const box = document.getElementById('compbox'); if(!D.composers || !D.composers.length){ box.hidden = true; return; } box.hidden = false;
+  const all = D.composers.reduce((a, c) => a + c.phrases, 0);
+  document.getElementById('comps').innerHTML = [['*', 'All', all], ...D.composers.map(c => [c.name, c.name, c.phrases])]
+    .map(([v, l, n]) => `<button class="chip" data-v="${esc(v)}" aria-pressed="${S.comp === v}">${esc(l)}<span class="n">${fmt(n)}</span></button>`).join('');
+  document.querySelectorAll('#comps button').forEach(b => b.onclick = () => { S.comp = S.comp === b.dataset.v ? null : b.dataset.v; comps(); draw(); });
+  const counts = {}; let tot = 0; if(S.comp) for(let i = D.n_main; i < nFit(); i++) if(refShown(i)){ const c = cl(i); counts[c] = (counts[c] || 0) + 1; tot++; }
+  document.getElementById('compmap').innerHTML = S.comp ? Object.entries(counts).sort((a, b) => b[1] - a[1]).map(([c, n]) => `<span><b>${LETTERS[c]}</b> ${Math.round(100 * n / tot)}%</span>`).join('') : '';
 }
 function select(i){ S.sel = i; card(); draw(); }
 
@@ -220,39 +255,50 @@ function legend(){
   document.getElementById('legend').innerHTML = L.map((c, k) => `<button data-c="${k}" aria-pressed="${S.focus === k}"><span class="mark">${LETTERS[k]}</span><span class="lab">${esc(c.label)}</span><span class="n">${fmt(c.n)}</span></button>`).join('');
   document.querySelectorAll('#legend button').forEach(b => b.onclick = () => { const k = +b.dataset.c; S.focus = S.focus === k ? -1 : k; S.hits = null; document.getElementById('q').value = ''; document.getElementById('hits').innerHTML = ''; legend(); draw(); });
   document.getElementById('listen').disabled = S.focus < 0;
-  const counts = {}; for(let i = D.n_main; i < D.piece.length; i++){ const c = cl(i); counts[c] = (counts[c] || 0) + 1; }
+  const counts = {}; for(let i = nFit(); i < D.piece.length; i++){ const c = cl(i); counts[c] = (counts[c] || 0) + 1; }
   const order = Object.entries(counts).sort((a, b) => b[1] - a[1]);
   document.getElementById('song').innerHTML = order.length ? order.map(([c, n]) => `<span><b>${LETTERS[c]}</b> ${n} ${n === 1 ? 'phrase' : 'phrases'}</span>`).join('') : '<span>not on this map</span>';
 }
-function setView(v){ S.view = v; S.focus = -1; document.querySelectorAll('.tabs button').forEach(b => b.setAttribute('aria-pressed', b.dataset.view === v)); legend(); card(); draw(); }
+function setView(v){ S.view = v; S.focus = -1; document.querySelectorAll('.tabs button').forEach(b => b.setAttribute('aria-pressed', b.dataset.view === v)); legend(); comps(); card(); draw(); }
 
-// sound: a soft triangle voice, quarter = 72. iOS mutes Web Audio under the silent switch unless the
-// page's audio session is "playback"; older iOS needs a media element started from the same tap
-let voices = [], unlocked = false;
-function audioOn(){
-  try{ if('audioSession' in navigator) navigator.audioSession.type = 'playback'; }catch(e){}
-  ac = ac || new (window.AudioContext || window.webkitAudioContext)();
-  if(ac.state !== 'running') ac.resume();
-  if(!unlocked){ unlocked = true;
-    try{ const n = 800, b = new Uint8Array(44 + n * 2), v = new DataView(b.buffer), w = (o, s) => [...s].forEach((c, k) => b[o + k] = c.charCodeAt(0));
-      w(0, 'RIFF'); v.setUint32(4, 36 + n * 2, true); w(8, 'WAVEfmt '); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
-      v.setUint32(24, 8000, true); v.setUint32(28, 16000, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true); w(36, 'data'); v.setUint32(40, n * 2, true);
-      const a = new Audio('data:audio/wav;base64,' + btoa(String.fromCharCode(...b))); a.setAttribute('playsinline', ''); a.play().catch(() => {}); }catch(e){} }
+// sound: each phrase is written out as a WAV file and played by an <audio> element, the way the
+// Scorewright page plays. In the Claude app on iOS, Web Audio stays muted under the silent switch.
+const player = new Audio(); player.setAttribute('playsinline', ''); player.preload = 'auto';
+const RATE = 22050, Q = 60 / 72 / 12;
+const phraseLen = ns => Math.max(...ns.map(n => n[0] + n[1])) * Q;
+function wav(list){
+  const gap = 0.7, parts = list.map(noteOf), total = parts.reduce((a, ns) => a + phraseLen(ns) + gap, 0) + 0.3;
+  const n = Math.ceil(total * RATE), buf = new Float32Array(n), starts = []; let t0 = 0.05;
+  for(const ns of parts){ starts.push(t0);
+    for(const [on, du, p] of ns){ const f = 440 * Math.pow(2, (p - 69) / 12), s0 = Math.floor((t0 + on * Q) * RATE), d = du * Q, len = Math.floor((d + 0.25) * RATE);
+      for(let k = 0; k < len && s0 + k < n; k++){ const t = k / RATE, w = 2 * Math.PI * f * t;
+        const env = Math.min(1, t / 0.008) * Math.exp(-t * 2.2) * (t > d ? Math.exp(-(t - d) * 18) : 1);
+        buf[s0 + k] += env * (Math.sin(w) + 0.35 * Math.exp(-t * 3) * Math.sin(2 * w) + 0.12 * Math.exp(-t * 5) * Math.sin(3 * w)); } }
+    t0 += phraseLen(ns) + gap; }
+  let peak = 0; for(let k = 0; k < n; k++) peak = Math.max(peak, Math.abs(buf[k]));
+  const g = peak ? 0.8 / peak : 1, b = new Uint8Array(44 + n * 2), v = new DataView(b.buffer), w = (o, s) => { for(let k = 0; k < s.length; k++) b[o + k] = s.charCodeAt(k); };
+  w(0, 'RIFF'); v.setUint32(4, 36 + n * 2, true); w(8, 'WAVEfmt '); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+  v.setUint32(24, RATE, true); v.setUint32(28, RATE * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true); w(36, 'data'); v.setUint32(40, n * 2, true);
+  for(let k = 0; k < n; k++) v.setInt16(44 + k * 2, Math.max(-32767, Math.min(32767, Math.round(buf[k] * g * 32767))), true);
+  let bin = ''; for(let k = 0; k < b.length; k += 0x8000) bin += String.fromCharCode.apply(null, b.subarray(k, k + 0x8000));
+  return {uri: 'data:audio/wav;base64,' + btoa(bin), starts};
 }
-function voice(t, f, d){ const o = ac.createOscillator(), g = ac.createGain(), lp = ac.createBiquadFilter(); o.type = 'triangle'; o.frequency.value = f; lp.type = 'lowpass'; lp.frequency.value = 2400;
-  g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.22, t + 0.02); g.gain.setTargetAtTime(0.12, t + 0.05, 0.15); g.gain.setTargetAtTime(0, t + Math.max(0.06, d - 0.04), 0.06);
-  o.connect(lp); lp.connect(g); g.connect(ac.destination); o.start(t); o.stop(t + d + 0.4); voices.push(o); }
 function playLabels(on){ const p = document.getElementById('play'); if(p) p.textContent = on ? '■ Stop' : '▶ Play';
   const l = document.getElementById('listen'); l.textContent = on && S.listening ? '■ Stop' : '▶ Listen to 4 from the region'; }
-function stopAll(){ voices.forEach(o => { try{ o.stop(); }catch(e){} }); voices = []; if(playing) playing.forEach(clearTimeout); playing = null; S.listening = false; playLabels(false); }
+function sayAudio(t){ const el = document.getElementById('audiomsg'); if(el){ el.textContent = t; el.hidden = !t; } }
+function stopAll(){ player.pause(); if(playing) playing.forEach(clearTimeout); playing = null; S.listening = false; playLabels(false); }
 function playSeq(list, listening){
-  if(!N || !list.length) return; stopAll(); S.listening = !!listening; audioOn();
-  const q = 60 / 72 / 12; let t = ac.currentTime + 0.12; const marks = [];
-  for(const i of list){ const ns = N.notes[i]; for(const [on, du, p] of ns) voice(t + on * q, 440 * Math.pow(2, (p - 69) / 12), du * q); marks.push([t, i]); t += (Math.max(...ns.map(n => n[0] + n[1])) * q) + 0.7; }
-  playing = marks.map(([at, i]) => setTimeout(() => { if(list.length > 1) select(i); playLabels(true); }, Math.max(0, (at - ac.currentTime) * 1000)));
-  playing.push(setTimeout(() => { playing = null; voices = []; S.listening = false; playLabels(false); }, (t - ac.currentTime) * 1000));
-  playLabels(true);
+  list = list.filter(noteOf); if(!list.length) return;
+  stopAll(); S.listening = !!listening; sayAudio('');
+  const {uri, starts} = wav(list);
+  player.src = uri;
+  const go = player.play();
+  playing = []; playLabels(true);
+  const timers = () => { playing = starts.map((s, k) => setTimeout(() => { if(list.length > 1) select(list[k]); playLabels(true); }, s * 1000)); };
+  if(go && go.then) go.then(timers).catch(e => { playing = null; S.listening = false; playLabels(false); sayAudio('This phone refused to play it (' + ((e && e.name) || 'error') + ').'); });
+  else timers();
 }
+player.addEventListener('ended', () => { if(playing) playing.forEach(clearTimeout); playing = null; S.listening = false; playLabels(false); });
 document.getElementById('listen').onclick = () => { if(S.listening){ stopAll(); return; } if(S.focus < 0) return; const m = []; for(let i = 0; i < D.n_main; i++) if(cl(i) === S.focus) m.push(i);
   const pick = []; for(let k = 0; k < 4 && m.length; k++) pick.push(m.splice(Math.floor(Math.random() * m.length), 1)[0]); playSeq(pick, true); };
 
@@ -299,13 +345,15 @@ new MutationObserver(() => { readColors(); card(); draw(); }).observe(document.d
   const ys = D.pieces.map(p => p.y).filter(Boolean); D.y0 = Math.min(...ys); D.y1 = Math.max(...ys);
   document.getElementById('y0').textContent = D.y0; document.getElementById('y1').textContent = D.y1;
   for(const v of D.views) labelPos[v] = labelsFor(v);
-  const extra = D.piece.length > D.n_main;
-  document.getElementById('sub').textContent = `${fmt(D.n_main)} phrases from ${fmt(D.pieces.length - (extra ? 1 : 0))} scores`;
-  if(extra){ const name = D.pieces[D.piece[D.n_main]].t.replace(/\s*\(.*\)\s*$/, '');
+  const extra = D.piece.length > nFit(), own = new Set(D.piece.slice(0, D.n_main)).size, comp = D.composers || [];
+  document.getElementById('sub').textContent = `${fmt(D.n_main)} phrases from ${fmt(own)} scores` +
+    (comp.length ? ` · with ${fmt(nFit() - D.n_main)} by ${comp.slice(0, 4).map(c => c.name).join(', ')}${comp.length > 4 ? ' and others' : ''}` : '');
+  if(extra){ const name = D.pieces[D.piece[nFit()]].t.replace(/\s*\(.*\)\s*$/, '');
     document.getElementById('songname').textContent = name; document.getElementById('songh').textContent = name + ' on this map'; }
   else { document.getElementById('songbtn').hidden = true; document.getElementById('songh').hidden = true; document.getElementById('song').hidden = true; S.song = false; }
   document.getElementById('loading').hidden = true;
-  legend(); size(); if(D.piece.length > D.n_main) select(D.n_main);
+  legend(); comps(); size(); if(extra) select(nFit());
   try{ N = await (await fetch('notes.json')).json(); card(); } catch(e){}
+  if(comp.length) try{ NR = await (await fetch('notes_ref.json')).json(); card(); } catch(e){}
 })();
 </script>
