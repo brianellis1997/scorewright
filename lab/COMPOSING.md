@@ -571,7 +571,38 @@ clusters and polychords count as "outside every template", which in his music is
 marker. The melody is the first part that is not a keyboard, guitar or harp. One analysis window
 per beat suits slow songs. Fast music with a harmony per bar wants a longer window.
 
-## 12. Read his pieces bar by bar (reduce_harmony.py)
+## 12. Read his pages first, like a musician; then the reductions
+
+Brian, Oct 10 2026: "Why can't you read it like a human? Look at the page: see vertically how each
+instrument interacts with the others, and horizontally what each line is doing: supporting the
+melody, its own line giving harmony and colour, the flutes ornamenting. Study the individual
+lines, their register, notes and harmonies."
+
+His engraved scores are in `$E/PDF/<stem>.pdf` (Sibelius pages, as he sees them). Before writing
+anything in his style:
+1. Open the two or three closest pieces with the Read tool, a few pages at a time (`pages: "1-4"`),
+   and look at them.
+2. Write down, per passage, what each part does and where: the melody's rhythm and breathing,
+   what the accompaniment's hands do, register, doubling, counter-lines, how the parts answer
+   each other, where the music rests, where the texture changes and why (often the words).
+3. Write from that reading. Then render your own pages (`app/render_one.py`, a screenshot of the
+   SVG) and read them the same way against his, before he hears anything.
+
+What the song-study pages showed that no measurement did:
+- **Space.** No 3's piano plays a short bass arpeggio and a two-note rising sigh, then rests.
+- **Call and response.** No 8's horn sings three bars, and the piano answers alone in parallel
+  thirds over rocking octaves.
+- **Complementary motion.** In no 1 the piano moves when the oboe holds, and simplifies when it
+  moves.
+- **Doubling is earned.** No 8's piano doubles the theme an octave up only when it returns, as
+  the left hand turns to sextuplets.
+- **The texture changes with the story,** once, at a section: no 3 at "we used to", where the
+  hands trade triplet-sixteenth waves that each swell and fall away.
+
+S7 of "Where I Left It" was built this way. The tools below are for checking and searching, not
+for deciding.
+
+### Reductions (reduce_harmony.py)
 
     python reduce_harmony.py <score.musicxml> [first_bar] [last_bar]
 

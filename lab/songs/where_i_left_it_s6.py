@@ -35,17 +35,22 @@ def rh_bar(spec, pd, st):
     if not spec:
         return (pd or '') + 'z16'
     ev, t, trip = [], 0, 0
-    for tok in re.findall(r'\(3|\[[^\]]*\]\d+|z\d+|[A-G][#b]?\d+/\d+', spec):
+    deco = ''
+    for tok in re.findall(r'!\S+?!|\(3|\[[^\]]*\]\d+|z\d+|[A-G][#b]?\d+/\d+', spec):
+        if tok.startswith('!'):
+            deco += tok
+            continue
         if tok == '(3':
             trip = 3
             continue
-        pre = '(3' if trip == 3 else ''
+        pre = deco + ('(3' if trip == 3 else '')
+        deco = ''
         if tok.startswith('z'):
             n = int(tok[1:]); d = 3 * n
-            ev.append((t, 'z' + dur(n), True, d))
+            ev.append((t, pre + 'z' + dur(n), True, d))
         elif tok.startswith('['):
             ps, n = tok[1:].split(']'); n = int(n); d = 3 * n
-            ev.append((t, '[' + ''.join(abc_pitch(p, 'G', st) for p in ps.split()) + ']' + dur(n), False, d))
+            ev.append((t, pre + '[' + ''.join(abc_pitch(p, 'G', st) for p in ps.split()) + ']' + dur(n), False, d))
         else:
             p, n = tok.split('/'); n = int(n)
             d = 2 * n if trip else 3 * n
