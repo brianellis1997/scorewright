@@ -44,6 +44,7 @@ For a Claude Code session: read [CLAUDE.md](CLAUDE.md), then [lab/COMPOSING.md](
 | `lab/songs/` | build scripts for whole new pieces: `where_i_left_it.py` (S1, too pop), `where_i_left_it_s2.py` (S2, odd), `where_i_left_it_s3.py` (S3, in his song-study grammar), English horn and piano with words |
 | `lab/style_profile.py` | measures a composer's harmonic and melodic habits from their scores and flags where a draft falls outside them |
 | `lab/rh_profile.py` | what the accompaniment's right hand does against the melody: doubling, thirds and sixths, fills in the melody's rests |
+| `lab/music_map.py` | the Phrase Atlas: every phrase of a set of scores mapped by melody, rhythm and harmony (UMAP), with named regions and nearest neighbours; `lab/app/phrase_atlas.html` is the viewer |
 | `lab/engrave_pages.py` | engraves a score to page images, so the whole piece is re-read as pages before every continue or revision |
 | `lab/lint_line.py` | checks a melody for wrong-way accidentals, unrecovered or augmented leaps, phrases too long to breathe, range |
 | `lab/harmony_index.py`, `lab/find_progression.py` | index the harmony of all 1,655 scores; find a progression in any key and show the melody he wrote over it |

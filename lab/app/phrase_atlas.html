@@ -1,0 +1,293 @@
+<title>Phrase Atlas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Old+Standard+TT:ital,wght@0,400;0,700;1,400&display=swap">
+<style>
+/* layout: the map is a page of manuscript, ink noteheads on paper with rehearsal letters for its regions; the panel is the margin where you read one phrase closely */
+:root{
+  --paper:#fbfbf9; --margin:#f3f2ee; --ink:#1c1b19; --ink-2:#56544e; --ink-3:#8b887f; --rule:#e2e0d8;
+  --focus:#2a78d6; --song:#eb6834; --old:#86b6ef; --new:#0d366b;
+  --display:"Old Standard TT","Iowan Old Style",Georgia,serif;
+  --ui:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#161615; --margin:#1e1d1b; --ink:#ece9e1; --ink-2:#b8b4a9; --ink-3:#86837a; --rule:#2c2b28;
+  --focus:#3987e5; --song:#d95926; --old:#184f95; --new:#cde2fb; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#161615; --margin:#1e1d1b; --ink:#ece9e1; --ink-2:#b8b4a9; --ink-3:#86837a; --rule:#2c2b28;
+  --focus:#3987e5; --song:#d95926; --old:#184f95; --new:#cde2fb; color-scheme:dark}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{background:var(--paper);color:var(--ink);font:14px/1.45 var(--ui);margin:0}
+.app{height:100%;display:grid;grid-template-columns:minmax(0,1fr) minmax(300px,380px);grid-template-rows:auto minmax(0,1fr);padding-inline:16px;box-sizing:border-box;gap:0 16px}
+header{grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 18px;padding-block:14px 10px;border-bottom:1px solid var(--rule)}
+h1{font:700 26px/1.1 var(--display);margin:0;letter-spacing:.01em}
+.sub{color:var(--ink-2);font-size:13px;font-variant-numeric:tabular-nums}
+.tabs{display:flex;gap:2px;margin-left:auto;background:var(--margin);border-radius:8px;padding:3px}
+.tabs button{border:0;background:none;color:var(--ink-2);font:500 13px var(--ui);padding:6px 11px;border-radius:6px;cursor:pointer}
+.tabs button[aria-pressed="true"]{background:var(--paper);color:var(--ink);box-shadow:0 0 0 1px var(--rule)}
+.map{position:relative;min-width:0;min-height:0;padding-block:10px}
+canvas#map{width:100%;height:100%;display:block;touch-action:none;cursor:crosshair}
+.mapbar{position:absolute;right:8px;top:18px;display:flex;gap:6px}
+.chip{border:1px solid var(--rule);background:var(--paper);color:var(--ink-2);font:500 12px var(--ui);padding:5px 9px;border-radius:999px;cursor:pointer}
+.chip[aria-pressed="true"]{color:var(--ink);border-color:var(--ink-3)}
+.chip .dot{display:inline-block;width:8px;height:6px;border-radius:50%;transform:rotate(-20deg);margin-right:5px;vertical-align:1px}
+#tip{position:absolute;pointer-events:none;background:var(--ink);color:var(--paper);font-size:12px;padding:5px 8px;border-radius:6px;max-width:240px;transform:translate(-50%,calc(-100% - 12px))}
+.panel{min-width:0;min-height:0;overflow:auto;padding-block:12px 24px;border-left:1px solid var(--rule);padding-left:16px}
+.panel h2{font:400 italic 15px var(--display);color:var(--ink-2);margin:18px 0 8px;letter-spacing:.01em}
+.panel h2:first-child{margin-top:0}
+.card{background:var(--margin);border-radius:10px;padding:12px}
+.title{font:700 18px/1.25 var(--display);margin:0 0 2px;overflow-wrap:anywhere}
+.meta{color:var(--ink-2);font-size:12.5px;font-variant-numeric:tabular-nums}
+.roll{width:100%;height:96px;display:block;margin:10px 0 4px}
+.chords{font:italic 14px var(--display);color:var(--ink-2);overflow-wrap:anywhere}
+.row{display:flex;align-items:center;gap:8px}
+.play{border:0;background:var(--ink);color:var(--paper);font:600 13px var(--ui);padding:7px 12px;border-radius:999px;cursor:pointer}
+.play:disabled{opacity:.5;cursor:default}
+.mark{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;border:1.5px solid var(--ink);font:700 13px var(--display);border-radius:2px;flex:0 0 auto}
+.legend{display:flex;flex-direction:column;gap:2px}
+.legend button{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:center;text-align:left;border:0;background:none;color:var(--ink);font:13px var(--ui);padding:6px;border-radius:7px;cursor:pointer}
+.legend button:hover{background:var(--margin)}
+.legend button[aria-pressed="true"]{background:var(--margin);box-shadow:inset 3px 0 0 var(--focus)}
+.legend .lab{min-width:0;overflow-wrap:anywhere}
+.legend .n{color:var(--ink-3);font-size:12px;font-variant-numeric:tabular-nums}
+.nn{display:flex;flex-direction:column;gap:6px}
+.nn button{display:grid;grid-template-columns:96px minmax(0,1fr);gap:10px;align-items:center;text-align:left;border:0;background:var(--margin);color:var(--ink);padding:6px;border-radius:8px;cursor:pointer;font:13px var(--ui)}
+.nn canvas{width:96px;height:34px;display:block}
+.nn .t{font-weight:600;overflow-wrap:anywhere;line-height:1.25}
+.nn .m{color:var(--ink-2);font-size:12px}
+.song{display:flex;flex-wrap:wrap;gap:6px}
+.song span{background:var(--margin);border-radius:6px;padding:3px 7px;font-size:12.5px;font-variant-numeric:tabular-nums}
+input[type=search]{width:100%;box-sizing:border-box;font:14px var(--ui);padding:8px 10px;border:1px solid var(--rule);border-radius:8px;background:var(--paper);color:var(--ink)}
+.hits{display:flex;flex-direction:column;gap:2px;margin-top:6px}
+.hits button{border:0;background:none;text-align:left;color:var(--ink);font:13px var(--ui);padding:5px 6px;border-radius:6px;cursor:pointer;overflow-wrap:anywhere}
+.hits button:hover{background:var(--margin)}
+.ramp{height:8px;border-radius:4px;background:linear-gradient(90deg,var(--old),var(--new));margin:6px 0 2px}
+.rampl{display:flex;justify-content:space-between;color:var(--ink-3);font-size:12px;font-variant-numeric:tabular-nums}
+.note{color:var(--ink-3);font-size:12px;margin-top:18px}
+button:focus-visible,input:focus-visible,canvas:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--ink-3);font:italic 16px var(--display)}
+@media (max-width:760px){
+  .app{grid-template-columns:minmax(0,1fr);grid-template-rows:auto 56vh auto;height:auto;min-height:100%}
+  .tabs{margin-left:0;width:100%} .tabs button{flex:1}
+  .panel{border-left:0;padding-left:0;border-top:1px solid var(--rule);overflow:visible}
+}
+</style>
+
+<div class="app">
+  <header>
+    <h1>Phrase Atlas</h1>
+    <span class="sub" id="sub">loading</span>
+    <div class="tabs" role="group" aria-label="What the map compares">
+      <button data-view="overall" aria-pressed="true">Overall</button>
+      <button data-view="melody" aria-pressed="false">Melody</button>
+      <button data-view="rhythm" aria-pressed="false">Rhythm</button>
+      <button data-view="harmony" aria-pressed="false">Harmony</button>
+    </div>
+  </header>
+  <div class="map">
+    <canvas id="map" tabindex="0" aria-label="Map of phrases; tap a mark to read it"></canvas>
+    <div class="mapbar">
+      <button class="chip" id="songbtn" aria-pressed="true"><span class="dot" style="background:var(--song)"></span><span id="songname">Your piece</span></button>
+      <button class="chip" id="yearbtn" aria-pressed="false">Ink by year</button>
+      <button class="chip" id="reset" title="Show the whole map">Whole map</button>
+    </div>
+    <div id="tip" hidden></div>
+    <div class="loading" id="loading">Engraving the map…</div>
+  </div>
+  <aside class="panel">
+    <h2>The phrase</h2>
+    <div class="card" id="card"><div class="meta">Tap a mark on the map.</div></div>
+    <h2 id="nnh">Closest phrases in other pieces</h2>
+    <div class="nn" id="nn"></div>
+    <h2 id="songh">Your piece on this map</h2>
+    <div class="song" id="song"></div>
+    <h2>Regions</h2>
+    <div class="legend" id="legend"></div>
+    <div class="row" style="margin-top:8px"><button class="play" id="listen" disabled>▶ Listen to 4 from the region</button></div>
+    <div id="yearkey" hidden><h2>Ink by the year each score was last saved</h2><div class="ramp"></div><div class="rampl"><span id="y0"></span><span id="y1"></span></div></div>
+    <h2>Find a piece</h2>
+    <input type="search" id="q" placeholder="Title, e.g. Song Study" autocomplete="off">
+    <div class="hits" id="hits"></div>
+    <p class="note">Each mark is one phrase, cut where a singer would breathe. Regions are found in the full feature space; the map flattens it, so nearness on screen is a guide and the lists above are exact.</p>
+  </aside>
+</div>
+
+<script>
+const LETTERS = 'ABCDEFGH';
+const S = {view:'overall', focus:-1, sel:-1, q:'', hits:null, year:false, song:true, k:1, tx:0, ty:0};
+let D = null, N = null, ac = null, playing = null;
+const cv = document.getElementById('map'), ctx = cv.getContext('2d');
+let W = 0, H = 0, DPR = 1, sx = 1, sy = 1, PAD = 20, sprites = {}, colors = {}, labelPos = {};
+
+function css(n){ return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+function readColors(){ for(const n of ['paper','ink','ink-2','ink-3','rule','focus','song','old','new']) colors[n] = css('--' + n); makeSprites(); }
+function sprite(color, alpha, r){
+  const s = Math.ceil(r * 2 + 4) * DPR, c = document.createElement('canvas'); c.width = c.height = s;
+  const g = c.getContext('2d'); g.translate(s / 2, s / 2); g.rotate(-0.35); g.scale(DPR, DPR);
+  g.globalAlpha = alpha; g.fillStyle = color; g.beginPath(); g.ellipse(0, 0, r, r * 0.7, 0, 0, Math.PI * 2); g.fill(); return c;
+}
+function hexmix(a, b, t){ const p = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16)); const x = p(a), y = p(b);
+  return '#' + x.map((v, i) => Math.round(v + (y[i] - v) * t).toString(16).padStart(2, '0')).join(''); }
+function makeSprites(){
+  sprites.ink = sprite(colors.ink, 0.30, 3); sprites.faint = sprite(colors.ink, 0.09, 3);
+  sprites.focus = sprite(colors.focus, 0.85, 3.2); sprites.song = sprite(colors.song, 1, 4.2);
+  sprites.year = []; for(let i = 0; i < 12; i++) sprites.year.push(sprite(hexmix(colors.old, colors.new, i / 11), 0.75, 3));
+}
+function size(){ const r = cv.getBoundingClientRect(); DPR = window.devicePixelRatio || 1; W = r.width; H = r.height;
+  cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR); sx = (W - 2 * PAD) / 999; sy = (H - 2 * PAD) / 999; makeSprites(); draw(); }
+const X = i => (PAD + D.x[S.view][i] * sx) * S.k + S.tx, Y = i => (PAD + D.y[S.view][i] * sy) * S.k + S.ty;
+const cl = i => +D.c[S.view][i];
+const isSong = i => i >= D.n_main;
+function lit(i){ if(S.hits) return S.hits.has(D.piece[i]); if(S.focus >= 0) return cl(i) === S.focus; return null; }
+
+let raf = 0; function draw(){ if(!raf) raf = requestAnimationFrame(paint); }
+function paint(){
+  raf = 0; if(!D) return; ctx.setTransform(DPR, 0, 0, DPR, 0, 0); ctx.clearRect(0, 0, W, H);
+  const n = D.piece.length, f = Math.min(2.2, Math.max(1, Math.sqrt(S.k))), anyLit = S.hits || S.focus >= 0;
+  const put = (sp, i, m) => { const w = sp.width / DPR * (m || f), x = X(i), y = Y(i); if(x < -10 || y < -10 || x > W + 10 || y > H + 10) return; ctx.drawImage(sp, x - w / 2, y - w / 2, w, w); };
+  for(let i = 0; i < D.n_main; i++){
+    if(anyLit && lit(i)) continue;
+    if(S.year){ const yr = D.pieces[D.piece[i]].y; put(yr ? sprites.year[Math.round(11 * (yr - D.y0) / Math.max(1, D.y1 - D.y0))] : sprites.faint, i); }
+    else put(anyLit ? sprites.faint : sprites.ink, i);
+  }
+  if(anyLit) for(let i = 0; i < D.n_main; i++) if(lit(i)) put(sprites.focus, i);
+  if(S.sel >= 0){
+    ctx.strokeStyle = colors.focus; ctx.lineWidth = 1.5; ctx.globalAlpha = 0.9;
+    for(const j of D.nn[S.view][S.sel]){ ctx.beginPath(); ctx.moveTo(X(S.sel), Y(S.sel)); ctx.lineTo(X(j), Y(j)); ctx.stroke(); }
+    ctx.globalAlpha = 1;
+    for(const j of D.nn[S.view][S.sel]){ ctx.beginPath(); ctx.arc(X(j), Y(j), 5.5, 0, Math.PI * 2); ctx.stroke(); }
+  }
+  if(S.song) for(let i = D.n_main; i < n; i++){ put(sprites.song, i, 1); }
+  if(S.sel >= 0){ ctx.strokeStyle = colors.ink; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(X(S.sel), Y(S.sel), 8, 0, Math.PI * 2); ctx.stroke();
+    ctx.fillStyle = isSong(S.sel) ? colors.song : colors.focus; ctx.beginPath(); ctx.arc(X(S.sel), Y(S.sel), 4.5, 0, Math.PI * 2); ctx.fill(); }
+  ctx.font = '700 14px ' + css('--display'); ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  const placed = [], free = (x, y) => !placed.some(q => Math.abs(q[0] - x) < 24 && Math.abs(q[1] - y) < 24);
+  for(let c = 0; c < LETTERS.length; c++){ const p = labelPos[S.view][c]; if(p < 0) continue; let x = X(p), y = Y(p);
+    for(let t = 1; t <= 24 && !free(x, y); t++){ x = X(p) + Math.cos(t * 0.9) * t * 5; y = Y(p) + Math.sin(t * 0.9) * t * 5; }
+    placed.push([x, y]);
+    if(x < 0 || y < 0 || x > W || y > H) continue;
+    ctx.fillStyle = colors.paper; ctx.fillRect(x - 10, y - 10, 20, 20); ctx.strokeStyle = S.focus === c ? colors.focus : colors.ink; ctx.lineWidth = 1.5; ctx.strokeRect(x - 10, y - 10, 20, 20);
+    ctx.fillStyle = colors.ink; ctx.fillText(LETTERS[c], x, y + 1); }
+}
+
+function nearest(px, py, r){ let best = -1, bd = r * r; const n = D.piece.length;
+  for(let i = 0; i < n; i++){ if(isSong(i) && !S.song) continue; const dx = X(i) - px, dy = Y(i) - py, d = dx * dx + dy * dy; if(d < bd){ bd = d; best = i; } } return best; }
+
+function labelsFor(view){ const out = [];
+  for(let c = 0; c < LETTERS.length; c++){ let mx = 0, my = 0, m = 0;
+    for(let i = 0; i < D.n_main; i++) if(+D.c[view][i] === c){ mx += D.x[view][i]; my += D.y[view][i]; m++; }
+    if(!m){ out.push(-1); continue; } mx /= m; my /= m; let best = -1, bd = 1e12;
+    for(let i = 0; i < D.n_main; i++) if(+D.c[view][i] === c){ const d = (D.x[view][i] - mx) ** 2 + (D.y[view][i] - my) ** 2; if(d < bd){ bd = d; best = i; } }
+    out.push(best); }
+  return out; }
+
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fmt = n => n.toLocaleString('en-US');
+function bars(i){ return D.bar[i] === D.end[i] ? 'bar ' + D.bar[i] : 'bars ' + D.bar[i] + '–' + D.end[i]; }
+function pieceLine(i){ const p = D.pieces[D.piece[i]]; return [bars(i), p.y, p.p].filter(Boolean).join(' · '); }
+
+function roll(c, notes, opt){
+  const r = c.getBoundingClientRect(), w = r.width, h = r.height; c.width = Math.round(w * DPR); c.height = Math.round(h * DPR);
+  const g = c.getContext('2d'); g.setTransform(DPR, 0, 0, DPR, 0, 0); g.clearRect(0, 0, w, h); if(!notes || !notes.length) return;
+  const end = Math.max(...notes.map(n => n[0] + n[1])), lo = Math.min(...notes.map(n => n[2])) - 1, hi = Math.max(...notes.map(n => n[2])) + 1;
+  const px = w / end, py = h / Math.max(6, hi - lo + 1);
+  g.strokeStyle = colors.rule; g.lineWidth = 1;
+  if(opt && opt.staff) for(let k = 1; k <= 5; k++){ const y = Math.round(h * k / 6) + 0.5; g.beginPath(); g.moveTo(0, y); g.lineTo(w, y); g.stroke(); }
+  g.fillStyle = opt && opt.color || colors.ink;
+  for(const [on, du, p] of notes){ const x = on * px, y = h - (p - lo + 1) * py; g.beginPath(); g.roundRect ? g.roundRect(x + 0.5, y, Math.max(2, du * px - 1.5), Math.max(2.5, py * 0.8), 2) : g.rect(x + 0.5, y, Math.max(2, du * px - 1.5), Math.max(2.5, py * 0.8)); g.fill(); }
+}
+
+function card(){
+  const el = document.getElementById('card'), i = S.sel;
+  if(i < 0){ el.innerHTML = '<div class="meta">Tap a mark on the map.</div>'; document.getElementById('nn').innerHTML = ''; return; }
+  const p = D.pieces[D.piece[i]], c = cl(i), lab = D.clusters[S.view][c];
+  el.innerHTML = `<p class="title">${esc(p.t)}</p><div class="meta">${esc(pieceLine(i))}</div>
+    <canvas class="roll" id="roll"></canvas><div class="chords" id="chords">${N ? esc(N.chords[i] || 'no chords') : '…'}</div>
+    <div class="row" style="margin-top:10px;justify-content:space-between"><button class="play" id="play">▶ Play</button>
+    <span class="row meta"><span class="mark">${LETTERS[c]}</span>${esc(lab.label)}</span></div>`;
+  roll(document.getElementById('roll'), N && N.notes[i], {staff:true, color:isSong(i) ? colors.song : colors.ink});
+  document.getElementById('play').onclick = () => { if(N) playSeq([i]); };
+  document.getElementById('nnh').textContent = 'Closest phrases in other pieces · ' + S.view;
+  document.getElementById('nn').innerHTML = D.nn[S.view][i].map(j => `<button data-i="${j}"><canvas></canvas><span><span class="t">${esc(D.pieces[D.piece[j]].t)}</span><br><span class="m">${esc(pieceLine(j))}</span></span></button>`).join('');
+  document.querySelectorAll('#nn button').forEach(b => { const j = +b.dataset.i; roll(b.querySelector('canvas'), N && N.notes[j]); b.onclick = () => select(j); });
+}
+function select(i){ S.sel = i; card(); draw(); }
+
+function legend(){
+  const L = D.clusters[S.view];
+  document.getElementById('legend').innerHTML = L.map((c, k) => `<button data-c="${k}" aria-pressed="${S.focus === k}"><span class="mark">${LETTERS[k]}</span><span class="lab">${esc(c.label)}</span><span class="n">${fmt(c.n)}</span></button>`).join('');
+  document.querySelectorAll('#legend button').forEach(b => b.onclick = () => { const k = +b.dataset.c; S.focus = S.focus === k ? -1 : k; S.hits = null; document.getElementById('q').value = ''; document.getElementById('hits').innerHTML = ''; legend(); draw(); });
+  document.getElementById('listen').disabled = S.focus < 0;
+  const counts = {}; for(let i = D.n_main; i < D.piece.length; i++){ const c = cl(i); counts[c] = (counts[c] || 0) + 1; }
+  const order = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+  document.getElementById('song').innerHTML = order.length ? order.map(([c, n]) => `<span><b>${LETTERS[c]}</b> ${n} ${n === 1 ? 'phrase' : 'phrases'}</span>`).join('') : '<span>not on this map</span>';
+}
+function setView(v){ S.view = v; S.focus = -1; document.querySelectorAll('.tabs button').forEach(b => b.setAttribute('aria-pressed', b.dataset.view === v)); legend(); card(); draw(); }
+
+// sound: a soft triangle voice, quarter = 72
+function voice(t, f, d){ const o = ac.createOscillator(), g = ac.createGain(), lp = ac.createBiquadFilter(); o.type = 'triangle'; o.frequency.value = f; lp.type = 'lowpass'; lp.frequency.value = 2400;
+  g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.22, t + 0.02); g.gain.setTargetAtTime(0.12, t + 0.05, 0.15); g.gain.setTargetAtTime(0, t + Math.max(0.06, d - 0.04), 0.06);
+  o.connect(lp); lp.connect(g); g.connect(ac.destination); o.start(t); o.stop(t + d + 0.4); }
+function playSeq(list){
+  if(!N) return; ac = ac || new (window.AudioContext || window.webkitAudioContext)(); if(ac.state === 'suspended') ac.resume();
+  const q = 60 / 72 / 12; let t = ac.currentTime + 0.08; const marks = [];
+  for(const i of list){ const ns = N.notes[i]; for(const [on, du, p] of ns) voice(t + on * q, 440 * Math.pow(2, (p - 69) / 12), du * q); marks.push([t, i]); t += (Math.max(...ns.map(n => n[0] + n[1])) * q) + 0.7; }
+  if(playing) playing.forEach(clearTimeout); playing = marks.map(([at, i]) => setTimeout(() => select(i), Math.max(0, (at - ac.currentTime) * 1000)));
+}
+document.getElementById('listen').onclick = () => { if(S.focus < 0) return; const m = []; for(let i = 0; i < D.n_main; i++) if(cl(i) === S.focus) m.push(i);
+  const pick = []; for(let k = 0; k < 4 && m.length; k++) pick.push(m.splice(Math.floor(Math.random() * m.length), 1)[0]); playSeq(pick); };
+
+// pan, zoom, tap, hover
+const pts = new Map(); let down = null, moved = false, pinch = null;
+cv.addEventListener('pointerdown', e => { cv.setPointerCapture(e.pointerId); pts.set(e.pointerId, [e.offsetX, e.offsetY]);
+  if(pts.size === 1){ down = [e.offsetX, e.offsetY]; moved = false; }
+  if(pts.size === 2){ const [a, b] = [...pts.values()]; pinch = {d: Math.max(1, Math.hypot(a[0] - b[0], a[1] - b[1])), k: S.k, tx: S.tx, ty: S.ty, mx: (a[0] + b[0]) / 2, my: (a[1] + b[1]) / 2}; moved = true; } });
+cv.addEventListener('pointermove', e => {
+  if(!pts.has(e.pointerId)){ if(e.pointerType === 'mouse' && D) hover(e.offsetX, e.offsetY); return; }
+  const prev = pts.get(e.pointerId); pts.set(e.pointerId, [e.offsetX, e.offsetY]);
+  if(pts.size === 2 && pinch){ const [a, b] = [...pts.values()]; const k = Math.min(40, Math.max(1, pinch.k * Math.hypot(a[0] - b[0], a[1] - b[1]) / pinch.d));
+    S.tx = pinch.mx - (pinch.mx - pinch.tx) * k / pinch.k; S.ty = pinch.my - (pinch.my - pinch.ty) * k / pinch.k; S.k = k; draw(); return; }
+  if(down && Math.hypot(e.offsetX - down[0], e.offsetY - down[1]) > 4) moved = true;
+  if(moved && S.k > 1){ S.tx += e.offsetX - prev[0]; S.ty += e.offsetY - prev[1]; draw(); } });
+cv.addEventListener('pointerup', e => { pts.delete(e.pointerId); if(pts.size < 2) pinch = null;
+  if(pts.size === 0){ if(!moved && down && D){ const i = nearest(down[0], down[1], 16); if(i >= 0) select(i); } down = null; } });
+cv.addEventListener('pointercancel', e => { pts.delete(e.pointerId); pinch = null; if(pts.size === 0) down = null; });
+cv.addEventListener('pointerleave', () => { document.getElementById('tip').hidden = true; });
+cv.addEventListener('wheel', e => { e.preventDefault(); const k = Math.min(40, Math.max(1, S.k * Math.exp(-e.deltaY * 0.0015)));
+  S.tx = e.offsetX - (e.offsetX - S.tx) * k / S.k; S.ty = e.offsetY - (e.offsetY - S.ty) * k / S.k; S.k = k; draw(); }, {passive: false});
+function hover(x, y){ const tip = document.getElementById('tip'), i = nearest(x, y, 10); if(i < 0){ tip.hidden = true; return; }
+  tip.textContent = D.pieces[D.piece[i]].t + ' · ' + bars(i) + ' · ' + LETTERS[cl(i)]; tip.style.left = (cv.offsetLeft + X(i)) + 'px'; tip.style.top = (cv.offsetTop + Y(i)) + 'px'; tip.hidden = false; }
+document.getElementById('reset').onclick = () => { S.k = 1; S.tx = 0; S.ty = 0; draw(); };
+document.getElementById('songbtn').onclick = e => { S.song = !S.song; e.currentTarget.setAttribute('aria-pressed', S.song); draw(); };
+document.getElementById('yearbtn').onclick = e => { S.year = !S.year; e.currentTarget.setAttribute('aria-pressed', S.year); document.getElementById('yearkey').hidden = !S.year; draw(); };
+document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => setView(b.dataset.view));
+document.getElementById('q').addEventListener('input', e => { const q = e.target.value.trim().toLowerCase(); const hits = document.getElementById('hits');
+  if(q.length < 2){ S.hits = null; hits.innerHTML = ''; draw(); return; }
+  const found = D.pieces.map((p, k) => [p, k]).filter(([p]) => p.t.toLowerCase().includes(q)).slice(0, 8);
+  S.hits = new Set(found.map(([, k]) => k)); S.focus = -1; legend();
+  hits.innerHTML = found.map(([p, k]) => `<button data-k="${k}">${esc(p.t)}${p.y ? ' · ' + p.y : ''}</button>`).join('') || '<div class="meta">No piece with that in its title.</div>';
+  hits.querySelectorAll('button').forEach(b => b.onclick = () => { const k = +b.dataset.k, i = D.piece.indexOf(k); if(i >= 0) select(i); });
+  draw(); });
+
+new ResizeObserver(size).observe(cv);
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { readColors(); card(); draw(); });
+new MutationObserver(() => { readColors(); card(); draw(); }).observe(document.documentElement, {attributes: true, attributeFilter: ['data-theme']});
+
+(async () => {
+  readColors();
+  try{ D = await (await fetch('map.json')).json(); }
+  catch(e){ document.getElementById('loading').textContent = 'The map data did not load. Reload the page.'; return; }
+  const ys = D.pieces.map(p => p.y).filter(Boolean); D.y0 = Math.min(...ys); D.y1 = Math.max(...ys);
+  document.getElementById('y0').textContent = D.y0; document.getElementById('y1').textContent = D.y1;
+  for(const v of D.views) labelPos[v] = labelsFor(v);
+  const extra = D.piece.length > D.n_main;
+  document.getElementById('sub').textContent = `${fmt(D.n_main)} phrases from ${fmt(D.pieces.length - (extra ? 1 : 0))} scores`;
+  if(extra){ const name = D.pieces[D.piece[D.n_main]].t.replace(/\s*\(.*\)\s*$/, '');
+    document.getElementById('songname').textContent = name; document.getElementById('songh').textContent = name + ' on this map'; }
+  else { document.getElementById('songbtn').hidden = true; document.getElementById('songh').hidden = true; document.getElementById('song').hidden = true; S.song = false; }
+  document.getElementById('loading').hidden = true;
+  legend(); size(); if(D.piece.length > D.n_main) select(D.n_main);
+  try{ N = await (await fetch('notes.json')).json(); card(); } catch(e){}
+})();
+</script>
