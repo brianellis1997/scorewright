@@ -43,6 +43,8 @@ For a Claude Code session: read [CLAUDE.md](CLAUDE.md), then [lab/COMPOSING.md](
 | `lab/band/` | the concert band orchestration of Bright Valley |
 | `lab/songs/` | build scripts for whole new pieces: `where_i_left_it.py` (S1, too pop), `where_i_left_it_s2.py` (S2, odd), `where_i_left_it_s3.py` (S3, in his song-study grammar), English horn and piano with words |
 | `lab/style_profile.py` | measures a composer's harmonic and melodic habits from their scores and flags where a draft falls outside them |
+| `lab/lint_line.py` | checks a melody for wrong-way accidentals, unrecovered or augmented leaps, phrases too long to breathe, range |
+| `lab/harmony_index.py`, `lab/find_progression.py` | index the harmony of all 1,655 scores; find a progression in any key and show the melody he wrote over it |
 | `lab/reduce_harmony.py` | prints a score as a lead-sheet reduction, one line per bar (chords, bass, melody, accompaniment rhythm), to read many pieces fast |
 | `lab/NotaGen/` | git submodule; its ABC converters are used by the pipeline |
 | `*.py` at the root | `xmledit.py`, `diffview.py`, `retrieve.py`, `ranges.py`, `analyze.py`, and the August prototypes |

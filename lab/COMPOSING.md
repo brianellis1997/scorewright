@@ -143,6 +143,27 @@ his style instead of from his pieces. Section 12 has the song-study grammar, rea
   (Bm, G, D, A) and choruses that soar. Most of his studies are minor or modal. When the words
   are bittersweet, take the minor side: a minor v, sus dominants that never resolve to the major,
   a low and narrow tune.
+- **Start from his idea when he has one.** After four misses he described his own sketch: "E
+  minor starting on G; Em, F# half-diminished, B major, back to Em, over again; the melody from G
+  up to E and back down, resolving to B on the B chord." S5 was built on it. Ask for the seed (a
+  progression, a contour, a take with the piano button) before inventing one. Then search his
+  archive for that progression (find_progression.py): Miniature no 6 has his i, iiø7, V, i three
+  times, under a narrow stepwise tune and a steady eighth-note left hand.
+- **Accidentals lean the way they were raised or lowered.** S4 put a G# (D# in the horn's written
+  part) on the way down, A, G#, F#. He heard a wrong note: "Mozart or Chopin would have it lean
+  up." A raised note rises by step or repeats; a lowered note falls. In minor that means the
+  raised 6th and 7th only on the way up. `lint_line.py` checks this.
+- **Wind players and singers breathe.** S1 to S4 sang three or four bars at a time with a
+  quarter rest between lines, about 15 seconds: "no wind instrument or human voice could hold
+  that". Put a rest at every comma and at least every 8 seconds at the marked tempo.
+- **Prepare and recover leaps.** "The jumps come out of nowhere." Approach a leap bigger than a
+  fourth by step, follow it with a step back the other way, and never write augmented or
+  diminished melodic intervals.
+- **Static accompaniment still has to move inside.** A pedal or a repeated figure needs a voice
+  moving in it ("something feels off about it"). S5 keeps one left-hand figure and changes the
+  right hand on each pass of the progression: silent, then an inner line (B C B A G), then
+  off-beat chords, then held chords. In the chorus the guide tones move (each seventh falls to
+  the next third).
 - **Change key on a held common tone.** "I'm more subtle when transitioning to different keys."
   No 10 goes from Fm to E major on a held Ab = G#.
 - **A fade on a held note runs to the end of the note.** End the hairpin on the event after the
@@ -577,3 +598,31 @@ built in:
 
 The 9/19/19 English horn study and The Ocean art song are richer: chromatic chains, polychords,
 whole-tone runs. They are not his song language in general, and S2 borrowed from them.
+
+## 13. Check the line, search the archive (lint_line.py, harmony_index.py, find_progression.py)
+
+    python lint_line.py <score.musicxml> [--part 0] [--breath 8]       # exit 1 on any issue
+    python harmony_index.py [--jobs 6]                                 # once; resumable
+    python find_progression.py "minor hdim@+2 major|dom@+5 minor@+5" --melody
+
+`lint_line.py` flags, in sounding pitch:
+- raised notes that do not rise by step, lowered notes that do not fall
+- augmented or diminished melodic intervals
+- leaps bigger than a fourth without a step back the other way
+- two leaps one way spanning more than an octave
+- more than N seconds without a rest at the marked tempo
+- notes outside the instrument's range
+
+Run it on every melody before he hears it. It reports S4's G# and S1-S4's 15-second phrases.
+
+`harmony_index.py` reduces all 1,655 scores (the archive plus `extra_sept2026/MusicXML`). For
+each window it stores the chord and bass, plus the melody per bar, in
+`$E/_logs/harmony_index/<stem>.json`. The whole run takes under two minutes with 6 workers.
+
+`find_progression.py` searches the index for a progression in any key. The pattern is chord
+families (minor, major, dom, hdim, dim, sus, any) with the root's distance from the previous
+chord in semitones. It prints the score, the bars, the chords and, with `--melody`, the notes
+he wrote over them. Use it before writing a progression "in his style", to see how he actually
+treats it.
+
+Piano pieces index the top staff as the melody and take chords from the other staff.

@@ -26,7 +26,7 @@ LAB = os.path.dirname(HERE)
 OUT = '/Users/bdogellis/Documents/Score Exports/_scorewright_out/songs'
 NAME = 'where_i_left_it_s3'
 WORDS = syllables(V1) + syllables(CH)
-KEYSIG = {'D': {'F': 1, 'C': 1}, 'A': {'F': 1, 'C': 1, 'G': 1}}
+KEYSIG = {'D': {'F': 1, 'C': 1}, 'A': {'F': 1, 'C': 1, 'G': 1}, 'G': {'F': 1}, 'C': {}}
 BAR, BEAT = 48, 12                 # in 48ths of a whole bar: a sixteenth is 3, a triplet eighth is 4
 
 
@@ -58,7 +58,7 @@ def join_beats(events):
     return out
 
 
-def eh_bar(spec, carry):
+def eh_bar(spec, carry, key='A'):
     """concert tokens -> written ABC. Pitch/sixteenths, ~ tie, z/n rest, ( ) slur, !..! decoration,
     N/ wordless, M/ melisma; '(3' makes the next three notes a triplet. kinds: s syllable, k no
     lyric (tie continuation, wordless), m melisma."""
@@ -93,7 +93,7 @@ def eh_bar(spec, carry):
             kind = 'k'
             if any(d in pre for d in ('!<)!', '!>)!')) and not any(d in pre for d in ('!<(!', '!>(!')):
                 raise ValueError(f'hairpin ends on a tied continuation (cut-off fade): {spec}')
-        events.append((t, pre + abc_pitch(up_fifth(p), 'A', state) + dur(n) + ('-' if tie else ''), False, 2 * n if trip else 3 * n))
+        events.append((t, pre + abc_pitch(up_fifth(p), key, state) + dur(n) + ('-' if tie else ''), False, 2 * n if trip else 3 * n))
         pre = ''
         t += 2 * n if trip else 3 * n
         trip = max(0, trip - 1)
