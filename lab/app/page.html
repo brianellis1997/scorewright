@@ -2,8 +2,8 @@
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Scorewright</title>
 <style>
-:root{--bg:#f6f4ef;--panel:#fff;--ink:#1b1a17;--ink2:#5b5850;--line:#ddd8cc;--green:#0b8a3e;--red:#c02626;--blue:#2a5bd7}
-@media(prefers-color-scheme:dark){:root{--bg:#161512;--panel:#1f1d19;--ink:#efece4;--ink2:#a9a498;--line:#34312a}}
+:root{--bg:#f6f4ef;--panel:#fff;--ink:#1b1a17;--ink2:#5b5850;--line:#ddd8cc;--btn:#e6e2d8;--green:#0b8a3e;--red:#c02626;--blue:#2a5bd7}
+@media(prefers-color-scheme:dark){:root{--bg:#161512;--panel:#1f1d19;--ink:#efece4;--ink2:#a9a498;--line:#34312a;--btn:#3b3830}}
 body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 -apple-system,"Segoe UI",sans-serif;display:grid;grid-template-rows:auto 1fr;height:100vh;height:100dvh}
 header{display:flex;gap:10px;align-items:center;padding:8px 12px;border-bottom:1px solid var(--line);background:var(--panel)}
 header b{font-size:16px} header .s{color:var(--ink2);font-size:13px;margin-left:auto}
@@ -20,7 +20,7 @@ html,body{max-width:100%;overflow-x:hidden}
 .sug{border:1px solid var(--green);border-radius:10px;padding:8px 10px;margin:6px 0;background:rgba(11,138,62,.06)}
 .sug b{color:var(--green)} .sug .st{font-size:12px;color:var(--ink2)}
 .btns{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}
-button{border:0;border-radius:8px;padding:8px 12px;font:inherit;cursor:pointer;background:#e6e2d8;color:var(--ink)}
+button{border:0;border-radius:8px;padding:8px 12px;font:inherit;cursor:pointer;background:var(--btn);color:var(--ink)}
 button.ok{background:var(--green);color:#fff} button.no{background:var(--red);color:#fff} button.go{background:var(--blue);color:#fff} button.mic.on{background:var(--red);color:#fff}
 #ask{display:flex;gap:6px;padding:8px;border-top:1px solid var(--line)}
 #takebox{border-top:1px solid var(--line);padding:8px;background:var(--panel)} #takebox .stf{background:#fff;border-radius:6px;overflow:auto;max-height:220px} #takebox .stf svg{width:100%;height:auto;display:block} #takebox textarea{width:100%;box-sizing:border-box;font:inherit;padding:6px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);margin:6px 0} #takebox .btns{display:flex;gap:6px}
