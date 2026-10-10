@@ -111,29 +111,33 @@ Rules learned from his verdicts:
   band piece written on two staves ("probably trumpet", "wind choir" in his own text); the useful
   output is the band score, with dynamics, slurs, articulations and tempo, not a continuation.
 
-Rules from his verdict on the first song, "Where I Left It" S1 (Oct 9 2026: "too pop, too
-saccharine, on the nose, no mystery, no tension"). Section 11 has the measurements behind them.
+Rules from his verdicts on the first song, "Where I Left It" (Oct 9 2026). S1: "too pop, too
+saccharine, on the nose, no mystery, no tension". S2 was written to a first version of these rules,
+and his verdict was: "odd harmonic language, not mine; the harmony changes a lot; the accompaniment
+style keeps changing; janky". Both missed the same way. They were composed toward a description of
+his style instead of from his pieces. Section 12 has the song-study grammar, read bar by bar.
 
-- **Lean into the chord, don't sit on it.** "Chopin uses a passing note resolving to the chord a
-  lot; your melody is on the nose of the chord." Put appoggiaturas and suspensions on the stressed
-  syllables and resolve them by step, some only when the harmony moves under a held note, a few
-  never. S1 sat on root, third or fifth on 80% of beats, more than any of his 17 songs. Don't
-  overcorrect either: his songs sit at 40-79% (median 59%), and a draft with 35% was also outside.
-- **No pop progressions.** I-V-vi-IV and the descending pop bass (D, A/C#, Bm, Bm/A, G) are
-  "vanilla, some amateur pop composer". Use his vocabulary instead: pedal points with chords moving
-  above them, polychords (C/D, A/G, D/G), the Lydian #4, borrowed bVI, iv and bVII,
-  half-diminished chords, V7 with b9 or 13, a deceptive cadence to bVI, plagal iv-I at the end.
-  Keep plain triads (about a third of his chords): over a simple chord the leaning melody carries
-  the tension.
-- **Walk the left hand.** In his songs 82% of bass moves are leaps (root on the beat, then the
-  third or fifth) and only 7% are half steps. A chromatic bass line is a special moment, not the
-  default.
-- **Change key gradually, by a common tone or a pivot.** "I'm more subtle when transitioning to
-  different keys." S2's bridge goes D, Dm (one note changes), Bb, Gb, and comes home on the
-  common tone F# = Gb.
-- **Change the accompaniment figure every one to four bars.** He varies contour, register and
-  rhythm while the idea persists. S1 ran one rhythm for 72 bars ("got repetitive, I would vary it
-  long before you did").
+- **Slow harmony; colour from the sonority.** His song studies hold one chord a bar or longer.
+  Often a sus or added-note chord sits over a pedal for four bars or more: F#sus4/B in no 9,
+  Ebsus4/Ab in no 2, Bbmaj7 and Fsus4 over Bb for most of no 6. The colour comes from sus2,
+  sus4, add9, maj7 and maj9 sonorities, and from the melody holding a note while the chord moves
+  under it. S2 changed chord on almost every beat ("changes a lot"). S1 changed twice a bar on
+  plain triads ("vanilla").
+- **Plain diatonic motion underneath, a borrowed chord where it matters.** Beneath the colours he
+  uses I, vi, IV, V and ii, often in inversion (no 3's verse is G, Em, C, D). Occasional extras:
+  a borrowed iv to I at a cadence (Cm to G in no 3 and no 4), V/vi (B7/D#), an augmented passing
+  chord (G to F#+). S2's grab-bag was "odd, not mine": polychords, major sevenths planing up,
+  whole-tone, a Gb excursion. Those came from one art song and one study, not from his song language.
+- **One accompaniment figure per section.** He keeps a figure for a section or a whole piece
+  (straight eighths through no 4 and no 9) and varies the voicing. S1 kept one unvaried figure for
+  108 bars ("repetitive"). S2 switched figure every one to four bars ("the changing of
+  accompaniment style").
+- **A simple stepwise melody from repeated motifs.** Long notes on the stresses, a two-bar motif
+  repeated over moving harmony, and his triplet turn (E5, then E D E, in no 1) on held notes.
+  Leaning tones come from the ninths and fourths of the sus and add9 chords. Textbook
+  appoggiaturas on every stressed syllable (S2) did not land.
+- **Change key on a held common tone.** "I'm more subtle when transitioning to different keys."
+  No 10 goes from Fm to E major on a held Ab = G#.
 - **A fade on a held note runs to the end of the note.** End the hairpin on the event after the
   tie chain, never on the tied continuation. S1's "home" in bars 35-36 stayed loud because the
   fade ended where the note began.
@@ -412,15 +416,19 @@ Accept copies the suggestion over the working score; Reject keeps the working sc
 verdict with his words. Never write to the working score directly: everything goes through a
 suggestion so the log stays complete.
 
-## 10. A new piece from words (lab/songs/where_i_left_it_s2.py is the worked example)
+## 10. A new piece from words (lab/songs/where_i_left_it_s3.py is the worked example)
 
 When he asks for a whole piece, not a continuation, there is no score to splice into, so write a
 build script under `lab/songs/` that generates the full ABC: harmony per beat, the melody in
 concert pitch, the words, and the accompaniment per section. Re-running it rebuilds the piece, so
 revisions are edits to tables, not to 100 bars of ABC.
 
-`where_i_left_it.py` built S1, which he rejected for its style (section 2, the S1 rules).
-`where_i_left_it_s2.py` built S2. In S2 every bar is one `bar()` row with these fields:
+`where_i_left_it.py` built S1 and `where_i_left_it_s2.py` built S2; he rejected both for their
+style (section 2). `where_i_left_it_s3.py` builds S3 (intro, verse 1, chorus 1) in his song-study
+grammar (section 12), in 4/4. It beams eighths in fours per half bar, as his scores do, with
+sixteenths and triplets by the beat. It writes his triplet turns with `(3`, and each bar takes a
+left-hand eight-note wave plus optional right-hand chords. S2's script has the tempo-step and
+swell machinery. In S2 every bar is one `bar()` row with these fields:
 - the English horn in concert pitch, using the tokens `Pitch/sixteenths`, `~` (tie), `z/n`
   (rest), `N/` (wordless note) and `M/` (melisma note, writes `_`)
 - one `left hand ; right hand` voicing per beat
@@ -506,9 +514,59 @@ Procedure:
     bars before the figure changes  1.4    1.0-3.0     10.8 (above)   1.6
     longest run of one rhythm       14     4-55        72 (above)     10
 
-S1 was outside his range on 8 measures, S2 on none.
+S1 was outside his range on 8 measures, S2 on none, and he rejected S2 anyway ("odd harmonic
+language, not mine; the harmony changes a lot; the accompaniment keeps changing"). Inside the
+range is not in style. Two measures misled outright:
+- The figure measure counted every voicing change inside one figure as a change of figure. It
+  said his figures change every 1.4 bars, so S2 switched textures every few bars. In fact he keeps
+  one figure for a whole section.
+- Beat-level bass motion read his arpeggiated left hands as a walking bass ("82% leaps"), so S2
+  walked the bass and changed chords under it.
+
+Use the profile to flag gross mismatches (S1's 80% plain beats and 72-bar figure were real). Then
+read the pieces (section 12) before deciding what to write.
 
 Limits: chords come from templates (triads, sevenths, sixths, ninths, sus), so quartal harmony,
 clusters and polychords count as "outside every template", which in his music is itself a style
 marker. The melody is the first part that is not a keyboard, guitar or harp. One analysis window
 per beat suits slow songs. Fast music with a harmony per bar wants a longer window.
+
+## 12. Read his pieces bar by bar (reduce_harmony.py)
+
+    python reduce_harmony.py <score.musicxml> [first_bar] [last_bar]
+
+Prints one line per bar:
+- the chord and bass per window (half bar in 4/4 and 12/8, a beat in 6/8, the bar in 3/4)
+- the melody in sounding pitch, with durations in quarters
+- the accompaniment's onsets per beat (`acc 2222` is straight eighths)
+
+A score reads like a lead sheet, so 14 pieces can be read in one sitting. Chords no template fits
+print as their pitch classes, for example `[E B G A]`. In a broken-chord figure, the second half
+of a bar may show only the upper notes ("F#m7" over a D pedal is the top of Dmaj9).
+
+His 14 song studies (2019), read this way. This is the grammar S3 of "Where I Left It" was
+built in:
+- **Openings sit still.** One suspended or added-note sonority over a pedal for four bars or more:
+  F#sus4/B (no 9), Asus4/D and Bbmaj9/D (no 11), Fm7 (no 10), Bbmaj7 rocking with Fsus4/Bb (no 6).
+- **Harmonic rhythm is slow.** One chord a bar, often two bars, sometimes two alternating
+  sonorities (F#sus4/B and Esus4/B; Am9/G and Gmaj9/A).
+- **The colours are sus2, sus4, add9, maj7, maj9 and m9.** Underneath, the motion is plain and
+  diatonic: G, Em, C, D in no 3; G, Am, Em, D7/F#, G, C/E in no 4.
+- **Borrowed and chromatic chords are rare and placed:**
+  - iv to I (Cm to G, no 3 and no 4)
+  - V/vi (B7/D#)
+  - an augmented passing chord (G to F#+)
+  - D7sus4 resolving to D (9/23/19)
+  - diminished passing chords in B sections
+- **Key changes go through a held common tone** (no 10: Fm to E major on Ab = G#) or through a
+  sus chord (Esus4/A to Dmaj7/A in no 4).
+- **One accompaniment figure per section:** straight eighths through all of no 4 and no 9,
+  triplets in no 11. The figure changes only where the section changes.
+- **The melody is simple and stepwise,** built from repeated two-bar motifs. Long notes or
+  repeated notes are recoloured by the harmony moving under them (no 10 holds Ab5 for four bars
+  over Fm7, Fm9 and Abmaj7). Small triplet turns ornament the held notes. The range is narrow.
+- **Endings hold.** A long tonic note or chord over a bare bass, often after a rit.
+- **Meter:** mostly a slow 4/4, some 3/4 (no 7, 9/23/19), one 6/8 (no 5), one 12/8 (no 11).
+
+The 9/19/19 English horn study and The Ocean art song are richer: chromatic chains, polychords,
+whole-tone runs. They are not his song language in general, and S2 borrowed from them.
