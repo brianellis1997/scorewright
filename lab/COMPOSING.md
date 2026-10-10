@@ -380,3 +380,31 @@ sections 1-5, then register the result with sw_suggest; it appears green in both
 Accept copies the suggestion over the working score; Reject keeps the working score; both log a
 verdict with his words. Never write to the working score directly: everything goes through a
 suggestion so the log stays complete.
+
+## 10. A new piece from words (lab/songs/where_i_left_it.py is the worked example)
+
+When he asks for a whole piece, not a continuation, there is no score to splice into, so write a
+build script under `lab/songs/` that generates the full ABC: harmony per beat, the melody in
+concert pitch, the words, and the accompaniment per section. Re-running it rebuilds the piece, so
+revisions are edits to tables, not to 100 bars of ABC.
+
+1. **Retrieve his idiom for the exact pairing first.** `corpus_find.py` with the instruments, then
+   `dump_abc.py` on the two or three closest pieces (for "Where I Left It": the 9/19/19 English horn
+   study, Song Study no 8, and no 5 for 6/8). Write down what he does: register, accompaniment
+   figure, bass motion, where the middle section goes harmonically, how it ends.
+2. **Let the words set the meter.** Mark the stresses. Anapests (da da DUM) want 6/8 or 12/8,
+   iambs and trochees want 4/4 or 3/4. Put stressed syllables on strong beats and let line ends
+   hold while the accompaniment fills.
+3. **Words go on the notes as ABC `w:` lines** under the melody voice. abc2xml writes them as
+   MusicXML `<lyric>` with begin/middle/end syllables; Verovio draws them and Dorico imports them.
+   - **abc2xml gives every note a syllable, the second half of a tie included.** Put `*` in the
+     `w:` line for every tie continuation and every wordless note, or the words slide one note early.
+   - `_` extends the previous syllable over a new note (a melisma); `-` joins syllables of a word.
+4. **Transposing melody instruments**: write the voice in written pitch with its own key,
+   `V:1 ... transpose=-7` and `[K:A]` at the start of that voice for an English horn in a D major
+   piece. abc2xml writes `<transpose>` with only `<chromatic>`: add `<diatonic>` (-4 for a fifth),
+   and delete the extra `<key>` the global K: leaves in the first bar of that part.
+5. **Check before showing**: every bar's length in every staff, the sounding range, that each
+   syllable sits on its note (no syllable on a tie continuation), and every strong-beat or long
+   melody note against the accompaniment chord (expect only deliberate suspensions and colours).
+   Then render, look, and register it as a suggestion in its own piece so his verdict is logged.
