@@ -218,6 +218,7 @@ Used only by the MuseScore panel; the page polls HTTP instead. Client to server:
 | `rh_profile.py` | `<scores...> [--examples N]`: right hand against the melody, as doubling, thirds and sixths, and fills of the melody's rests (filled, held or silent); prints the fills |
 | `songs/where_i_left_it_s6.py` | S6: S5 in concert pitch with the right hand rewritten after his song studies (intro tune, thirds, octave doubling, a fill in every breath) |
 | `songs/where_i_left_it_s7.py` | S7: S5's tune, the piano rewritten from reading his song-study pages (space, counter-line under held notes, a two-bar piano answer in thirds, one texture change for the chorus with fading waves) |
+| `songs/where_i_left_it_s8.py` | S8: S7 with Brian's melody edits (rise to C and fall to A on "win-dow I"; B A F# G on "swore I'd turn off"), applied where the same figures recur, intro updated |
 | `harmony_index.py` | `[--jobs 6] [--limit N]`: per-window chord and bass and per-bar melody for every score into `$E/_logs/harmony_index/` (resumable) |
 | `find_progression.py` | `"<families with @+semitones>" [--max N] [--melody]`: find a progression in any key across the index |
 | `songs/where_i_left_it_s4.py`, `songs/where_i_left_it_s5.py` | S4 (B minor, rejected) and S5 (his own E minor sketch, lint-clean, breaths, a right hand that changes each pass, circle-of-fifths chorus) |
