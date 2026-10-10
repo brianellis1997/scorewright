@@ -164,6 +164,13 @@ his style instead of from his pieces. Section 12 has the song-study grammar, rea
   right hand on each pass of the progression: silent, then an inner line (B C B A G), then
   off-beat chords, then held chords. In the chorus the guide tones move (each seventh falls to
   the next third).
+- **The right hand talks to the melody.** "I would be filling in: doubling the melody at times,
+  or in thirds, some ornamentation, or filling lines when the melody stops. Do you not notice
+  that in my song studies?" Measured with `rh_profile.py`, the right hand in his 14 song studies
+  doubles about a third of the melody's notes (no 8: 52%), harmonises it in thirds or sixths
+  (no 5 and no 9: over 40%) and fills about 70% of the melody's rests with a line: an arpeggio,
+  a scale run, an echo. S5's right hand only held chords and filled none of the 13 breaths. S6
+  previews the tune, then adds thirds, then octave doubling, and fills every breath.
 - **Change key on a held common tone.** "I'm more subtle when transitioning to different keys."
   No 10 goes from Fm to E major on a held Ab = G#.
 - **A fade on a held note runs to the end of the note.** End the hairpin on the event after the
@@ -203,7 +210,11 @@ Conventions that matter, all learned the hard way:
 - **Rest-reduced format.** A voice that rests for a whole bar is omitted from that bar's line.
   When continuing an ensemble piece, include every voice that should sound. Invisible rests `x`
   are legal but render as gaps; write `z`.
-- **Transposing instruments.** Write the whole ensemble in concert pitch and let
+- **Transposing instruments: concert pitch, always, for Brian.** Since Oct 10 2026 every part is
+  written and notated at sounding pitch: no `transpose=` in the ABC, no `<transpose>` in the
+  MusicXML ("compose in concert pitch, always; it's confusing for everyone and you could misspell
+  a note; I can't tell which note the English horn plays"). Transposed parts are an option only for
+  a user who asks for them. For such a user, write in concert pitch and let
   `orch_transpose.py` produce written pitch per voice from the header's `transpose=` and each
   voice's inline `[K:]`. It spells by interval letters (concert E up a major second is F sharp,
   not G flat) and emits accidentals relative to the written key with bar carry:
@@ -480,10 +491,11 @@ tempo steps.
    - **abc2xml gives every note a syllable, the second half of a tie included.** Put `*` in the
      `w:` line for every tie continuation and every wordless note, or the words slide one note early.
    - `_` extends the previous syllable over a new note (a melisma); `-` joins syllables of a word.
-4. **Transposing melody instruments**: write the voice in written pitch with its own key,
-   `V:1 ... transpose=-7` and `[K:A]` at the start of that voice for an English horn in a D major
-   piece. abc2xml writes `<transpose>` with only `<chromatic>`: add `<diatonic>` (-4 for a fifth),
-   and delete the extra `<key>` the global K: leaves in the first bar of that part.
+4. **Transposing melody instruments: concert pitch** (section 3; S6 onward). Only for a user who
+   wants transposed parts: write the voice in written pitch with its own key (`V:1 ...
+   transpose=-7` and `[K:A]` for an English horn in a D major piece). abc2xml then writes
+   `<transpose>` with only `<chromatic>`, so add `<diatonic>` (-4 for a fifth). Also delete the
+   extra `<key>` the global K: leaves in the first bar of that part.
 5. **Check before showing**: every bar's length in every staff, the sounding range, that each
    syllable sits on its note (no syllable on a tie continuation), and every strong-beat or long
    melody note against the accompaniment chord (expect only deliberate suspensions and colours).
@@ -618,6 +630,11 @@ Run it on every melody before he hears it. It reports S4's G# and S1-S4's 15-sec
 `harmony_index.py` reduces all 1,655 scores (the archive plus `extra_sept2026/MusicXML`). For
 each window it stores the chord and bass, plus the melody per bar, in
 `$E/_logs/harmony_index/<stem>.json`. The whole run takes under two minutes with 6 workers.
+
+`rh_profile.py <scores...> [--examples N]` measures what the right hand of the accompaniment
+does against the melody. It counts doubling (same pitch class, unison or octave), thirds and
+sixths attacked together, and whether each melody rest of a beat or more is filled with a line,
+held or silent. With `--examples` it prints the fills, note by note.
 
 `find_progression.py` searches the index for a progression in any key. The pattern is chord
 families (minor, major, dom, hdim, dim, sus, any) with the root's distance from the previous

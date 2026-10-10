@@ -58,7 +58,7 @@ def join_beats(events):
     return out
 
 
-def eh_bar(spec, carry, key='A'):
+def eh_bar(spec, carry, key='A', transpose=True):
     """concert tokens -> written ABC. Pitch/sixteenths, ~ tie, z/n rest, ( ) slur, !..! decoration,
     N/ wordless, M/ melisma; '(3' makes the next three notes a triplet. kinds: s syllable, k no
     lyric (tie continuation, wordless), m melisma."""
@@ -93,7 +93,7 @@ def eh_bar(spec, carry, key='A'):
             kind = 'k'
             if any(d in pre for d in ('!<)!', '!>)!')) and not any(d in pre for d in ('!<(!', '!>(!')):
                 raise ValueError(f'hairpin ends on a tied continuation (cut-off fade): {spec}')
-        events.append((t, pre + abc_pitch(up_fifth(p), key, state) + dur(n) + ('-' if tie else ''), False, 2 * n if trip else 3 * n))
+        events.append((t, pre + abc_pitch(up_fifth(p) if transpose else p, key, state) + dur(n) + ('-' if tie else ''), False, 2 * n if trip else 3 * n))
         pre = ''
         t += 2 * n if trip else 3 * n
         trip = max(0, trip - 1)
