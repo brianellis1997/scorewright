@@ -171,6 +171,22 @@ his style instead of from his pieces. Section 12 has the song-study grammar, rea
   (no 5 and no 9: over 40%) and fills about 70% of the melody's rests with a line: an arpeggio,
   a scale run, an echo. S5's right hand only held chords and filled none of the 13 breaths. S6
   previews the tune, then adds thirds, then octave doubling, and fills every breath.
+- **In minor, hint at the relative major.** "In my minor-key music there's a hint of the relative
+  major: a D major chord hinting at resolving to G, and maybe it does, or a false resolution to
+  the minor v (B minor). That's what Rachmaninoff does. Not constantly, just hints." His archive
+  has i, VII, III 376 times and i, VII, v 323 times (find_progression.py): The Ocean (Gm9, F7b9,
+  Bbmaj9), A set of 5 Nocturnes (Abm7, F#7/Bb, B), 117 Art Song (Bbm, Ab/C, Fm). VII is often in
+  first inversion. S9: one real arrival on G under "morning I left", and one false one: the breath
+  held on D major falls to B minor.
+- **Melodic peaks are rationed.** "Going up just to a C is more subtle, more melancholic, less on
+  the nose. Going up to an E makes no sense, way too dramatic." Reach the high note only where the
+  words and the form have earned it.
+- **Don't transplant his figures.** The chorus figure lifted from Song Study no 3 was "on the nose".
+  Take his principles from the pages (space, answering, complementary motion), not his exact
+  gestures.
+- **Every piano diminuendo needs somewhere to land.** Repeated diminuendos with no new dynamic
+  between them fade the piano to silence in playback (S7, S8). Restate the dynamic at each wave,
+  as he does in no 3 ("f > p"), or use swells that come back.
 - **Change key on a held common tone.** "I'm more subtle when transitioning to different keys."
   No 10 goes from Fm to E major on a held Ab = G#.
 - **A fade on a held note runs to the end of the note.** End the hairpin on the event after the
