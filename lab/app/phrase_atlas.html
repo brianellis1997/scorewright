@@ -56,12 +56,19 @@ canvas#map{width:100%;height:100%;display:block;touch-action:none;cursor:crossha
 .nnplay{border:0;background:var(--margin);color:var(--ink);border-radius:8px;font:15px var(--ui);cursor:pointer}
 .nnrow.now .nnplay{background:var(--ink);color:var(--paper)}
 .nnrow.now .nnsel{box-shadow:inset 3px 0 0 var(--focus)}
-.nn .nnsel{display:grid;grid-template-columns:96px minmax(0,1fr);gap:10px;align-items:center;text-align:left;border:0;background:var(--margin);color:var(--ink);padding:6px;border-radius:8px;cursor:pointer;font:13px var(--ui);min-width:0}
+.nn .nnsel{display:grid;grid-template-columns:96px minmax(0,1fr) auto;gap:4px 10px;align-items:center;text-align:left;border:0;background:var(--margin);color:var(--ink);padding:6px 8px 6px 6px;border-radius:8px;cursor:pointer;font:13px var(--ui);min-width:0}
+.nn .pct{font:600 17px var(--ui);font-variant-numeric:tabular-nums;text-align:right;line-height:1.05}
+.nn .pct small{display:block;font:400 11px var(--ui);color:var(--ink-3)}
+.nn .sims{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:4px 12px;font-size:11px;color:var(--ink-3);font-variant-numeric:tabular-nums}
+.nn .sims span{display:inline-flex;align-items:center;gap:4px}
+.nn .sims span.on{color:var(--ink)}
+.nn .sims b{display:inline-block;width:28px;height:5px;border-radius:3px;background:linear-gradient(90deg,var(--ink-2) var(--v),var(--rule) var(--v))}
 .lh{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:18px 0 8px}
 .lh h2{margin:0}
 .nn canvas{width:96px;height:34px;display:block}
 .nn .t{font-weight:600;overflow-wrap:anywhere;line-height:1.25}
 .nn .m{color:var(--ink-2);font-size:12px}
+.nn .ch{font:italic 13px var(--display);color:var(--ink)}
 .song{display:flex;flex-wrap:wrap;gap:6px}
 .comps{display:flex;flex-wrap:wrap;gap:6px}
 .comps .chip[aria-pressed="true"]{border-color:var(--ref);box-shadow:inset 0 0 0 1px var(--ref)}
@@ -124,7 +131,7 @@ button:focus-visible,input:focus-visible,canvas:focus-visible{outline:2px solid 
     <h2>Find a piece</h2>
     <input type="search" id="q" placeholder="Title, e.g. Song Study" autocomplete="off">
     <div class="hits" id="hits"></div>
-    <p class="note">Each mark is one phrase, cut where a singer would breathe. Regions are found in the full feature space; the map flattens it, so nearness on screen is a guide and the lists above are exact.</p>
+    <p class="note">Each mark is one phrase, cut where a singer would breathe. Regions are found in the full feature space; the map flattens it, so nearness on screen is a guide and the lists above are exact. "% alike" runs from 100%, the same phrase, to 0%, as different as two phrases picked at random; the bars under each match give its melody, rhythm and harmony separately.</p>
   </aside>
 </div>
 
@@ -141,6 +148,16 @@ const TPL = {maj:[0,4,7], min:[0,3,7], dim:[0,3,6], aug:[0,4,8], sus4:[0,5,7], s
 const QN = {maj:'', min:'m', dim:'dim', aug:'+', sus4:'sus4', sus2:'sus2', '7sus4':'7sus4', '7':'7', maj7:'maj7', m7:'m7', m7b5:'ø7', dim7:'o7',
   add9:'add9', madd9:'m(add9)', maj9:'maj9', m9:'m9', '6':'6', m6:'m6', mmaj7:'m(maj7)', '9':'9', '7b9':'7b9', '7#5':'7#5'};
 const PCN = ['C','Db','D','Eb','E','F','F#','G','Ab','A','Bb','B'];
+// "% alike": each view's coordinates (int8 per dimension, vec.json); 100% is the same phrase, 0% is
+// as far apart as two phrases picked at random (the median distance between random pairs)
+let V = null;
+function decodeVec(o){ const bin = atob(o.data), q = new Int8Array(bin.length); for(let k = 0; k < bin.length; k++) q[k] = bin.charCodeAt(k) << 24 >> 24; return {scale: o.scale, med: o.med, dims: o.dims, q}; }
+function alike(view, i, j){ const v = V && V[view]; if(!v || i < 0) return null; const d = v.dims; let s = 0;
+  for(let k = 0; k < d; k++){ const x = (v.q[i * d + k] - v.q[j * d + k]) * v.scale[k]; s += x * x; }
+  return Math.max(0, Math.round(100 * (1 - Math.sqrt(s) / v.med))); }
+function sims(i, j){ if(!V) return '';
+  return '<span class="sims">' + ['melody', 'rhythm', 'harmony'].map(v => { const a = alike(v, i, j);
+    return `<span class="${S.view === v ? 'on' : ''}">${v} <b style="--v:${a}%"></b> ${a}</span>`; }).join('') + '</span>'; }
 const cv = document.getElementById('map'), ctx = cv.getContext('2d');
 let W = 0, H = 0, DPR = 1, sx = 1, sy = 1, PAD = 20, sprites = {}, colors = {}, labelPos = {};
 
@@ -221,26 +238,46 @@ function bars(i){ return D.bar[i] === D.end[i] ? 'bar ' + D.bar[i] : 'bars ' + D
 function pieceLine(i){ const p = D.pieces[D.piece[i]], q = p.q ? '♩ ' + p.q : null; return (p.c ? [bars(i), q, p.p] : [bars(i), q, p.y, p.p]).filter(Boolean).join(' · '); }
 function nnList(el, list){
   el.innerHTML = list.map(j => `<div class="nnrow" data-i="${j}"><button class="nnplay" data-p="${j}" aria-label="Play this phrase">▶</button>` +
-    `<button class="nnsel" data-i="${j}"><canvas></canvas><span><span class="t">${esc(titleOf(j))}</span><br><span class="m">${esc(pieceLine(j))}</span></span></button></div>`).join('');
-  el.querySelectorAll('.nnsel').forEach(b => { const j = +b.dataset.i; roll(b.querySelector('canvas'), noteOf(j), {color: isRef(j) ? colors.ref : colors.ink});
+    `<button class="nnsel" data-i="${j}"><canvas></canvas><span><span class="t">${esc(titleOf(j))}</span><br><span class="m">${esc(pieceLine(j))}</span>` +
+    (S.view === 'harmony' ? `<br><span class="m ch">${esc(chordLine(j))}</span>` : '') + `</span>` +
+    (V ? `<span class="pct" title="100% is the same phrase; 0% is as different as two phrases picked at random">${alike(S.view, S.sel, j)}%<small>alike</small></span>` + sims(S.sel, j) : '') +
+    `</button></div>`).join('');
+  el.querySelectorAll('.nnsel').forEach(b => { const j = +b.dataset.i; roll(b.querySelector('canvas'), noteOf(j), {color: isRef(j) ? colors.ref : colors.ink, harm: harmOf(j), mode: S.view});
     b.onclick = () => { if(isRef(j) && !S.comp){ S.comp = compOf(j); comps(); } select(j); }; });
   el.querySelectorAll('.nnplay').forEach(b => { const j = +b.dataset.p;
     b.onclick = () => { if(playing && S.playKey === 'row:' + j){ stopAll(); return; } playSeq([j], 'row:' + j, k => { S.nowRow = k; }); }; });
   playLabels(); }
 
+// a phrase drawn as what the current tab compares: the melody (overall, melody), its note lengths on
+// one line (rhythm), or its chords as boxes along the time line (harmony)
 function roll(c, notes, opt){
+  opt = opt || {};
   const r = c.getBoundingClientRect(), w = r.width, h = r.height; c.width = Math.round(w * DPR); c.height = Math.round(h * DPR);
   const g = c.getContext('2d'); g.setTransform(DPR, 0, 0, DPR, 0, 0); g.clearRect(0, 0, w, h); if(!notes || !notes.length) return;
-  const harm = opt && opt.harm && opt.harm.length ? opt.harm : null, hh = harm ? h - 18 : h;
-  const end = Math.max(...notes.map(n => n[0] + n[1])), lo = Math.min(...notes.map(n => n[2])) - 1, hi = Math.max(...notes.map(n => n[2])) + 1;
-  const px = w / end, py = hh / Math.max(6, hi - lo + 1);
-  g.strokeStyle = colors.rule; g.lineWidth = 1;
-  if(opt && opt.staff) for(let k = 1; k <= 5; k++){ const y = Math.round(hh * k / 6) + 0.5; g.beginPath(); g.moveTo(0, y); g.lineTo(w, y); g.stroke(); }
-  g.fillStyle = opt && opt.color || colors.ink;
-  for(const [on, du, p] of notes){ const x = on * px, y = hh - (p - lo + 1) * py; g.beginPath(); g.roundRect ? g.roundRect(x + 0.5, y, Math.max(2, du * px - 1.5), Math.max(2.5, py * 0.8), 2) : g.rect(x + 0.5, y, Math.max(2, du * px - 1.5), Math.max(2.5, py * 0.8)); g.fill(); }
-  if(harm){ g.fillStyle = colors['ink-2']; g.font = 'italic 13px ' + css('--display'); g.textBaseline = 'alphabetic'; let last = -99;
+  const mode = opt.mode || 'overall', harm = opt.harm && opt.harm.length ? opt.harm : null, col = opt.color || colors.ink;
+  const end = Math.max(...notes.map(n => n[0] + n[1]), ...(harm || []).map(x => x[0] + x[1])), px = w / end;
+  const box = (x, y, bw, bh, rad) => { g.beginPath(); g.roundRect ? g.roundRect(x, y, bw, bh, rad) : g.rect(x, y, bw, bh); g.fill(); };
+  const melody = (top, bot, alpha) => { const lo = Math.min(...notes.map(n => n[2])) - 1, hi = Math.max(...notes.map(n => n[2])) + 1, py = (bot - top) / Math.max(6, hi - lo + 1);
+    g.globalAlpha = alpha; g.fillStyle = col; for(const [on, du, p] of notes) box(on * px + 0.5, bot - (p - lo + 1) * py, Math.max(2, du * px - 1.5), Math.max(2.5, py * 0.8), 2); g.globalAlpha = 1; };
+  if(mode === 'rhythm'){ const bh = opt.staff ? 12 : 7, y = (h - bh) / 2;
+    g.strokeStyle = colors.rule; g.lineWidth = 1; g.beginPath(); g.moveTo(0, Math.round(h / 2) + 0.5); g.lineTo(w, Math.round(h / 2) + 0.5); g.stroke();
+    g.fillStyle = col; for(const [on, du] of notes) box(on * px + 0.5, y, Math.max(2, du * px - 2), bh, 3);
+    return; }
+  if(mode === 'harmony' && harm){ const bh = opt.staff ? 34 : h - 6, y = h - bh - (opt.staff ? 2 : 3);
+    if(opt.staff) melody(4, y - 8, 0.3);
+    g.font = 'italic 14px ' + css('--display'); g.textBaseline = 'middle'; g.textAlign = 'left';
+    harm.forEach(([on, du, r, q], k) => { const x = on * px + 1, bw = Math.max(3, du * px - 3), name = PCN[r] + (QN[q] ?? '');
+      g.fillStyle = k % 2 ? colors.rule : hexmix(colors.rule, colors.ink, 0.16); box(x, y, bw, bh, 4);
+      if(opt.staff && g.measureText(name).width < bw - 8){ g.fillStyle = colors.ink; g.fillText(name, x + 6, y + bh / 2 + 1); } });
+    return; }
+  const hh = harm && opt.staff ? h - 18 : h;
+  if(opt.staff){ g.strokeStyle = colors.rule; g.lineWidth = 1; for(let k = 1; k <= 5; k++){ const y = Math.round(hh * k / 6) + 0.5; g.beginPath(); g.moveTo(0, y); g.lineTo(w, y); g.stroke(); } }
+  melody(0, hh, 1);
+  if(harm && opt.staff){ g.fillStyle = colors['ink-2']; g.font = 'italic 13px ' + css('--display'); g.textBaseline = 'alphabetic'; g.textAlign = 'left'; let last = -99;
     for(const [on, , r, q] of harm){ const x = Math.min(on * px, w - 30); if(x - last < 38) continue; g.fillText(PCN[r] + (QN[q] ?? ''), x + 1, h - 3); last = x; } }
 }
+const chordLine = i => { const h = harmOf(i); return h && h.length ? h.slice(0, 7).map(([, , r, q]) => PCN[r] + (QN[q] ?? '')).join(' · ') : 'no chords'; };
+const PLAYWORD = {overall: '▶ Play', melody: '▶ Play melody', rhythm: '▶ Play rhythm', harmony: '▶ Play chords'};
 
 function card(){
   const el = document.getElementById('card'), i = S.sel;
@@ -251,7 +288,7 @@ function card(){
     <div class="row" style="margin-top:10px;justify-content:space-between"><button class="play" id="play">▶ Play</button>
     <span class="row meta"><span class="mark">${LETTERS[c]}</span>${esc(lab.label)}</span></div>
     <div class="meta" id="audiomsg" hidden style="margin-top:8px"></div>`;
-  roll(document.getElementById('roll'), notes, {staff:true, color:isSong(i) ? colors.song : isRef(i) ? colors.ref : colors.ink, harm:harmOf(i)});
+  roll(document.getElementById('roll'), notes, {staff:true, color:isSong(i) ? colors.song : isRef(i) ? colors.ref : colors.ink, harm:harmOf(i), mode:S.view});
   document.getElementById('play').onclick = () => { if(playing && S.playKey === 'card'){ stopAll(); return; } if(noteOf(i)) playSeq([i], 'card'); else document.getElementById('play').textContent = 'Loading notes…'; };
   document.getElementById('nnh').textContent = (isRef(i) || isSong(i) ? 'Closest in your music · ' : 'Closest in your other pieces · ') + S.view;
   nnList(document.getElementById('nn'), D.nn[S.view][i]);
@@ -288,23 +325,28 @@ const player = new Audio(); player.setAttribute('playsinline', ''); player.prelo
 // each phrase at its own piece's tempo; chords soft underneath, the bass in octave 2, the chord
 // tones in octave 3, moved down when they would reach the melody
 const RATE = 22050, hz = p => 440 * Math.pow(2, (p - 69) / 12);
-function addTone(buf, s0, f, d, amp, pad){
+// kind: 'mel' a plucked voice, 'pad' soft sustained chords under a melody, 'block' struck chords on their own
+function addTone(buf, s0, f, d, amp, kind){
   const len = Math.floor((d + 0.25) * RATE);
-  for(let k = Math.max(0, -s0); k < len && s0 + k < buf.length; k++){ const t = k / RATE, w = 2 * Math.PI * f * t;
-    const env = pad ? Math.min(1, t / 0.025) * Math.exp(-t * 0.7) * (t > d ? Math.exp(-(t - d) * 14) : 1)
-                    : Math.min(1, t / 0.008) * Math.exp(-t * 2.2) * (t > d ? Math.exp(-(t - d) * 18) : 1);
-    buf[s0 + k] += amp * env * (pad ? Math.sin(w) + 0.3 * Math.sin(2 * w) : Math.sin(w) + 0.35 * Math.exp(-t * 3) * Math.sin(2 * w) + 0.12 * Math.exp(-t * 5) * Math.sin(3 * w)); } }
+  for(let k = Math.max(0, -s0); k < len && s0 + k < buf.length; k++){ const t = k / RATE, w = 2 * Math.PI * f * t, rel = t > d ? Math.exp(-(t - d) * 16) : 1;
+    const env = kind === 'pad' ? Math.min(1, t / 0.025) * Math.exp(-t * 0.7) * rel
+              : kind === 'block' ? Math.min(1, t / 0.01) * Math.exp(-t * 1.1) * rel
+              : Math.min(1, t / 0.008) * Math.exp(-t * 2.2) * rel;
+    buf[s0 + k] += amp * env * (kind === 'mel' ? Math.sin(w) + 0.35 * Math.exp(-t * 3) * Math.sin(2 * w) + 0.12 * Math.exp(-t * 5) * Math.sin(3 * w) : Math.sin(w) + 0.3 * Math.sin(2 * w)); } }
+// what plays follows the tab: overall the melody over soft chords, melody alone, the rhythm on one
+// pitch, or the chords alone (the melody stands in when a phrase has no chords)
 function wav(list){
-  const gap = 0.7, qs = list.map(i => 60 / ((D.pieces[D.piece[i]].q) || 72) / 12);
-  const lens = list.map((i, k) => Math.max(...noteOf(i).map(x => x[0] + x[1])) * qs[k]);
+  const mode = S.view, gap = 0.7, qs = list.map(i => 60 / ((D.pieces[D.piece[i]].q) || 72) / 12);
+  const lens = list.map((i, k) => Math.max(...noteOf(i).map(x => x[0] + x[1]), ...(harmOf(i) || []).map(x => x[0] + x[1])) * qs[k]);
   const n = Math.ceil((lens.reduce((a, l) => a + l + gap, 0) + 0.4) * RATE), buf = new Float32Array(n), starts = []; let t0 = 0.05;
-  list.forEach((i, k) => { starts.push(t0); const q = qs[k], ns = noteOf(i), mlo = Math.min(...ns.map(x => x[2]));
-    for(const [on, du, p] of ns) addTone(buf, Math.floor((t0 + on * q) * RATE), hz(p), du * q, 1, false);
-    for(const [on, du, r, qual, bass] of (harmOf(i) || [])){ const tpl = TPL[qual]; if(!tpl) continue;
-      let base = 48 + r; if(base + Math.max(...tpl) >= mlo - 1 && base - 12 >= 40) base -= 12;
+  list.forEach((i, k) => { starts.push(t0); const q = qs[k], ns = noteOf(i), mlo = Math.min(...ns.map(x => x[2])), hm = harmOf(i) || [];
+    const melOn = mode !== 'harmony' || !hm.length, chordsOn = mode === 'overall' || mode === 'harmony';
+    if(melOn) for(const [on, du, p] of ns) addTone(buf, Math.floor((t0 + on * q) * RATE), hz(mode === 'rhythm' ? 76 : p), du * q, 1, 'mel');
+    if(chordsOn) for(const [on, du, r, qual, bass] of hm){ const tpl = TPL[qual]; if(!tpl) continue;
+      const alone = mode === 'harmony'; let base = 48 + r; if(!alone && base + Math.max(...tpl) >= mlo - 1 && base - 12 >= 40) base -= 12;
       const s0 = Math.floor((t0 + on * q) * RATE), d = du * q;
-      for(const iv of tpl) addTone(buf, s0, hz(base + iv), d, 0.13, true);
-      addTone(buf, s0, hz(36 + ((bass != null ? bass : r) % 12)), d, 0.2, true); }
+      for(const iv of tpl) addTone(buf, s0, hz(base + iv), d, alone ? 0.32 : 0.13, alone ? 'block' : 'pad');
+      addTone(buf, s0, hz(36 + ((bass != null ? bass : r) % 12)), d, alone ? 0.45 : 0.2, alone ? 'block' : 'pad'); }
     t0 += lens[k] + gap; });
   let peak = 0; for(let k = 0; k < n; k++) peak = Math.max(peak, Math.abs(buf[k]));
   const g = peak ? 0.8 / peak : 1, b = new Uint8Array(44 + n * 2), v = new DataView(b.buffer), w = (o, s) => { for(let k = 0; k < s.length; k++) b[o + k] = s.charCodeAt(k); };
@@ -318,7 +360,7 @@ function wav(list){
 // 'all:nn', 'all:nr'); S.nowRow is the neighbour being heard, highlighted in its list
 function playLabels(){
   const on = !!playing, k = on ? S.playKey : null;
-  const p = document.getElementById('play'); if(p) p.textContent = k === 'card' ? '■ Stop' : '▶ Play';
+  const p = document.getElementById('play'); if(p) p.textContent = k === 'card' ? '■ Stop' : PLAYWORD[S.view];
   document.getElementById('listen').textContent = k === 'listen' ? '■ Stop' : '▶ Listen to 4 from the region';
   document.querySelectorAll('[data-all]').forEach(b => b.textContent = k === 'all:' + b.dataset.all ? '■ Stop' : '▶ Play all');
   document.querySelectorAll('.nnrow').forEach(r => { const j = +r.dataset.i, now = on && S.nowRow === j && (k === 'row:' + j || (k || '').startsWith('all:'));
@@ -397,6 +439,7 @@ new MutationObserver(() => { readColors(); card(); draw(); }).observe(document.d
   document.getElementById('loading').hidden = true;
   legend(); comps(); size(); if(extra) select(nFit());
   try{ N = await (await fetch('notes.json')).json(); card(); } catch(e){}
+  try{ const vj = await (await fetch('vec.json')).json(); V = {}; for(const k in vj) V[k] = decodeVec(vj[k]); card(); } catch(e){ V = null; }
   if(comp.length) try{ NR = await (await fetch('notes_ref.json')).json(); card(); } catch(e){}
 })();
 </script>

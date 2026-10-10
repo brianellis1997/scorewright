@@ -17,7 +17,7 @@ and every phrase also gets its nearest phrases by those composers.
 usage (whisperer env): python music_map.py [--index DIR] [--ref DIR] [--extra "Name=score.musicxml" ...] [--out DIR] [--respread]
 writes map.json (pieces, coordinates, regions, neighbours), notes.json (own and extra phrases' notes
 and chords) and notes_ref.json (the reference composers') to --out (default: Score Exports/_logs/music_map)"""
-import argparse, glob, json, math, os, re, sys, tempfile
+import argparse, base64, glob, json, math, os, re, sys, tempfile
 import numpy as np
 
 E = '/Users/bdogellis/Documents/Score Exports'
@@ -336,7 +336,19 @@ def add(pieces, rows, more, more_rows):
     rows += more_rows
 
 
-def build(index_paths, extra, ref_paths=()):
+def pack(p, n_main):
+    """a view's coordinates as int8 per dimension, the scale that undoes it, and the median distance
+    between two random phrases: the viewer's "% alike" is 1 - distance / that median"""
+    s = np.abs(p).max(0) / 127 + 1e-12
+    q = np.clip(np.round(p / s), -127, 127).astype(np.int8)
+    back = q.astype(float) * s
+    rng = np.random.default_rng(7)
+    a, b = rng.integers(0, n_main, 20000), rng.integers(0, n_main, 20000)
+    return dict(scale=[float(x) for x in s], med=float(np.median(np.linalg.norm(back[a] - back[b], axis=1))),
+                dims=int(p.shape[1]), data=base64.b64encode(q.tobytes()).decode())
+
+
+def build(index_paths, extra, ref_paths=(), vectors_only=False):
     """rows: the composer's own phrases [0, n_main), reference composers' [n_main, n_fit), extra pieces after.
     Scaling, PCA and regions come from the composer's own phrases; the layout from own + reference."""
     from sklearn.cluster import KMeans
@@ -369,10 +381,14 @@ def build(index_paths, extra, ref_paths=()):
     blocks['overall'] = (None, None, None, np.hstack([z / math.sqrt(z.shape[1]) for _, _, _, z in (blocks[v] for v in ('melody', 'rhythm', 'harmony'))]))
 
     out = dict(views=VIEWS, n_main=n_main, n_fit=n_fit, x={}, y={}, c={}, nn={}, nr={}, clusters={})
+    vecs = {}
     for view in VIEWS:
         names, words, raw, z = blocks[view]
         pca = PCA(n_components=min(12, z.shape[1]), random_state=7).fit(z[:n_main])
         p = pca.transform(z)
+        vecs[view] = pack(p, n_main)
+        if vectors_only:
+            continue
         km = KMeans(n_clusters=K, n_init=10, random_state=7).fit(p[:n_main])
         order = np.argsort(-np.bincount(km.labels_, minlength=K))
         remap = np.empty(K, int)
@@ -402,6 +418,8 @@ def build(index_paths, extra, ref_paths=()):
         else:
             out['clusters'][view] = describe(raw[:n_main], lab[:n_main], names, words, K)
         print(view, 'done', flush=True)
+    if vectors_only:
+        return vecs
 
     years = {}
     for path in glob.glob(f'{E}/_source_sib/*.sib'):
@@ -423,7 +441,7 @@ def build(index_paths, extra, ref_paths=()):
                              chords=[' '.join(r['chords'][:12]) if ref(i) == want else None for i, r in enumerate(rows)],
                              harm=[r['harm'] if ref(i) == want else None for i, r in enumerate(rows)])
     own, others = pick(False), pick(True)
-    return out, own, others
+    return out, own, others, vecs
 
 
 def index_extra(spec, tmp):
@@ -443,6 +461,7 @@ if __name__ == '__main__':
     ap.add_argument('--ref', help='index folder of other composers to compare with (fetch_reference.py)')
     ap.add_argument('--out', default=f'{E}/_logs/music_map')
     ap.add_argument('--respread', action='store_true', help='only redo the 2D spacing of an existing map.json')
+    ap.add_argument('--vectors-only', action='store_true', help='only write vec.json (the coordinates behind "% alike")')
     a = ap.parse_args()
     if a.respread:
         respread(f'{a.out}/map.json')
@@ -452,9 +471,13 @@ if __name__ == '__main__':
     extra = dict(index_extra(s, tmp) for s in a.extra)
     paths = sorted(glob.glob(f'{a.index}/*.json'))
     refs = sorted(p for p in glob.glob(f'{a.ref}/*.json') if 'choraleAnalyses' not in p) if a.ref else []
-    m, own, others = build(paths, extra, refs)
+    if a.vectors_only:
+        json.dump(build(paths, extra, refs, vectors_only=True), open(f'{a.out}/vec.json', 'w'), separators=(',', ':'))
+        sys.exit(0)
+    m, own, others, vecs = build(paths, extra, refs)
     json.dump(m, open(f'{a.out}/map.json', 'w'), separators=(',', ':'))
     json.dump(own, open(f'{a.out}/notes.json', 'w'), separators=(',', ':'))
     json.dump(others, open(f'{a.out}/notes_ref.json', 'w'), separators=(',', ':'))
-    for f in ('map.json', 'notes.json', 'notes_ref.json'):
+    json.dump(vecs, open(f'{a.out}/vec.json', 'w'), separators=(',', ':'))
+    for f in ('map.json', 'notes.json', 'notes_ref.json', 'vec.json'):
         print(f, round(os.path.getsize(f'{a.out}/{f}') / 1e6, 1), 'MB')
