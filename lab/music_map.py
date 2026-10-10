@@ -39,7 +39,7 @@ MEL = {'repeat': ('repeated notes', None), 'step': ('stepwise', None), 'third': 
        'wide': ('wide leaps', None), 'chrom': ('chromatic', None), 'up': ('rising', 'falling'), 'net': ('ends high', 'ends low'),
        'range': ('wide range', 'narrow range'), 'zigzag': ('zigzag', 'smooth lines'), 'peak': ('peaks late', 'peaks early'),
        'run': ('long scale runs', None), 'arp': ('arpeggios', None), 'turn': ('turns', None)}
-RHY = {'sixteenth': ('sixteenths', None), 'triplet': ('triplets', None), 'eighth': ('eighths', None), 'quarter': ('quarters', None),
+RHY = {'tempo': ('fast tempo', 'slow tempo'), 'speed': ('rapid notes', 'unhurried'), 'sixteenth': ('sixteenths', None), 'triplet': ('triplets', None), 'eighth': ('eighths', None), 'quarter': ('quarters', None),
        'long': ('long notes', None), 'dotted': ('dotted rhythms', None), 'density': ('busy', 'sparse'), 'sync': ('syncopated', 'on the beat'),
        'rest': ('broken by rests', None), 'cell': ('repeated rhythm cells', None), 'bars': ('long phrases', 'short phrases'),
        'pickup': ('pickups', 'starts on the beat')}
@@ -167,7 +167,7 @@ def melody_features(ph):
                 peak=int(np.argmax(p)) / max(1, len(p) - 1), run=best / len(p), arp=arp, turn=turn)
 
 
-def rhythm_features(ph):
+def rhythm_features(ph, bpm=80.0):
     du = [n[1] for n in ph]
     span = ph[-1][0] + ph[-1][1] - ph[0][0]
     ts = ph[0][5]
@@ -183,7 +183,52 @@ def rhythm_features(ph):
     return dict(sixteenth=frac(du, lambda x: x <= 0.26), triplet=trip, eighth=frac(du, lambda x: near(x, 0.5)),
                 quarter=frac(du, lambda x: near(x, 1.0)), long=frac(du, lambda x: x >= 2), dotted=frac(du, lambda x: any(near(x, v) for v in (0.75, 1.5, 3.0))),
                 density=math.log(len(ph) / max(span, 0.25)), sync=frac(ph, lambda n: (n[4] % beat) > 0.01 and n[1] > beat * 0.6),
-                rest=gaps / max(span, 0.25), cell=cell, bars=span / bar_len(ts), pickup=1.0 if ph[0][4] > 0.01 else 0.0)
+                rest=gaps / max(span, 0.25), cell=cell, bars=span / bar_len(ts), pickup=1.0 if ph[0][4] > 0.01 else 0.0,
+                tempo=math.log(bpm / 80), speed=math.log(max(0.1, len(ph) / max(0.25, span * 60 / bpm))))
+
+
+TEMPO_WORDS = [('prestissimo', 190), ('presto', 172), ('vivace', 150), ('allegretto', 112), ('allegro', 132), ('moderato', 100),
+               ('andantino', 84), ('andante', 76), ('adagietto', 70), ('adagio', 66), ('larghetto', 58), ('largo', 50), ('lento', 56), ('grave', 40)]
+EXTRA_SRC = {}
+
+
+def tempo_of(stem, kind):
+    """quarter notes per minute from the score: the first <sound tempo> (MusicXML) or *MM (Humdrum),
+    else the first Italian tempo word in its directions; 80 when nothing is marked"""
+    if kind == 2:
+        cands = glob.glob(f'{E}/reference/files/{glob.escape(stem)}.*')
+    elif kind == 1:
+        cands = [EXTRA_SRC.get(stem, '')]
+    else:
+        cands = [f'{E}/MusicXML/{stem}.musicxml', f'{E}/extra_sept2026/MusicXML/{stem}.musicxml']
+    for path in cands:
+        if not path or not os.path.exists(path):
+            continue
+        try:
+            if path.endswith('.mxl'):
+                import zipfile
+                with zipfile.ZipFile(path) as z:
+                    name = next((n for n in z.namelist() if n.endswith(('.xml', '.musicxml')) and not n.startswith('META')), None)
+                    txt = z.read(name).decode('utf-8', 'ignore') if name else ''
+            else:
+                txt = open(path, encoding='utf-8', errors='ignore').read()
+        except Exception:
+            continue
+        m = re.search(r'<sound[^>]*\btempo="([\d.]+)"', txt) or re.search(r'^\*MM([\d.]+)', txt, re.M)
+        if m and 20 <= float(m.group(1)) <= 300:
+            return float(m.group(1))
+        mm = re.search(r'<metronome[^>]*>\s*<beat-unit>(\w+)</beat-unit>(\s*<beat-unit-dot\s*/>)?\s*<per-minute>([\d.]+)</per-minute>', txt)
+        if mm:
+            unit = {'whole': 4, 'half': 2, 'quarter': 1, 'eighth': 0.5, '16th': 0.25}.get(mm.group(1), 1) * (1.5 if mm.group(2) else 1)
+            q = float(mm.group(3)) * unit
+            if 20 <= q <= 300:
+                return q
+        words = ' '.join(re.findall(r'<words[^>]*>([^<]+)</words>', txt) + re.findall(r'^!!!OMD[^:]*:\s*(.+)$', txt, re.M)
+                         + re.findall(r'^\*MM\[([^\]]+)\]', txt, re.M)).lower()
+        hits = [(words.find(w), q) for w, q in TEMPO_WORDS if w in words]
+        if hits:
+            return float(min(hits)[1])
+    return 80.0
 
 
 def harmony_features(ph, wins, starts):
@@ -207,10 +252,20 @@ def harmony_features(ph, wins, starts):
     f['inv'] = frac(lab, lambda w: w[4] is not None and w[4] % 12 != w[2])
     f['outside'] = frac(lab, lambda w: (w[2] - 7 * w[5]) % 12 not in (0, 2, 4, 5, 7, 9, 11))
     names = [NAMES[w[2]] + QNAME.get(w[3], '') for w in seq]
-    return f, names
+    timed = []
+    for w in ws:
+        s, e = max(w[0], t0), min(w[0] + w[1], t1)
+        if not w[3] or e <= s:
+            continue
+        if timed and timed[-1][2:4] == [w[2], w[3]] and abs(timed[-1][5] - s) < 1e-6:
+            timed[-1][5] = e
+        else:
+            timed.append([s, 0, w[2], w[3], w[4], e])
+    harm = [[round((s - t0) * 12), max(1, round((e - s) * 12)), r, q, b] for s, _, r, q, b, e in timed]
+    return f, names, harm
 
 
-def phrase_rows(index_paths):
+def phrase_rows(index_paths, kind=0):
     pieces, rows = [], []
     for path in index_paths:
         try:
@@ -222,11 +277,12 @@ def phrase_rows(index_paths):
             continue
         starts = np.array([w[0] for w in wins]) if wins else np.array([0.0])
         pi = len(pieces)
+        d['bpm'] = tempo_of(d['stem'], kind)
         pieces.append(d)
         for ph in phrases(notes, bars):
-            m, r = melody_features(ph), rhythm_features(ph)
-            h, chords = harmony_features(ph, wins, starts) if wins else ({}, [])
-            rows.append(dict(piece=pi, bar=ph[0][3], end=ph[-1][3], m=m, r=r, h=h, chords=chords,
+            m, r = melody_features(ph), rhythm_features(ph, d['bpm'])
+            h, chords, harm = harmony_features(ph, wins, starts) if wins else ({}, [], [])
+            rows.append(dict(piece=pi, bar=ph[0][3], end=ph[-1][3], m=m, r=r, h=h, chords=chords, harm=harm,
                              notes=[[round((n[0] - ph[0][0]) * 12), max(1, round(n[1] * 12)), n[2]] for n in ph]))
     return pieces, rows
 
@@ -288,17 +344,17 @@ def build(index_paths, extra, ref_paths=()):
     from sklearn.neighbors import NearestNeighbors
     import umap
 
-    pieces, rows = phrase_rows(index_paths)
+    pieces, rows = phrase_rows(index_paths, 0)
     for d in pieces:
         d['kind'] = 0
     n_main = len(rows)
-    rp, rr = phrase_rows(ref_paths)
+    rp, rr = phrase_rows(ref_paths, 2)
     for d in rp:
         comp, _, title = d['stem'].partition('__')
         d.update(kind=2, composer=comp.replace('_', ' '), title=nice_title(title.replace('_', ' '), comp))
     add(pieces, rows, rp, rr)
     n_fit = len(rows)
-    xp, xr = phrase_rows(list(extra.values()))
+    xp, xr = phrase_rows(list(extra.values()), 1)
     for d, name in zip(xp, extra):
         d.update(kind=1, title=name)
     add(pieces, rows, xp, xr)
@@ -350,7 +406,7 @@ def build(index_paths, extra, ref_paths=()):
     years = {}
     for path in glob.glob(f'{E}/_source_sib/*.sib'):
         years[os.path.basename(path)[:-4]] = int(__import__('datetime').date.fromtimestamp(os.path.getmtime(path)).year)
-    out['pieces'] = [dict(t=d.get('title') or d['stem'], y=years.get(d['stem']), k=d['kind'], c=d.get('composer'),
+    out['pieces'] = [dict(t=d.get('title') or d['stem'], y=years.get(d['stem']), q=round(d['bpm']), k=d['kind'], c=d.get('composer'),
                           p=' + '.join(dict.fromkeys(d.get('parts') or []))[:60]) for d in pieces]
     out['piece'] = [r['piece'] for r in rows]
     out['bar'] = [r['bar'] for r in rows]
@@ -363,8 +419,10 @@ def build(index_paths, extra, ref_paths=()):
         comp[c][1] += 1
     out['composers'] = [dict(name=c, pieces=len(v[0]), phrases=v[1]) for c, v in sorted(comp.items(), key=lambda kv: -kv[1][1])]
     ref = lambda i: n_main <= i < n_fit
-    own = dict(notes=[None if ref(i) else r['notes'] for i, r in enumerate(rows)], chords=[None if ref(i) else ' '.join(r['chords'][:12]) for i, r in enumerate(rows)])
-    others = dict(notes=[r['notes'] if ref(i) else None for i, r in enumerate(rows)], chords=[' '.join(r['chords'][:12]) if ref(i) else None for i, r in enumerate(rows)])
+    pick = lambda want: dict(notes=[r['notes'] if ref(i) == want else None for i, r in enumerate(rows)],
+                             chords=[' '.join(r['chords'][:12]) if ref(i) == want else None for i, r in enumerate(rows)],
+                             harm=[r['harm'] if ref(i) == want else None for i, r in enumerate(rows)])
+    own, others = pick(False), pick(True)
     return out, own, others
 
 
@@ -374,6 +432,7 @@ def index_extra(spec, tmp):
     import harmony_index as hi
     hi.OUT = tmp
     stem, status = hi.index_one(path)
+    EXTRA_SRC[stem] = path
     return name, f'{tmp}/{stem}.json'
 
 

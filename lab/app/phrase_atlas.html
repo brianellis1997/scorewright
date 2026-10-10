@@ -134,6 +134,13 @@ const S = {view:'overall', focus:-1, sel:-1, q:'', hits:null, year:false, song:t
 let D = null, N = null, NR = null, ac = null, playing = null;
 const noteOf = i => (N && N.notes[i]) || (NR && NR.notes[i]) || null;
 const chordOf = i => (N && N.chords[i]) || (NR && NR.chords[i]) || '';
+const harmOf = i => (N && N.harm && N.harm[i]) || (NR && NR.harm && NR.harm[i]) || null;
+const TPL = {maj:[0,4,7], min:[0,3,7], dim:[0,3,6], aug:[0,4,8], sus4:[0,5,7], sus2:[0,2,7], '7':[0,4,7,10], maj7:[0,4,7,11], m7:[0,3,7,10],
+  m7b5:[0,3,6,10], dim7:[0,3,6,9], mmaj7:[0,3,7,11], '7sus4':[0,5,7,10], '6':[0,4,7,9], m6:[0,3,7,9], add9:[0,2,4,7], madd9:[0,2,3,7],
+  '9':[0,2,4,7,10], maj9:[0,2,4,7,11], m9:[0,2,3,7,10], '7b9':[0,1,4,7,10], '7#5':[0,4,8,10]};
+const QN = {maj:'', min:'m', dim:'dim', aug:'+', sus4:'sus4', sus2:'sus2', '7sus4':'7sus4', '7':'7', maj7:'maj7', m7:'m7', m7b5:'ø7', dim7:'o7',
+  add9:'add9', madd9:'m(add9)', maj9:'maj9', m9:'m9', '6':'6', m6:'m6', mmaj7:'m(maj7)', '9':'9', '7b9':'7b9', '7#5':'7#5'};
+const PCN = ['C','Db','D','Eb','E','F','F#','G','Ab','A','Bb','B'];
 const cv = document.getElementById('map'), ctx = cv.getContext('2d');
 let W = 0, H = 0, DPR = 1, sx = 1, sy = 1, PAD = 20, sprites = {}, colors = {}, labelPos = {};
 
@@ -211,7 +218,7 @@ function labelsFor(view){ const out = [];
 const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const fmt = n => n.toLocaleString('en-US');
 function bars(i){ return D.bar[i] === D.end[i] ? 'bar ' + D.bar[i] : 'bars ' + D.bar[i] + '–' + D.end[i]; }
-function pieceLine(i){ const p = D.pieces[D.piece[i]]; return (p.c ? [bars(i), p.p] : [bars(i), p.y, p.p]).filter(Boolean).join(' · '); }
+function pieceLine(i){ const p = D.pieces[D.piece[i]], q = p.q ? '♩ ' + p.q : null; return (p.c ? [bars(i), q, p.p] : [bars(i), q, p.y, p.p]).filter(Boolean).join(' · '); }
 function nnList(el, list){
   el.innerHTML = list.map(j => `<div class="nnrow" data-i="${j}"><button class="nnplay" data-p="${j}" aria-label="Play this phrase">▶</button>` +
     `<button class="nnsel" data-i="${j}"><canvas></canvas><span><span class="t">${esc(titleOf(j))}</span><br><span class="m">${esc(pieceLine(j))}</span></span></button></div>`).join('');
@@ -224,12 +231,15 @@ function nnList(el, list){
 function roll(c, notes, opt){
   const r = c.getBoundingClientRect(), w = r.width, h = r.height; c.width = Math.round(w * DPR); c.height = Math.round(h * DPR);
   const g = c.getContext('2d'); g.setTransform(DPR, 0, 0, DPR, 0, 0); g.clearRect(0, 0, w, h); if(!notes || !notes.length) return;
+  const harm = opt && opt.harm && opt.harm.length ? opt.harm : null, hh = harm ? h - 18 : h;
   const end = Math.max(...notes.map(n => n[0] + n[1])), lo = Math.min(...notes.map(n => n[2])) - 1, hi = Math.max(...notes.map(n => n[2])) + 1;
-  const px = w / end, py = h / Math.max(6, hi - lo + 1);
+  const px = w / end, py = hh / Math.max(6, hi - lo + 1);
   g.strokeStyle = colors.rule; g.lineWidth = 1;
-  if(opt && opt.staff) for(let k = 1; k <= 5; k++){ const y = Math.round(h * k / 6) + 0.5; g.beginPath(); g.moveTo(0, y); g.lineTo(w, y); g.stroke(); }
+  if(opt && opt.staff) for(let k = 1; k <= 5; k++){ const y = Math.round(hh * k / 6) + 0.5; g.beginPath(); g.moveTo(0, y); g.lineTo(w, y); g.stroke(); }
   g.fillStyle = opt && opt.color || colors.ink;
-  for(const [on, du, p] of notes){ const x = on * px, y = h - (p - lo + 1) * py; g.beginPath(); g.roundRect ? g.roundRect(x + 0.5, y, Math.max(2, du * px - 1.5), Math.max(2.5, py * 0.8), 2) : g.rect(x + 0.5, y, Math.max(2, du * px - 1.5), Math.max(2.5, py * 0.8)); g.fill(); }
+  for(const [on, du, p] of notes){ const x = on * px, y = hh - (p - lo + 1) * py; g.beginPath(); g.roundRect ? g.roundRect(x + 0.5, y, Math.max(2, du * px - 1.5), Math.max(2.5, py * 0.8), 2) : g.rect(x + 0.5, y, Math.max(2, du * px - 1.5), Math.max(2.5, py * 0.8)); g.fill(); }
+  if(harm){ g.fillStyle = colors['ink-2']; g.font = 'italic 13px ' + css('--display'); g.textBaseline = 'alphabetic'; let last = -99;
+    for(const [on, , r, q] of harm){ const x = Math.min(on * px, w - 30); if(x - last < 38) continue; g.fillText(PCN[r] + (QN[q] ?? ''), x + 1, h - 3); last = x; } }
 }
 
 function card(){
@@ -237,11 +247,11 @@ function card(){
   if(i < 0){ el.innerHTML = '<div class="meta">Tap a mark on the map.</div>'; document.getElementById('nn').innerHTML = ''; return; }
   const c = cl(i), lab = D.clusters[S.view][c], notes = noteOf(i);
   el.innerHTML = `<p class="title">${esc(titleOf(i))}</p><div class="meta">${esc(pieceLine(i))}</div>
-    <canvas class="roll" id="roll"></canvas><div class="chords" id="chords">${notes ? esc(chordOf(i) || 'no chords') : '…'}</div>
+    <canvas class="roll" id="roll"></canvas><div class="chords" id="chords"${notes && harmOf(i) ? ' hidden' : ''}>${notes ? esc(chordOf(i) || 'no chords') : '…'}</div>
     <div class="row" style="margin-top:10px;justify-content:space-between"><button class="play" id="play">▶ Play</button>
     <span class="row meta"><span class="mark">${LETTERS[c]}</span>${esc(lab.label)}</span></div>
     <div class="meta" id="audiomsg" hidden style="margin-top:8px"></div>`;
-  roll(document.getElementById('roll'), notes, {staff:true, color:isSong(i) ? colors.song : isRef(i) ? colors.ref : colors.ink});
+  roll(document.getElementById('roll'), notes, {staff:true, color:isSong(i) ? colors.song : isRef(i) ? colors.ref : colors.ink, harm:harmOf(i)});
   document.getElementById('play').onclick = () => { if(playing && S.playKey === 'card'){ stopAll(); return; } if(noteOf(i)) playSeq([i], 'card'); else document.getElementById('play').textContent = 'Loading notes…'; };
   document.getElementById('nnh').textContent = (isRef(i) || isSong(i) ? 'Closest in your music · ' : 'Closest in your other pieces · ') + S.view;
   nnList(document.getElementById('nn'), D.nn[S.view][i]);
@@ -275,17 +285,27 @@ function setView(v){ S.view = v; S.focus = -1; document.querySelectorAll('.tabs 
 // sound: each phrase is written out as a WAV file and played by an <audio> element, the way the
 // Scorewright page plays. In the Claude app on iOS, Web Audio stays muted under the silent switch.
 const player = new Audio(); player.setAttribute('playsinline', ''); player.preload = 'auto';
-const RATE = 22050, Q = 60 / 72 / 12;
-const phraseLen = ns => Math.max(...ns.map(n => n[0] + n[1])) * Q;
+// each phrase at its own piece's tempo; chords soft underneath, the bass in octave 2, the chord
+// tones in octave 3, moved down when they would reach the melody
+const RATE = 22050, hz = p => 440 * Math.pow(2, (p - 69) / 12);
+function addTone(buf, s0, f, d, amp, pad){
+  const len = Math.floor((d + 0.25) * RATE);
+  for(let k = Math.max(0, -s0); k < len && s0 + k < buf.length; k++){ const t = k / RATE, w = 2 * Math.PI * f * t;
+    const env = pad ? Math.min(1, t / 0.025) * Math.exp(-t * 0.7) * (t > d ? Math.exp(-(t - d) * 14) : 1)
+                    : Math.min(1, t / 0.008) * Math.exp(-t * 2.2) * (t > d ? Math.exp(-(t - d) * 18) : 1);
+    buf[s0 + k] += amp * env * (pad ? Math.sin(w) + 0.3 * Math.sin(2 * w) : Math.sin(w) + 0.35 * Math.exp(-t * 3) * Math.sin(2 * w) + 0.12 * Math.exp(-t * 5) * Math.sin(3 * w)); } }
 function wav(list){
-  const gap = 0.7, parts = list.map(noteOf), total = parts.reduce((a, ns) => a + phraseLen(ns) + gap, 0) + 0.3;
-  const n = Math.ceil(total * RATE), buf = new Float32Array(n), starts = []; let t0 = 0.05;
-  for(const ns of parts){ starts.push(t0);
-    for(const [on, du, p] of ns){ const f = 440 * Math.pow(2, (p - 69) / 12), s0 = Math.floor((t0 + on * Q) * RATE), d = du * Q, len = Math.floor((d + 0.25) * RATE);
-      for(let k = 0; k < len && s0 + k < n; k++){ const t = k / RATE, w = 2 * Math.PI * f * t;
-        const env = Math.min(1, t / 0.008) * Math.exp(-t * 2.2) * (t > d ? Math.exp(-(t - d) * 18) : 1);
-        buf[s0 + k] += env * (Math.sin(w) + 0.35 * Math.exp(-t * 3) * Math.sin(2 * w) + 0.12 * Math.exp(-t * 5) * Math.sin(3 * w)); } }
-    t0 += phraseLen(ns) + gap; }
+  const gap = 0.7, qs = list.map(i => 60 / ((D.pieces[D.piece[i]].q) || 72) / 12);
+  const lens = list.map((i, k) => Math.max(...noteOf(i).map(x => x[0] + x[1])) * qs[k]);
+  const n = Math.ceil((lens.reduce((a, l) => a + l + gap, 0) + 0.4) * RATE), buf = new Float32Array(n), starts = []; let t0 = 0.05;
+  list.forEach((i, k) => { starts.push(t0); const q = qs[k], ns = noteOf(i), mlo = Math.min(...ns.map(x => x[2]));
+    for(const [on, du, p] of ns) addTone(buf, Math.floor((t0 + on * q) * RATE), hz(p), du * q, 1, false);
+    for(const [on, du, r, qual, bass] of (harmOf(i) || [])){ const tpl = TPL[qual]; if(!tpl) continue;
+      let base = 48 + r; if(base + Math.max(...tpl) >= mlo - 1 && base - 12 >= 40) base -= 12;
+      const s0 = Math.floor((t0 + on * q) * RATE), d = du * q;
+      for(const iv of tpl) addTone(buf, s0, hz(base + iv), d, 0.13, true);
+      addTone(buf, s0, hz(36 + ((bass != null ? bass : r) % 12)), d, 0.2, true); }
+    t0 += lens[k] + gap; });
   let peak = 0; for(let k = 0; k < n; k++) peak = Math.max(peak, Math.abs(buf[k]));
   const g = peak ? 0.8 / peak : 1, b = new Uint8Array(44 + n * 2), v = new DataView(b.buffer), w = (o, s) => { for(let k = 0; k < s.length; k++) b[o + k] = s.charCodeAt(k); };
   w(0, 'RIFF'); v.setUint32(4, 36 + n * 2, true); w(8, 'WAVEfmt '); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
