@@ -138,6 +138,17 @@ rhythm and tie. Every stop came before an edit at the wrong place.
 - Six replies on Nov 13-14 never reached the panel: `sw_say.py` without a session tagged them
   `current`, and the server drops those. It now uses the current piece by default.
 
+## Ranges that start on a slur (S12, Nov 14)
+
+- The status bar reads a range as far as the last bar of a slur that starts on the range's first
+  note: S12 step 13 selected the flute from bar 42 to bar 43, on a note that starts a slur to bar 44,
+  and Dorico showed "Bars 42-44", so the range check stopped the run before the hairpin. A slur that
+  starts on a later note of the range does not count (step 14 read "Bars 43-44" with a slur from bar
+  44 to 45 inside it).
+- The planner now reads every slur in the file and remembers each one it adds (`Plan.slurs`), and
+  expects that wider range. Replayed on S12, it gives exactly the ranges that went in. Whether a
+  hairpin that starts on the first note also counts is not known yet; a stop will tell.
+
 ## Marks on typed notes, and carets in empty bars (S8, Nov 13)
 
 - After a mark (dynamic, slur, hairpin, technique) Dorico selects the new mark. A typed note has no

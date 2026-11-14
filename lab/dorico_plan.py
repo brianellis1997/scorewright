@@ -75,7 +75,7 @@ class Score:
 
     def __init__(self, xml):
         self.names = dict(re.findall(r'<score-part id="([^"]+)">\s*<part-name>([^<]*)</part-name>', xml))
-        self.parts, self.staves = {}, []
+        self.parts, self.staves, self.slurs = {}, [], {}
         for pid in re.findall(r'<score-part id="([^"]+)"', xml):
             body = re.search(rf'<part id="{pid}">(.*?)</part>', xml, re.S).group(1)
             t = re.search(r'<transpose\b.*?</transpose>', body, re.S)
@@ -87,6 +87,33 @@ class Score:
             div = re.findall(r'<divisions>(\d+)</divisions>', body)
             self.parts[pid] = (bars, tr, int(div[0]) if div else 1)
             self.staves += [(pid, s) for s in range(1, n + 1)]
+            self.read_slurs(pid)
+
+    def read_slurs(self, pid):
+        """self.slurs[(pid, staff)]: [((bar, onset), last bar)] for each slur in the file"""
+        bars, tr, div = self.parts[pid]
+        open_ = {}
+        for b in sorted(bars):
+            t = on = 0
+            for ev in re.finditer(r'<note[ >].*?</note>|<backup>.*?</backup>|<forward>.*?</forward>', bars[b], re.S):
+                s = ev.group(0)
+                d = int((re.search(r'<duration>(\d+)</duration>', s) or [0, 0])[1])
+                if s.startswith('<backup'):
+                    t -= d
+                    continue
+                if s.startswith('<forward'):
+                    t += d
+                    continue
+                staff = int((re.search(r'<staff>(\d+)</staff>', s) or [0, 1])[1])
+                if '<chord/>' not in s:
+                    on, t = Fraction(t, div), t + d
+                for tag in re.findall(r'<slur\b[^>]*>', s):
+                    kind = re.search(r'type="(\w+)"', tag).group(1)
+                    key = ((re.search(r'number="(\d+)"', tag) or [0, '1'])[1], staff)
+                    if kind == 'start':
+                        open_[key] = (b, on)
+                    elif kind == 'stop' and key in open_:
+                        self.slurs.setdefault((pid, staff), []).append((open_.pop(key), b))
 
     def items(self, pid, bar, staff=1):
         """[(onset, 'Rest' or [concert names, top first], tied from before, tied on)], voice by voice in file order"""
@@ -153,6 +180,7 @@ class Plan:
         self.base = self.cur = Score(xml)
         self.grid = grid
         self.steps, self.cursor, self.tied = [], None, set()
+        self.slurs = {k: list(v) for k, v in self.base.slurs.items()}
 
     def use(self, xml):
         self.cur = Score(xml)
@@ -293,7 +321,9 @@ class Plan:
             if n:
                 st['extend'].append(f'EventEdit.NavigateRightExtend*{n}')
                 k1 = self.cur.index(pid, to[0], to[1], staff)
-                st['range'] = [bar, self.cur.chain_end(pid, to[0], self.cur.nav(pid, to[0], staff)[k1][0], staff)]
+                st['end'] = self.cur.chain_end(pid, to[0], self.cur.nav(pid, to[0], staff)[k1][0], staff)
+                first = (bar, Fraction(s['onset']))
+                st['range'] = [bar, max([st['end']] + [e for a, e in self.slurs.get((pid, staff), []) if a == first])]
         if down:
             st['extend'].append(f'EventEdit.NavigateDownExtend*{down}')
         st['plain'], st['edits'] = list(plain), list(edits)
@@ -381,7 +411,11 @@ class Plan:
         return self.step(f'{text} for {self.who(pid)} in bar {bar}', pid, bar, onset, staff, edits=[f'NoteInput.CreatePlayingTechnique?Definition={text}'])
 
     def slur(self, pid, start, end, staves=1, staff=1):
-        return self.step(f'slur for {self.who(pid)} bars {start[0]}-{end[0]}', pid, *start, staff, to=end, down=staves - 1, edits=['NoteInput.SlurStart'])
+        """Dorico's status bar counts a slur that starts on the first selected note as part of a range
+        (S12: a 42-43 range read "Bars 42-44"), so each slur is remembered for the ranges after it"""
+        st = self.step(f'slur for {self.who(pid)} bars {start[0]}-{end[0]}', pid, *start, staff, to=end, down=staves - 1, edits=['NoteInput.SlurStart'])
+        self.slurs.setdefault((pid, staff), []).append(((start[0], Fraction(start[1]).limit_denominator(64)), st.get('end', end[0])))
+        return st
 
     def hairpin(self, pid, start, end, up=True, staves=1, staff=1):
         kind = 'Up' if up else 'Down'
