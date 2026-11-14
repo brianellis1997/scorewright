@@ -36,8 +36,9 @@ before left the selection (`rel`; after note entry the last typed note stays sel
    checks it in the status bar, and places each caret, but types and edits nothing.
 4. Accept. `sw_wait.sh` sees `[ACCEPT S<n>]` and runs `sw_on_accept.py` before it prints the line:
    the plan runs (`dorico_apply.py`), the panel says "Putting S<n> into Dorico now", then the result.
-   The waiter output shows `[DORICO S<n>] done: ...` or `STOPPED: ...`. Each run is logged in
-   `$E/_bridge/dorico/apply_log.jsonl`.
+   After a full run it exports the project and compares it with the suggestion (`lab/dorico_check.py`),
+   and the panel and the waiter output (`[DORICO S<n>] done: ... CHECK: ...`) say what differs. Each run
+   is logged in `$E/_bridge/dorico/apply_log.jsonl`.
 5. After. A stop happens before the step whose target does not match, and the steps before it stay
    in. Fix that step, say so in one line, and go on: `dorico_apply.py S<n>.dorico.json --from k`.
    The first time a recipe runs, export and compare every note (`xml_marks.pitches`) and mark.
@@ -75,6 +76,9 @@ the new lines, then the marks on them, then every tie between existing notes, ri
 staff. Call `p.use(xml)` with the score as it is after a step that changes what later steps count.
 
 ## Note entry traps (learned in the S6 run, Nov 13)
+
+Every stop and every difference the check finds gets its cause and its rule here, in the same commit
+as the fix (Brian: "we're learning from our mistakes as we go on").
 
 - Note values: use the names in Dorico's key-command file: kSemibreve, kMinim, kCrotchet, kQuaver,
   kSemiQuaver, kDemiSemiQuaver. `kSemiquaver` (small q) is accepted without an error and types

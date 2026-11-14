@@ -3,13 +3,16 @@ sw_wait.sh pipes every new inbox line here. For an "[ACCEPT S<n>]" line whose su
 plan beside it (S<n>.dorico.json, saved by sw_suggest.py --plan), this runs the plan
 (dorico_apply.py) and tells Brian the result in the panel. A plan runs once: its result is kept in
 S<n>.dorico.result.json; a stopped run keeps its edits so far and goes on from the stopped step
-(dorico_apply.py --from k). Every other line passes untouched.
+(dorico_apply.py --from k). After a full run it exports the project and compares it with the
+suggestion (lab/dorico_check.py), and the panel says what, if anything, differs. Every other line
+passes untouched.
 usage: sw_wait.sh does it; by hand: echo '<inbox line>' | python sw_on_accept.py [--quiet]"""
-import datetime, json, os, re, sys
+import datetime, json, os, re, subprocess, sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 from dorico_apply import run  # noqa: E402
+from dorico_check import problems  # noqa: E402
 
 E = '/Users/bdogellis/Documents/Score Exports'
 OUTBOX = f'{E}/_bridge/queue/outbox.jsonl'
@@ -41,6 +44,15 @@ for line in sys.stdin:
     say(session, f'Putting {sid} into Dorico now: {len(plan["steps"])} steps.', working=True)
     ok, msg, done = run(plan, base + '.json')
     json.dump(dict(ok=ok, msg=msg, done=done, ts=datetime.datetime.now().isoformat(timespec='seconds')), open(base + '.result.json', 'w'))
-    say(session, f'{sid} is in Dorico: {msg}.' if ok else
-        f'{sid} is not all in Dorico yet: it {msg}. Only the steps before it are in your score. I will fix that step and finish it.')
-    print(f'[DORICO {sid}] ' + ('done: ' if ok else 'STOPPED: ') + msg, flush=True)
+    if not ok:
+        say(session, f'{sid} is not all in Dorico yet: it {msg}. Only the steps before it are in your score. I will fix that step and finish it.')
+        print(f'[DORICO {sid}] STOPPED: {msg}', flush=True)
+        continue
+    folder = f'{E}/_scorewright_out/session/{session}'
+    export = f'{folder}/dorico_export_after_{sid}.xml'
+    subprocess.run([sys.executable, f'{HERE}/dorico_export.py', export], capture_output=True, text=True, timeout=300)
+    lines = problems(open(f'{folder}/{sid}.musicxml', encoding='utf-8').read(), open(export, encoding='utf-8').read()) if os.path.exists(export) else ['no export to check']
+    check = 'A fresh export matches it in every note, spelling, rhythm, tie and mark.' if not lines else \
+        f'A fresh export differs in {len(lines)} place(s), first: {lines[0]}. I will fix that.'
+    say(session, f'{sid} is in Dorico: {msg}. {check}')
+    print(f'[DORICO {sid}] done: {msg}. CHECK: ' + ('all match' if not lines else ' | '.join(lines[:8])), flush=True)

@@ -9,6 +9,8 @@ Every score the page can show (the working score and each suggestion) gets audio
 - SVG: Verovio through `diffview.render`, the whole score on one page, written to `<stem>.svg`.
 - Audio: `/Applications/MuseScore 4.app/Contents/MacOS/mscore -o <session>/audio_<key>.mp3 <score>`, windowless, 180 s timeout. `<key>` is the first 12 hex digits of the md5 of the file path plus its modification time, so an unchanged file is never rendered twice. The mp3 goes into `<stem>.audio.txt` as a `data:audio/mpeg;base64,...` URI, which is what `/audio?id=` returns.
 - Sounds: MuseScore's own engine. Muse Hub is installed; Muse Sounds play if their packs have been installed inside it.
+- Instruments: MuseScore picks each part's instrument from `<instrument-sound>`, else from the part name. Dorico's export has neither a sound nor a MIDI program, and on Nov 13 2026 MuseScore made 15 of 111326's 32 parts a grand piano (cor anglais, clarinets, horns, Wagner tuba, trumpets, harps, violins, double bass). `render_one.py` therefore renders a copy with `lab/sounds.py` applied: every part gets its standard sound (31 of 32 right; tubular bells still a piano), and a "pizz." or "arco" text gets `<sound pizzicato>`, which MuseScore plays (as text alone the strings stay arco).
+- While Brian composes in Dorico, his project is open, so the NotePerformer pass below waits: the page plays this MuseScore audio. Accepted material he can play in Dorico itself.
 - Bar times: music21 parses the score and walks the first part's measures, adding each bar's length at the current tempo (the first metronome mark seen in a bar, 120 if none). The result, `[[bar, seconds], ...]`, goes to `<stem>.bars.json`, and the page seeks with it.
 
 ## NotePerformer through Dorico 4
