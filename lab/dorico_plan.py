@@ -257,7 +257,7 @@ class Plan:
             for j in range(len(its) - 1 if b < bar else k - 1, -1, -1):
                 if its[j][1] != 'Rest':
                     return dict(target=self.short(self.spec(pid, b, its[j][0], staff)), moves=self.walk(pid, staff, (b, j), (bar, k)))
-        for b in range(bar, max(bar - 4, 0), -1):
+        for b in range(bar, max(bar - 8, 0), -1):
             for i in range(z - 1, -1, -1):
                 vp, vs = self.cur.staves[i]
                 if not self.unchanged(vp, b):
@@ -271,7 +271,7 @@ class Plan:
                     break
                 moves = [f'EventEdit.NavigateDown*{down}'] + self.walk(pid, staff, (b, 0), (bar, k))
                 return dict(target=self.short(self.spec(vp, b, 0, vs)), moves=squeeze(moves))
-        for b in range(bar, max(bar - 4, 0), -1):
+        for b in range(bar, max(bar - 8, 0), -1):
             for i in range(z + 1, len(self.cur.staves)):
                 vp, vs = self.cur.staves[i]
                 if not self.unchanged(vp, b):

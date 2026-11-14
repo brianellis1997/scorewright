@@ -135,6 +135,9 @@ rhythm and tie. Every stop came before an edit at the wrong place.
   last note before a long rest), then on a staff above (`NavigateDown`), then on a staff below
   (`NavigateUp`, one press into each staff, one more per extra chord note). A tied note on a staff in
   between blocks a vertical walk, because the arrows stop on the tie chain.
+- A part that has not played before (the trumpets in S14) has no note with an ID on its own staff,
+  so after a hairpin its next mark needs a vertical walk. The vertical search now looks up to 8 bars
+  back (it was 4), so it finds a note on a nearby staff in a bar that a long tie does not block.
 - Six replies on Nov 13-14 never reached the panel: `sw_say.py` without a session tagged them
   `current`, and the server drops those. It now uses the current piece by default.
 

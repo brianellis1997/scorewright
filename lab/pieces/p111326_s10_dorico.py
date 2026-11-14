@@ -30,7 +30,7 @@ def black_keys(line):
     for b in sorted(bars):
         t = onset if b == bar else 0
         for name, div, tie in bars[b]:
-            if name and re.search(r'[#b]', name[1:]) and tie not in ('stop', 'both'):
+            if isinstance(name, str) and re.search(r'[#b]', name[1:]) and tie not in ('stop', 'both'):
                 out.append((b, t))
             t += div / 4
     return out

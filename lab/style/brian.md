@@ -67,6 +67,27 @@ together. Bars refer to that sketch.
   accents, marks the harmony, or becomes a counter-melody). A line never just stops. Then decide
   which new instruments join. (Nov 14 2026, 111326 bars 29-33: S10 left the harp's run of bars
   29-32 and the cor anglais and E flat clarinet on a G sharp with nowhere to go.)
+- **A phrase keeps its lead-in.** When a phrase comes back, its pickup comes back with it: "the
+  transition is not smooth... you're missing the G fall into that E... it just starts suddenly
+  fortissimo on an E and it comes out of nowhere." If the instruments with the melody are still
+  finishing the phrase before, the pickup goes to instruments that are free: "if the violins are
+  taking over the melody then maybe they can't play this, so what instruments are free to take
+  this?" (Nov 14 2026, 111326 bar 48, after S13.)
+- **Players warm up.** A player who has rested all piece does not come in on a high, exposed note
+  at ff: "the trumpets haven't played anything up to this point, so you expect them to start on
+  that high E? That's just unrealistic. Either move them down an octave or have them warm up; that
+  could also dovetail into this new phrase." Bring them in a bar or two earlier, softly, on notes
+  of the chord, and let that entry lead into the new phrase. (Nov 14 2026, after S13.)
+- **Instrumental dynamics: every instrument is heard, or it supports.** "Trumpets are pretty much
+  the loudest instrument in the orchestra, and up in that high register at fortissimo they're going
+  to drown out everything else." Write the brass one dynamic below the strings and winds, and keep
+  trumpets out of their top register in a tutti unless they are meant to cover everything. Ask of
+  each part: will it be heard here? "The harp is not going to be heard in this scenario... if not,
+  should they be supporting some harmonic texture?" (Nov 14 2026, after S13.)
+- **Spacing: a tutti melody is not only unisons and octaves.** "Everything is playing this E. What
+  about doubling it a minor third or a third down, or a sixth below, to fill out the harmony?" Give
+  some of the melody instruments the line a third or a sixth below, in each octave the melody uses.
+  (Nov 14 2026, after S13.)
 - **Harmony in the theme.** One chord per 2/4 bar, a modal minor loop under a melody centred on E:
   F, G, Em, E (A minor VI, VII, v, V), with inversions in the second half (F/A, G/B).
 
