@@ -32,6 +32,18 @@ together. Bars refer to that sketch.
   that and get into the flowing rhythm." Long slurs cover the flowing eighth-note runs.
 - **A theme that changes instruments keeps its slurs.** When the flute takes the oboe's theme, it
   copies the oboe's slur groups and articulation bar for bar.
+- **A chord on one staff is a sketch for the section.** Spread it across the players before
+  anything else, without being asked: "the horn can only play one note at a time... horns 1 and 2
+  take the top two notes, and a similar instrument, the Wagner tuba or a trombone, takes the lower
+  note... the violin can't play that low F: the first and second violins take the top notes and the
+  viola takes the bottom." Copy the slurs and dynamics to every player and check each range. "This
+  is basic school writing... it has to be obvious." (Nov 13 2026)
+- **Every player has the phrase slurs.** When a texture passes to new players, they get slurs
+  over the same phrases: the strings in bars 16-24 slur 16-19 and 20-24, as the horns slur 8-11 and
+  12-16. ("The strings need their slurs as well.")
+- **Harmony parts hold their common tones.** A note a player repeats inside a bar is one held note,
+  not two quarters; only the voices that move change: "those should be half notes, not individual
+  quarter notes. They're just harmony, so it needs to seem smooth." (Nov 13 2026)
 - **Harmony in the theme.** One chord per 2/4 bar, a modal minor loop under a melody centred on E:
   F, G, Em, E (A minor VI, VII, v, V), with inversions in the second half (F/A, G/B).
 
@@ -50,4 +62,9 @@ From "Where I Left It" (Oct 2026). The full list of rules from his verdicts is i
 
 ## Notation
 
-- Concert pitch, always, for every instrument (Oct 10 2026).
+- Concert pitch, always, for every instrument (Oct 10 2026). He writes horns, clarinets, trumpets and
+  the Wagner tuba at concert pitch: "they might say horn in F, but the notation is in pitch" (Nov 13).
+  Dorico's MusicXML stores them at written pitch with `<transpose>`: convert in code, never call his
+  parts transposed.
+- In 2/4, eighth notes are beamed in pairs, one beam per beat, never four to a bar (Nov 13). In
+  4/4, four eighths per half bar (Oct 9).

@@ -101,7 +101,7 @@ function statusUpdate(){ const el=document.getElementById('status'); if(!el||!st
   }
   el.textContent=t; el.hidden=!t; }
 function render(){
-  const log=document.getElementById('log'); const atBottom = log.scrollTop+log.clientHeight >= log.scrollHeight-40;
+  const log=document.getElementById('log'); const atBottom = !log.dataset.shown || log.scrollTop+log.clientHeight >= log.scrollHeight-40;
   let h='';
   for(const m of state.chat){
     if(m.suggestion){ const s=state.suggestions.find(x=>x.id===m.suggestion); if(!s) continue;
@@ -109,7 +109,7 @@ function render(){
          (s.status==='open'?`<div class=btns><button class=ok onclick="verdict('${s.id}',true)">Accept</button><button class=no onclick="verdict('${s.id}',false)">Reject</button><button onclick="showScore('${s.id}')">show</button></div>`:'')+`</div>`;
     } else h+=`<div class="m ${m.who}"><div class=w>${m.who==='brian'?'you':'Claude'} · ${m.ts.slice(11,16)}</div>${esc(m.text)}${m.take?`<div class=stf><img src="/take_svg?id=${m.take}" alt="take"></div>`:''}</div>`;
   }
-  log.innerHTML=h; if(atBottom) log.scrollTop=log.scrollHeight;
+  log.innerHTML=h; if(atBottom) log.scrollTop=log.scrollHeight; log.dataset.shown='1';
   document.getElementById('title').textContent = state.working ? state.working.split('/').slice(-2).join(' / ') : 'no score yet';
   const open=state.suggestions.filter(s=>s.status==='open'); document.getElementById('latest').hidden=!open.length;
   npUpdate();

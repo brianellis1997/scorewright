@@ -14,7 +14,13 @@ else:
 key = hashlib.md5((xml_path + str(os.path.getmtime(xml_path))).encode()).hexdigest()[:12]
 mp3 = f'{sdir}/audio_{key}.mp3'
 if not os.path.exists(mp3):
-    subprocess.run(['/Applications/MuseScore 4.app/Contents/MacOS/mscore', '-o', mp3, xml_path], capture_output=True, timeout=180)
+    play = xml_path
+    if 'color="#C02626"' in xml:
+        play = f'{stem}.audio_src.musicxml'
+        open(play, 'w', encoding='utf-8').write(re.sub(r'<note color="#C02626">.*?</note>', '', xml, flags=re.S))
+    subprocess.run(['/Applications/MuseScore 4.app/Contents/MacOS/mscore', '-o', mp3, play], capture_output=True, timeout=180)
+    if play != xml_path:
+        os.remove(play)
 if os.path.exists(mp3):
     open(stem + '.audio.txt', 'w').write('data:audio/mpeg;base64,' + base64.b64encode(open(mp3, 'rb').read()).decode()); print('audio ok')
 # bar start times (seconds) for play-from-bar, following the score's metronome marks
