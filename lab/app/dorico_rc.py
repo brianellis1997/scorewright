@@ -18,7 +18,8 @@ Brian runs, with parameters. Found on Nov 13 2026 (Dorico 4.0.31):
   step at a time; NavigateRightExtend: extend the selection. NavigateDownNextStave goes to the bottom
   staff, not the next one. With nothing selected, NavigateRight selects the time signature in bar 1,
   where no move works.
-- NavigateRightExtendBar extends a range by bars (the status bar then shows "Bars 8-16");
+- NavigateRightExtend extends a range one item a press (the status bar then shows "Bars 8-16");
+  count the items. NavigateRightExtendBar is not reliable: 8 presses gave 4 to 12 bars.
   NavigateDownExtend adds one staff a press, a chord counting as one; Edit.Copy then
   Edit.PasteExplode spreads copied chords over the selected staves, top note to the top staff,
   with their slurs, dynamics and hairpins; NoteInput.Tie on the first of two equal notes ties
@@ -27,6 +28,9 @@ Brian runs, with parameters. Found on Nov 13 2026 (Dorico 4.0.31):
 - NoteInput.CreateDynamic?Definition=mp&UseLocalOverride=0 (no popover), NoteInput.SetArticulation?Value=kStaccatoTenuto,
   NoteInput.SlurStart and NoteInput.HairpinStart?Type=kGradualDynamicUp&GradualDynamicType=kCrescOrDim
   (Down for a diminuendo) over the selection.
+Speed: one command at a time waits for a redraw (100 to 275 ms each); the same commands sent as one
+burst take about 15 ms each. A status-bar read takes about 190 ms. Recipes, timings and the plan
+format: app/DORICO.md.
 usage: python app/dorico_rc.py allow    asks Dorico for access and saves the token
        python app/dorico_rc.py status   prints what the status bar shows
 from code: d = Dorico(); d.cmd('EventEdit.NavigateRight'); bar, item, texts = d.sb()"""
@@ -36,16 +40,33 @@ import websockets
 
 TOKEN = '/Users/bdogellis/Documents/Score Exports/_bridge/dorico/session_token.txt'
 URL = 'ws://127.0.0.1:4560'
-SB = '''tell application "System Events"
-tell process "Dorico 4"
-set w to first window whose subrole is "AXStandardWindow"
-set out to ""
-repeat with t in (static texts of w)
-set out to out & (value of t as text) & "|"
-end repeat
-return out
+SB = '''tell application "System Events" to tell process "Dorico 4"
+set v to value of static texts of (first window whose subrole is "AXStandardWindow")
 end tell
-end tell'''
+set AppleScript's text item delimiters to "|"
+return v as text'''
+
+
+LOG = os.path.expanduser('~/Library/Application Support/Steinberg/Dorico 4/application.log')
+LOOKS = ('EventEdit.Navigate', 'Edit.SelectAtPoint', 'Edit.SelectNone', 'Edit.SelectMore', 'Edit.Copy', 'Edit.GoTo',
+         'Edit.ClickInScoreUI', 'NoteInput.Enter', 'NoteInput.Exit', 'NoteInput.Move', 'NoteInput.NoteValue',
+         'NoteInput.SetDotted', 'NoteInput.MouseInput', 'NoteInput.Mode', 'NoteInput.Toggle', 'NoteInput.StartTupletRun',
+         'File.', 'Window.', 'View.', 'Play.', 'Transport.', 'Mixer.', 'Help.')
+
+
+def edits_since(ts):
+    """Brian's commands that changed the score since ts ('2026-11-13 19:50:00'), from Dorico's log.
+    Commands run while a Scorewright remote-control client was connected are left out. Not empty
+    means the last export is out of date: export again before a plan is built."""
+    out, remote = [], False
+    for line in open(LOG, errors='replace'):
+        if 'Remote Control Client' in line:
+            remote = line.rstrip().endswith(' connected') and 'disconnected' not in line
+        elif not remote and line[:19] >= ts and 'Executing command: ' in line:
+            c = line.split('Executing command: ', 1)[1].strip()
+            if not c.startswith(LOOKS):
+                out.append(f'{line[11:19]} {c}')
+    return out
 
 
 class Dorico:

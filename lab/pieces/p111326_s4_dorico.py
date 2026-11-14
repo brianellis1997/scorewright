@@ -2,6 +2,8 @@
 through the remote-control link (app/dorico_rc.py). This is the pattern for every Dorico change:
 the suggestion first, Dorico only after Accept, then a fresh export compared with the suggestion.
 That export matched S4 note for note and mark for mark.
+Since then, plans are made with the suggestion and run on Accept by themselves (app/DORICO.md),
+and ranges are extended item by item: NavigateRightExtendBar proved unreliable.
 
 Steps, each start note checked against the status bar before the command:
 1. Horn 1 bars 8-16: select the bar-8 chord, extend bar by bar until the status bar shows
@@ -58,4 +60,4 @@ def extend_to(last):
 
 
 if __name__ == '__main__':
-    raise SystemExit('S4 is already in the project (Nov 13 2026). These steps are the pattern for the next change.')
+    raise SystemExit('S4 is already in the project (Nov 13 2026). The pattern now: lab/dorico_plan.py and app/DORICO.md.')
