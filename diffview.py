@@ -22,6 +22,22 @@ except Exception:
 
 SF = '/usr/local/lift/Soundfonts/FluidR3_GM2-2.sf2'
 
+ABBR = [('Contrabassoon', 'Cbsn.'), ('Piccolo', 'Picc.'), ('Flute', 'Fl.'), ('Oboe', 'Ob.'), ('Cor Anglais', 'C.A.'),
+        ('English Horn', 'E.H.'), ('Bass Clarinet', 'B.Cl.'), ('Clarinet', 'Cl.'), ('Bassoon', 'Bsn.'), ('Wagner Tuba', 'W.Tba.'),
+        ('French Horn', 'Hn.'), ('Horn', 'Hn.'), ('Trumpet', 'Tpt.'), ('Bass Trombone', 'B.Tbn.'), ('Trombone', 'Tbn.'),
+        ('Tuba', 'Tba.'), ('Timpani', 'Timp.'), ('Side Drum', 'S.D.'), ('Bass Drum', 'B.D.'), ('Clash Cymbal', 'Cym.'),
+        ('Tubular Bells', 'T.Bells'), ('Glockenspiel', 'Glk.'), ('Xylophone', 'Xyl.'), ('Celesta', 'Cel.'), ('Piano', 'Pno.'),
+        ('Harp', 'Hp.'), ('Violoncello', 'Vc.'), ('Cello', 'Vc.'), ('Violin', 'Vln.'), ('Viola', 'Vla.'), ('Double Bass', 'Cb.'),
+        ('Contrabass', 'Cb.')]
+
+
+def abbreviation(name):
+    s = re.sub(r'\s*\([^)]*\)', '', name)
+    for full, short in ABBR:
+        if full in s:
+            return s.replace(full, short)
+    return s
+
 VRV = {'pageWidth': 2400, 'pageHeight': 60000, 'scale': 42, 'adjustPageHeight': True,
        'header': 'none', 'footer': 'none', 'xmlIdSeed': 1, 'breaks': 'auto',
        'svgAdditionalAttribute': ['note@pname', 'note@oct', 'measure@n', 'staff@n']}
@@ -47,6 +63,15 @@ def render(xml_text, page=1, width=None, timemap=False, n_parts=1):
     elif n_parts > 6:
         opts['scale'] = 30
         opts['pageWidth'] = int((width or VRV['pageWidth']) * 1.5)
+    if '<transpose' in xml_text:
+        opts['transposeToSoundingPitch'] = True
+        xml_text = re.sub(r'<transpose\b[^>]*>(?:(?!</transpose>)[\s\S])*?<chromatic>(-?\d+)</chromatic>(?:(?!</transpose>)[\s\S])*?</transpose>',
+                          lambda m: '' if int(m.group(1)) % 12 == 0 else m.group(0), xml_text)
+    if xml_text.count('<score-part ') > 12:
+        opts.update(condense='auto', condenseFirstPage=True)
+        if '<part-abbreviation' not in xml_text:
+            xml_text = re.sub(r'(<part-name>([^<]*)</part-name>)',
+                              lambda m: m.group(1) + f'<part-abbreviation>{abbreviation(m.group(2))}</part-abbreviation>', xml_text)
     tk.setOptions(opts)
     tk.loadData(xml_text)
     svg = tk.renderToSVG(min(page, max(tk.getPageCount(), 1)))

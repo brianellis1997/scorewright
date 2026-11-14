@@ -21,6 +21,8 @@ lab/*
 !lab/cloud/
 !lab/NotaGen/
 !lab/songs/
+!lab/pieces/
+!lab/style/
 !lab/sibelius_SWExport.plg.txt
 !lab/unfinished_piano_since_fall2018.txt
 

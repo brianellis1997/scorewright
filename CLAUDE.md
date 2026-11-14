@@ -15,6 +15,8 @@ No trained music model is in the loop. The model is you. The value is in what ge
 Code, in this repo (`/Users/bdogellis/repos/scorewright`):
 
 - `lab/COMPOSING.md`: the composing procedure and every rule learned from his verdicts. The most important file here. Link to it, never copy it.
+- `lab/style/brian.md`: Brian's style guide, the rules he states about his own writing (orchestration, dynamics, articulation, harmony), in his words. Read it with COMPOSING.md before writing a note for him.
+- `lab/app/dorico_rc.py`, `lab/app/dorico_export.py`, `lab/xml_marks.py`, `lab/pieces/`: working on a piece that lives in Dorico (see "Pieces that live in Dorico").
 - `lab/app/`: the surface. `server.py` (runs under launchd), `page.html`, `render_one.py`, `dorico_render.py`, `np_agent.py`, `listen.py`, `hum.py`, `media.py`, `Scorewright.qml` (MuseScore panel), and the scripts you use to talk to the server: `sw_wait.sh`, `sw_say.py`, `sw_suggest.py`, `sw_working.py`.
 - `lab/*.py`: the composing tools (below), plus many scripts from the training phase that the loop does not use.
 - `lab/band/orchestrate_bv.py`: worked example of orchestrating a two-stave sketch for concert band.
@@ -53,7 +55,7 @@ Each Bash call starts a fresh shell, so define the shorthands used below in the 
 
 ## Session start checklist
 
-1. Read `lab/COMPOSING.md`. Skim the end of `$E/PROJECT.md` for anything newer than this file.
+1. Read `lab/COMPOSING.md` and `lab/style/brian.md`. Skim the end of `$E/PROJECT.md` for anything newer than this file.
 2. Server up? `launchctl list | grep scorewright` shows a PID, and `curl -s -m 3 http://127.0.0.1:8790/api/sessions` returns JSON. If not, see [docs/operations.md](docs/operations.md).
 3. Is another session already running the loop? `ps -axo pid,etime,command | grep -E "sw_wait.sh|np_agent.py" | grep -v grep`. Two waiters both wake on the same message and both answer it. If another live session owns them, leave them alone. If they look orphaned, ask Brian before stopping anything.
 4. Start the waiter as a background task: `/Users/bdogellis/repos/scorewright/lab/app/sw_wait.sh`. It blocks until Brian says something in the page, prints every inbox line it has not delivered yet (the count lives in `_bridge/queue/.inbox_cursor`), and exits. Handle the lines, then start it again. One must be running the whole time he works.
@@ -73,6 +75,7 @@ He talks or types in the page, or in the MuseScore panel. Each message becomes a
 - `[NEW PIECE <name>] ...`: he made a new piece from the header menu
 - `[REVIEW S<n>] k comments`, then one line per comment, `bars 45-48: ...`, `bar 76: ...` or `general: ...`: his review, collected in the page and submitted at once (the JSON line also carries `review`, the list). Treat it as one revision: re-read the piece as pages, answer every comment in one new suggestion whose note goes through them comment by comment, then withdraw the suggestion it replaces. Brian, Oct 10 2026: "like reviewing a PR, so I'm not submitting one at a time while you're in the middle of a change."
 - a message that starts `[S10 bars 45-48]` or `[working bar 12]`: he had those bars selected when he sent it
+- a message that starts `style:` (in the page or in the chat): a rule about his style. Add it to `lab/style/brian.md` under the right heading, with the date, the piece and his words, then confirm in one line.
 
 Rules, from COMPOSING.md section 9 and from what went wrong in earlier sessions:
 
@@ -109,6 +112,17 @@ Follow `lab/COMPOSING.md` in order. The tools, in the order you reach for them (
 For a whole new piece, from his words or from scratch, there is no score to splice into: follow COMPOSING.md section 10 and the worked example `lab/songs/where_i_left_it_s3.py`, which builds the full ABC (words as `w:` lines, transposing melody voice, piano figures, beams in fours) and registers it as a suggestion in its own piece. Start from his own idea when he has one (a progression, a contour, a take), and search the archive for how he treats it: `$W find_progression.py "<pattern>" --melody` (COMPOSING.md section 13). Every melody passes `$W lint_line.py <score>` before he hears it: accidentals leaning the right way, breaths, recovered leaps, range. For anything "in his style" (or anyone's), read his engraved pages first, as images (`$E/PDF/<stem>.pdf` with the Read tool, a few pages at a time): what each part does, register, doubling, counter-lines, space, how the parts answer each other (COMPOSING.md section 12). Before he hears a draft, render it and read your own pages the same way against his. Then the reductions: `$W reduce_harmony.py <score>` (COMPOSING.md section 12). Write from what they do, then use `$W style_profile.py <his scores> --draft <draft>` only to catch gross mismatches (section 11). S1 of "Where I Left It" was "too pop". S2 was rewritten to the profile's numbers, landed inside his range on every measure, and was still "odd, not mine".
 
 The server makes the green editor copy itself (`color_xml.py`, `fix_pedal.py`, `mark_xml.py`, `layout_xml.py`). The manual versions of those steps in COMPOSING.md section 5 are for producing a standalone file. For a piano sketch that is really an ensemble piece, see COMPOSING.md section 8 and `band/orchestrate_bv.py`.
+
+## Pieces that live in Dorico
+
+From Nov 13 2026 (111326, an orchestral sketch) Brian composes in Dorico 4 and wants Claude to work in his open project the way Claude Code works in an open file: "this needs to be seamless... you have the actual code file, and Claude Code in a panel to the side." His Dorico project is the master copy.
+
+1. Read it. `$W app/dorico_export.py $E/_scorewright_out/session/<piece>/dorico_export_<HHMM>.xml` exports his open project to MusicXML through File > Export > MusicXML (it presses Return in his Dorico, so say so first; it refuses while a dialog is open, and it moves earlier exports and the part files Dorico writes to the Trash). Then read it as pages, as for any piece. For a new piece, make the session with `/api/new` and load the export with `/api/working`.
+2. Plan the change as a suggestion first, so the log stays complete: a marks-only change goes through `lab/xml_marks.py` (dynamics, hairpins, articulations, slurs by part, bar and onset, proven with `pitches()`), as in `lab/pieces/p111326_s1.py`; register it with `sw_suggest.py`.
+3. Make it in his project through Dorico's remote-control link, `lab/app/dorico_rc.py` (worked example `lab/pieces/p111326_s1_dorico.py`). Each command is one undo step. Reach each note from a fixed start point (a position from his own clicks in Dorico's log), check bar and pitch in the status bar before every mark, and stop at the first mismatch. Tell him not to click in Dorico while it runs.
+4. Check it. Export again and compare every note and mark with the plan.
+
+Gotchas: Dorico's MusicXML keeps transposing instruments at written pitch with `<transpose>`; leave that in files that go back to Dorico. The page shows concert pitch anyway (`diffview.render` transposes to sounding pitch, except octave transpositions), hides staves that rest for a whole line in scores with more than 12 parts, and adds short instrument names when the file has none. Dorico 4.0 does not list its commands over the link; the names are in `/Applications/Dorico 4.app/Contents/Resources/keycommands_en.json`, and the log shows each command with its parameters. The access token lives outside the repo, in `$E/_bridge/dorico/session_token.txt`.
 
 ## Verify before he sees it
 

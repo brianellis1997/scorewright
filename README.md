@@ -46,6 +46,8 @@ For a Claude Code session: read [CLAUDE.md](CLAUDE.md), then [lab/COMPOSING.md](
 | `lab/rh_profile.py` | what the accompaniment's right hand does against the melody: doubling, thirds and sixths, fills in the melody's rests |
 | `lab/music_map.py` | the Phrase Atlas: every phrase of a set of scores mapped by melody, rhythm and harmony (UMAP), with named regions and nearest neighbours; `lab/app/phrase_atlas.html` is the viewer |
 | `lab/engrave_pages.py` | engraves a score to page images, so the whole piece is re-read as pages before every continue or revision |
+| `lab/app/dorico_rc.py`, `lab/app/dorico_export.py` | work in the Dorico project Brian has open: read it as MusicXML, and make changes in it live through Dorico's remote-control link, one undo step each |
+| `lab/style/brian.md` | Brian's style guide: the rules he states about his writing, read before every note |
 | `lab/lint_line.py` | checks a melody for wrong-way accidentals, unrecovered or augmented leaps, phrases too long to breathe, range |
 | `lab/harmony_index.py`, `lab/find_progression.py` | index the harmony of all 1,655 scores; find a progression in any key and show the melody he wrote over it |
 | `lab/reduce_harmony.py` | prints a score as a lead-sheet reduction, one line per bar (chords, bass, melody, accompaniment rhythm), to read many pieces fast |
