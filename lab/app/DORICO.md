@@ -32,8 +32,12 @@ before left the selection (`rel`; after note entry the last typed note stays sel
    from the same export (`lab/pieces/p111326_s6_dorico.py` and `lab/dorico_plan.py`), with the
    score states the plan walks over (after a paste, after the new lines). Register the suggestion
    with `sw_suggest.py ... --plan plan.json`, or copy the plan to `S<n>.dorico.json` in the session.
-3. Probe. `$W app/dorico_apply.py S<n>.dorico.json --probe` jumps to every start that has an ID,
-   checks it in the status bar, and places each caret, but types and edits nothing.
+3. Check. `$W app/dorico_apply.py S<n>.dorico.json --check` finds every note the plan selects by ID
+   in the newest copy of his project (the autosave, or the file Dorico last saved) and sends nothing
+   to Dorico. The live `--probe` also reads each start in the status bar and places each caret, but
+   it moves the selection, enters note input and plays every selected note in his Dorico: on Nov 14
+   he saw that with no word in the panel ("You're changing my actual Dorico score"). Use it only
+   when he is away, and say so in the panel first.
 4. Accept. `sw_wait.sh` sees `[ACCEPT S<n>]` and runs `sw_on_accept.py` before it prints the line:
    the plan runs (`dorico_apply.py`), the panel says "Putting S<n> into Dorico now", then the result.
    After a full run it exports the project and compares it with the suggestion (`lab/dorico_check.py`),
@@ -119,6 +123,15 @@ rhythm and tie. Every stop came before an edit at the wrong place.
   listing (every part, old against new) showed it before Brian saw anything.
 - After Dorico restarts it has no autosave until the project changes. The runner reads the newest of
   the autosave and the file Dorico last saved (the log line `Saving document: 0 to <path>`).
+
+## Hairpins on typed notes, and resuming (S10, Nov 14)
+
+- After `HairpinStart` on a range of typed notes, `NavigateNextItemSamePosition` did not come back
+  to the start note in 6 tries (S10 step 27, Violin II), so the run stopped although the hairpin was
+  in. The runner now marks the selection as lost instead of stopping, and the next step starts from
+  a note with an ID (its `via`), never from `rel`. A run resumed with `--from` starts lost too.
+- Six replies on Nov 13-14 never reached the panel: `sw_say.py` without a session tagged them
+  `current`, and the server drops those. It now uses the current piece by default.
 
 ## Marks on typed notes, and carets in empty bars (S8, Nov 13)
 

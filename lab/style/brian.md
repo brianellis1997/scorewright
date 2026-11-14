@@ -49,6 +49,24 @@ together. Bars refer to that sketch.
   over." His example: Violin I enters on A, falls to a G half note, and the next bar starts with a
   G quarter, so the G is tied over. "When I compose, the harmony tries to be as continuous and fluid
   as possible... sometimes there are exceptions." (Nov 13 2026)
+- **A new phrase starts from everything that is already sounding.** His sketch of a new phrase is
+  often only the melody and the harmony; the other lines are still going. "The cohesiveness of the
+  phrasing needs to be maintained... look at what everything else is doing. Like the harp just
+  started this run 4 bars ago, right? We can't just leave it and fill in the harmony or melody...
+  Where's this harp part going? How does it evolve into this phrase? Do we dovetail it into another
+  instrument, or does it just kind of end? It doesn't make sense to end abruptly. That's not my
+  style. If it's going to end, it has to end smoothly. Or keep the pattern going, if it makes sense,
+  or have the harp devolve into a phrase, maybe accenting the melody or the harmony in some way, or
+  a counter melody... Look at all the different ideas going on right now, the texture, the
+  individual lines: where are they all heading? Do some continue, do we dovetail into another
+  phrase, politely end that phrase in a smooth way, or do we need to add new instruments?" In
+  notation: before the new phrase, list every line that sounds in the bars before it, and give each
+  one a fate in the suggestion. It continues (the figure follows the new chords), it dovetails
+  (another instrument takes it on the same beat), it ends smoothly (a leading tone resolves, a line
+  lands on a held chord tone, a diminuendo), or it changes its role (it doubles the melody's
+  accents, marks the harmony, or becomes a counter-melody). A line never just stops. Then decide
+  which new instruments join. (Nov 14 2026, 111326 bars 29-33: S10 left the harp's run of bars
+  29-32 and the cor anglais and E flat clarinet on a G sharp with nowhere to go.)
 - **Harmony in the theme.** One chord per 2/4 bar, a modal minor loop under a melody centred on E:
   F, G, Em, E (A minor VI, VII, v, V), with inversions in the second half (F/A, G/B).
 

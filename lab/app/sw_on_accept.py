@@ -12,6 +12,7 @@ import datetime, glob, json, os, re, subprocess, sys, time, urllib.request
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 from dorico_apply import run  # noqa: E402
+from dorico_rc import LOG  # noqa: E402
 from dorico_check import problems  # noqa: E402
 
 E = '/Users/bdogellis/Documents/Score Exports'
@@ -33,6 +34,7 @@ def fresh_autosave(session, sid):
     minutes, and over the link Dorico refuses to autosave): its note numbers are what the plan uses"""
     log = f'{E}/_bridge/dorico/apply_log.jsonl'
     saves = glob.glob(os.path.expanduser('~/Library/Application Support/Steinberg/Dorico 4/AutoSave/*.dorico'))
+    saves += [m.group(1) for m in (re.search(r'Saving document: \d+ to (.+\.dorico)\s*$', ln) for ln in open(LOG, errors='replace')) if m and os.path.exists(m.group(1))]
     if not os.path.exists(log) or not saves:
         return True
     runs = [json.loads(x) for x in open(log) if x.strip()]

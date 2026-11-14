@@ -16,7 +16,7 @@ also holds every selection and caret move, so a stopped run is never undone blin
 before the step whose target does not match, says which step, and can go on from there (--from).
 usage (whisperer env): python app/dorico_apply.py <S<n>.dorico.json> [--from k] [--probe]      exit 0 done, 1 stopped
 --probe jumps to every start that has an ID and checks it, and places each caret, but types and edits nothing."""
-import asyncio, datetime, fcntl, json, os, re, sys, time
+import asyncio, datetime, fcntl, glob, json, os, re, sys, time
 from fractions import Fraction
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -54,11 +54,42 @@ def project_file(project):
     return max(have, key=os.path.getmtime) if have else None
 
 
+def check_ids(plan, project=None):
+    """the probe without Dorico: every note the plan selects by its ID is in the newest copy of the
+    project. No command goes to Dorico, so nothing moves in his score (Brian, Nov 14, about the live
+    probe: "You're changing my actual Dorico score... what the fuck is going on?")"""
+    if not project:
+        saves = glob.glob(f'{AUTOSAVE}/*.dorico')
+        project = os.path.basename(max(saves, key=os.path.getmtime))[:-len('.dorico')] if saves else None
+    path = project_file(project) if project else None
+    if not path:
+        return False, 'no copy of the project to read'
+    notes = [n for f in dorico_file.read(path).flows for n in f.notes]
+    missing, n_ids = [], 0
+    for i, st in enumerate(plan['steps'], 1):
+        if 'caret' in st:
+            ts = [st['caret']['start']]
+        elif 'insert' in st:
+            ts = [st['then']]
+        else:
+            ts = [st['target'] or (st.get('via') or {}).get('target')]
+        for t in filter(None, ts):
+            n_ids += 1
+            want = {midi(n) for n in t['names'] or []}
+            if not any(n.instrument == t['part'] and n.staff == t['staff'] and n.bar == t['bar'] and n.onset == Fraction(t['onset'])
+                       and n.pitch in want for n in notes):
+                missing.append(f'step {i} ({st["label"]}): no ID for {t["part"]} bar {t["bar"]} {"/".join(t["names"] or [])}')
+    stamp = datetime.datetime.fromtimestamp(os.path.getmtime(path)).strftime('%H:%M:%S')
+    if missing:
+        return False, f'{len(missing)} of {n_ids} notes not found in {os.path.basename(path)} ({stamp}): ' + '; '.join(missing[:4])
+    return True, f'all {n_ids} notes the plan selects by ID are in {os.path.basename(path)} ({stamp}); nothing was sent to Dorico'
+
+
 def run(plan, label='', start=0, probe=False):
     lock = open(f'{BRIDGE}/apply.lock', 'w')
     fcntl.flock(lock, fcntl.LOCK_EX)
     d = Dorico()
-    t0, done, short, spelled = time.time(), start, 0, 0
+    t0, done, short, spelled, lost = time.time(), start, 0, 0, start > 0
     texts = d.sb()[2]
     project = next((t.split(' in ', 1)[1] for t in texts if t.startswith('Flow ') and ' in ' in t), None)
     auto = project_file(project) if project else None
@@ -149,6 +180,7 @@ def run(plan, label='', start=0, probe=False):
                 d.loop.run_until_complete(settle(1.0, 'noteinput'))
                 one_by_one(c['moves'] + (['NoteInput.Exit'] if probe else step['edits']))
                 d.loop.run_until_complete(settle(1.5))
+                lost = False
             elif probe:
                 if step['target']:
                     jump(step['target'])
@@ -159,7 +191,7 @@ def run(plan, label='', start=0, probe=False):
                 elif step.get('via'):
                     jump(step['via']['target'])
             else:
-                if step.get('rel') is not None and go(step['rel'], soft=True) and there(step['expect'])[0]:
+                if not lost and step.get('rel') is not None and go(step['rel'], soft=True) and there(step['expect'])[0]:
                     short += 1
                 else:
                     if step['target']:
@@ -170,6 +202,7 @@ def run(plan, label='', start=0, probe=False):
                     else:
                         raise Stop(f'{step["label"]}: no way to reach it')
                     check(step['expect'], step['label'])
+                lost = False
                 go(step.get('extend', []))
                 if 'range' in step:
                     check_range(step)
@@ -186,7 +219,7 @@ def run(plan, label='', start=0, probe=False):
                             break
                         go(['EventEdit.NavigateNextItemSamePosition'])
                     else:
-                        raise Stop(f'{step["label"]}: done, but the note was not found again after it')
+                        lost = True
             done = i + 1
         go(['Edit.SelectNone'])
         ok, msg = True, f'{len(steps) - start} steps in {time.time() - t0:.1f} s, every target checked' + (f', {spelled} spelling(s) fixed' if spelled else '') + (' (probe: nothing changed)' if probe else '')
@@ -199,6 +232,10 @@ def run(plan, label='', start=0, probe=False):
 
 
 if __name__ == '__main__':
+    if '--check' in sys.argv:
+        ok, msg = check_ids(json.load(open(sys.argv[1])))
+        print(('ok: ' if ok else 'PROBLEM: ') + msg)
+        sys.exit(0 if ok else 1)
     k = int(sys.argv[sys.argv.index('--from') + 1]) - 1 if '--from' in sys.argv else 0
     ok, msg, done = run(json.load(open(sys.argv[1])), sys.argv[1], k, '--probe' in sys.argv)
     print(('done: ' if ok else 'STOPPED: ') + msg)

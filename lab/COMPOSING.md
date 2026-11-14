@@ -96,6 +96,11 @@ Rules learned from his verdicts:
 - **Never end unless asked.** Every forced ending was called "abrupt". An accented ff cadence followed by a sudden piano chord also reads as an ending ("you seem to want to end the piece, it is nowhere near ending"); a section closes on its last strong beat with the accompaniment still moving. A continuation stops where
   the next idea would start: on a tie, a crescendo, an open dominant. Ending is a separate
   request with a real approach, a phrase and not a chord.
+- **Every line that sounds gets a fate at a phrase boundary.** Before writing or orchestrating a new
+  phrase, list each line that sounds in the four bars before it (instrument, figure, where it is
+  heading) and decide for each: it continues, it dovetails, it ends smoothly, or it changes its role.
+  Never leave a line hanging. His words and the notation: `style/brian.md`, "A new phrase starts
+  from everything that is already sounding" (Nov 14 2026).
 - **Recapitulation is legitimate; variation of the last phrase is not enough.** Bringing earlier
   material back, transformed, is what he recognised as composing. Restating the last four bars
   with different notes is what he called "not inventing anything".
