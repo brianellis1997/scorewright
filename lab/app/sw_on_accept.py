@@ -7,7 +7,7 @@ S<n>.dorico.result.json; a stopped run keeps its edits so far and goes on from t
 suggestion (lab/dorico_check.py), and the panel says what, if anything, differs. Every other line
 passes untouched.
 usage: sw_wait.sh does it; by hand: echo '<inbox line>' | python sw_on_accept.py [--quiet]"""
-import datetime, json, os, re, subprocess, sys
+import datetime, glob, json, os, re, subprocess, sys, time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
@@ -28,6 +28,30 @@ def say(session, text, working=False):
     open(OUTBOX, 'a').write(json.dumps(rec) + '\n')
 
 
+def fresh_autosave(session, sid):
+    """after a run that changed the project, wait for Dorico's next autosave (it comes every few
+    minutes, and over the link Dorico refuses to autosave): its note numbers are what the plan uses"""
+    log = f'{E}/_bridge/dorico/apply_log.jsonl'
+    saves = glob.glob(os.path.expanduser('~/Library/Application Support/Steinberg/Dorico 4/AutoSave/*.dorico'))
+    if not os.path.exists(log) or not saves:
+        return True
+    runs = [json.loads(x) for x in open(log) if x.strip()]
+    changed = [r['ts'] for r in runs if r.get('done', 0) > r.get('start', 0) and 'probe' not in r.get('msg', '')]
+    newest = max(saves, key=os.path.getmtime)
+    if not changed or datetime.datetime.fromtimestamp(os.path.getmtime(newest)).isoformat(timespec='seconds') > changed[-1]:
+        return True
+    say(session, f'Waiting for Dorico to autosave (it does that every few minutes) before {sid}, so every note has its new number.', working=True)
+    t0, m0 = time.time(), os.path.getmtime(newest)
+    while time.time() - t0 < 420:
+        time.sleep(5)
+        if os.path.getmtime(newest) != m0:
+            time.sleep(2)
+            return True
+    say(session, f'Dorico did not autosave in 7 minutes, so {sid} is not in yet. I will look at it.')
+    print(f'[DORICO {sid}] WAITING: no autosave in 7 minutes', flush=True)
+    return False
+
+
 for line in sys.stdin:
     try:
         rec = json.loads(line)
@@ -41,6 +65,8 @@ for line in sys.stdin:
     if not os.path.exists(base + '.json') or os.path.exists(base + '.result.json'):
         continue
     plan = json.load(open(base + '.json'))
+    if not fresh_autosave(session, sid):
+        continue
     say(session, f'Putting {sid} into Dorico now: {len(plan["steps"])} steps.', working=True)
     ok, msg, done = run(plan, base + '.json')
     json.dump(dict(ok=ok, msg=msg, done=done, ts=datetime.datetime.now().isoformat(timespec='seconds')), open(base + '.result.json', 'w'))

@@ -283,36 +283,40 @@ class Plan:
         if down:
             st['extend'].append(f'EventEdit.NavigateDownExtend*{down}')
         st['plain'], st['edits'] = list(plain), list(edits)
-        self.steps.append(st)
         keeps = not st['extend'] and all(e.split('?')[0] in KEEPS for e in st['edits'])
-        self.cursor = (pid, staff, bar, s['item']) if keeps else None
+        if not keeps and st['target'] is None and not down and st['edits'] and 'Edit.Delete' not in st['edits'] and 'Edit.PasteExplode' not in st['edits']:
+            st['restore'] = True
+        self.steps.append(st)
+        self.cursor = (pid, staff, bar, s['item']) if keeps or st.get('restore') else None
         return st
 
     def notes(self, pid, bar, onset, events, staff=1):
         """note entry from the caret: events = [(names or None for a rest, quarters[, 'tie'])];
         the caret starts at a note with an ID (same staff, or the nearest staff above it) and moves"""
         z = self.cur.staves.index((pid, staff))
+        order = sorted(range(len(self.cur.staves)), key=lambda i: (abs(i - z), i > z))
         start = None
-        for b in range(bar, max(bar - 12, 0), -1):
-            for i in [z] + list(range(z - 1, -1, -1)):
+        for b in list(range(bar, max(bar - 12, 0), -1)) + list(range(bar + 1, bar + 13)):
+            for i in order:
                 vp, vs = self.cur.staves[i]
-                if not self.unchanged(vp, b):
+                if b not in self.cur.parts[vp][0] or not self.unchanged(vp, b):
                     continue
-                its = [it for it in self.cur.nav(vp, b, vs) if it[1] != 'Rest' and (b < bar or it[0] <= Fraction(onset))]
-                if i != z:
-                    its = [it for it in its if it[0] == 0]
+                its = [it for it in self.cur.nav(vp, b, vs) if it[1] != 'Rest']
+                its = [it for it in its if it[0] <= Fraction(onset)] if (i, b) == (z, bar) else [it for it in its if it[0] == 0]
                 if its:
-                    it = its[-1] if i == z else its[0]
-                    start = (vp, vs, b, it[0], i)
+                    start = (vp, vs, b, its[-1][0], i)
                     break
             if start:
                 break
         if not start:
             raise ValueError(f'{self.who(pid)} bar {bar}: no note with an ID to start the caret from')
         vp, vs, vb, von, vi = start
-        moves = [f'NoteInput.MoveDown*{z - vi}'] if vi != z else []
+        moves = [f'NoteInput.MoveDown*{z - vi}'] if vi < z else [f'NoteInput.MoveUp*{vi - z}'] if vi > z else []
         if bar > vb:
             moves.append(f'NoteInput.MoveRightBar*{bar - vb}')
+            pos = Fraction(onset)
+        elif bar < vb:
+            moves.append(f'NoteInput.MoveLeftBar*{vb - bar}')
             pos = Fraction(onset)
         else:
             pos = Fraction(onset) - von
@@ -380,6 +384,21 @@ class Plan:
         return self.step(f'respell {self.who(pid)} bar {bar}', pid, bar, onset, staff,
                          edits=[f'NoteEdit.RespellUsingNoteName{"Above" if up else "Below"}'])
 
+    def insert_bars(self, at_bar, count, check, flow=0):
+        """insert count empty bars before bar at_bar (all staves), then check that the note at check =
+        (pid, bar, onset) moved count bars later; Dorico takes the time in quarters, as 'n, d' fractions"""
+        m = re.search(r'<beats>(\d+)</beats>\s*<beat-type>(\d+)</beat-type>', next(iter(self.cur.parts.values()))[0][1])
+        per_bar = Fraction(int(m.group(1)) * 4, int(m.group(2)))
+        pos, dur = per_bar * (at_bar - 1), per_bar * count
+        s = self.spec(*check)
+        st = dict(label=f'insert {count} bar(s) before bar {at_bar}',
+                  insert=[f'NoteInput.CreateBarLine?Duration={dur.numerator}\\, {dur.denominator}&RhythmicPosition={pos.numerator}\\, {pos.denominator}'
+                          f'&RhythmicPositionIncludesLeftOfNotes=1&FlowID={flow}'],
+                  then=self.short(s), expect=[s['bar'] + count, s['expect'][1]])
+        self.steps.append(st)
+        self.cursor = None
+        return st
+
     def explode(self, pid, b0, b1, staves, staff=1):
         """copy the chords of bars b0-b1 and paste-explode them onto this staff and the staves-1 below"""
         self.step(f'copy {self.who(pid)} bars {b0}-{b1}', pid, b0, 0, staff, to=(b1, None), plain=['Edit.Copy'])
@@ -392,6 +411,9 @@ class Plan:
         for s in self.steps:
             if 'caret' in s:
                 n += 2 + count(s['caret']['moves']) + count(s['edits'])
+                continue
+            if 'insert' in s:
+                n += len(s['insert']) + 1
                 continue
             walk = s['rel'] if s.get('rel') is not None else (['select'] if s['target'] else ['select'] + s['via']['moves'])
             n += count(walk) + count(s['extend'] + s['plain'] + s['edits'])

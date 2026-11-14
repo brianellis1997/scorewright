@@ -5,7 +5,8 @@ sw_on_accept.py, which calls run(). Recipes, timings and the plan format: DORICO
 Each target is selected by its internal IDs, read from Dorico's autosave of the project
 (lab/dorico_file.py): one EventEdit.Select, in any score and layout. A target the plan wrote itself
 is reached from a note that has an ID (via) or from where the step before left the selection
-(rel). Note entry starts the caret at a note with an ID and moves it. The status bar is read at
+(rel). After a mark on such a note Dorico selects the new mark; "restore" steps through the items at
+that position (NavigateNextItemSamePosition) back to the note, so the next step can start there. Note entry starts the caret at a note with an ID and moves it. The status bar is read at
 every target before anything changes there.
 
 How Dorico takes commands: it answers each one when it queues it and decides then whether the
@@ -121,7 +122,13 @@ def run(plan, label='', start=0, probe=False):
         d.loop.run_until_complete(burst(['NoteInput.Exit']))
         for i in range(start, len(steps)):
             step = steps[i]
-            if 'caret' in step:
+            if 'insert' in step:
+                if not probe:
+                    one_by_one(step['insert'])
+                    d.loop.run_until_complete(settle(1.5))
+                jump(step['then'])
+                check(step['expect'] if not probe else [step['then']['bar'], step['expect'][1]], step['label'])
+            elif 'caret' in step:
                 c = step['caret']
                 jump(c['start'])
                 check(c['expect'], step['label'])
@@ -155,6 +162,14 @@ def run(plan, label='', start=0, probe=False):
                     check_range(step)
                 go(step['plain'])
                 one_by_one(step['edits'])
+                if step.get('restore'):
+                    d.loop.run_until_complete(settle(0.6))
+                    for _ in range(6):
+                        if there(step['expect'])[0]:
+                            break
+                        go(['EventEdit.NavigateNextItemSamePosition'])
+                    else:
+                        raise Stop(f'{step["label"]}: done, but the note was not found again after it')
             done = i + 1
         go(['Edit.SelectNone'])
         ok, msg = True, f'{len(steps) - start} steps in {time.time() - t0:.1f} s, every target checked' + (' (probe: nothing changed)' if probe else '')
