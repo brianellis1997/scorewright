@@ -68,6 +68,7 @@ bars 50-52 were removed, 48 undo steps in all).
 | respell | `p.respell('P6', 25, 0, up=True)` | `NoteEdit.RespellUsingNoteNameAbove` (E sharp to F) or `...Below` |
 | spread a chord part | `p.explode('P5', 24, 31, staves=3)` | the range, `Edit.Copy`; the start, `NavigateDownExtend` x2, `Edit.PasteExplode` |
 | new notes | `p.notes('P3', 18, 0, [('G4', 1), ('A4', 1, 'tie'), (None, 0.5)])` | select a note with an ID, `NoteInput.Enter?Set=true`, caret moves, then for every note `NoteInput.NoteValue?LogDuration=kCrotchet&Set=true` and, only for a dotted note, `NoteInput.SetDotted?Value=1&Set=true`; then `NoteInput.MIDINoteInput?MIDIPitches=67` (a chord: `60\,64\,67`); `NoteInput.Tie` after a note ties it to the next typed note; `NoteInput.Exit` |
+| insert bars | `p.insert_bars(3, 1, check=('P3', 7, 1.0))` | `NoteInput.CreateBarLine?Duration=2\, 1&RhythmicPosition=4\, 1&RhythmicPositionIncludesLeftOfNotes=1&FlowID=0`: time in quarters as `n\, d` (the form Dorico logs for the system track's insert); then the check note, by its ID, must be one bar later. `CreateBarLine?Value=10&Location=End` adds bars at the end |
 | anything else | `p.step(label, pid, bar, onset, to=(bar, onset), down=n, edits=[...], plain=[...])` | |
 
 Order the steps so that every ID is still valid when it is used: a tie merges two notes into one
@@ -97,6 +98,19 @@ The S6 run: steps 1-18, a stop at 19 (a bar jump over a tied note, see below), s
 at 26 (a range too long, from the dot error), a repair plan (`lab/pieces/p111326_s6_repair.py`, 8
 steps), steps 26-56, three finish steps. Then a fresh export matched S6 in every note, spelling,
 rhythm and tie. Every stop came before an edit at the wrong place.
+
+## Marks on typed notes, and carets in empty bars (S8, Nov 13)
+
+- After a mark (dynamic, slur, hairpin, technique) Dorico selects the new mark. A typed note has no
+  ID, so the next step cannot jump back to it. `restore` steps through the items at that place with
+  `EventEdit.NavigateNextItemSamePosition` (Note, Playing technique, Dynamic, Note...) until the
+  status bar shows the note again. So the marks for a new line go right after its note entry, each
+  starting from the last typed note (Dorico leaves it selected after `NoteInput.Exit`).
+- An introduction has no notes before it. The caret then starts at a note with an ID in a later bar
+  (or on a staff below) and moves with `NoteInput.MoveLeftBar` and `NoteInput.MoveUp`.
+- After a run that moved notes (inserted bars), the autosave still has the old bars until Dorico
+  autosaves again (every few minutes; `File.AutoSave` over the link returns kError). The Accept hook
+  waits for that autosave before the next plan.
 
 ## Timings (111326, 36 staves)
 
