@@ -7,7 +7,7 @@ S<n>.dorico.result.json; a stopped run keeps its edits so far and goes on from t
 suggestion (lab/dorico_check.py), and the panel says what, if anything, differs. Every other line
 passes untouched.
 usage: sw_wait.sh does it; by hand: echo '<inbox line>' | python sw_on_accept.py [--quiet]"""
-import datetime, glob, json, os, re, subprocess, sys, time
+import datetime, glob, json, os, re, subprocess, sys, time, urllib.request
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
@@ -65,6 +65,16 @@ for line in sys.stdin:
     if not os.path.exists(base + '.json') or os.path.exists(base + '.result.json'):
         continue
     plan = json.load(open(base + '.json'))
+    folder = f'{E}/_scorewright_out/session/{session}'
+    for need in plan.get('requires', []):
+        done = f'{folder}/{need}.dorico.result.json'
+        if os.path.exists(done) and json.load(open(done)).get('ok'):
+            continue
+        say(session, f'{sid} builds on {need}, which is not in Dorico yet. Putting {need} in first.', working=True)
+        ok, msg, k = run(json.load(open(f'{folder}/{need}.dorico.json')), f'{folder}/{need}.dorico.json')
+        json.dump(dict(ok=ok, msg=msg, done=k, ts=datetime.datetime.now().isoformat(timespec='seconds'), by=sid), open(done, 'w'))
+        if ok:
+            urllib.request.urlopen(urllib.request.Request('http://localhost:8790/api/withdraw', data=json.dumps(dict(id=need, text=f'included in {sid}')).encode(), headers={'Content-Type': 'application/json'}))
     if not fresh_autosave(session, sid):
         continue
     say(session, f'Putting {sid} into Dorico now: {len(plan["steps"])} steps.', working=True)
@@ -74,7 +84,6 @@ for line in sys.stdin:
         say(session, f'{sid} is not all in Dorico yet: it {msg}. Only the steps before it are in your score. I will fix that step and finish it.')
         print(f'[DORICO {sid}] STOPPED: {msg}', flush=True)
         continue
-    folder = f'{E}/_scorewright_out/session/{session}'
     export = f'{folder}/dorico_export_after_{sid}.xml'
     subprocess.run([sys.executable, f'{HERE}/dorico_export.py', export], capture_output=True, text=True, timeout=300)
     lines = problems(open(f'{folder}/{sid}.musicxml', encoding='utf-8').read(), open(export, encoding='utf-8').read()) if os.path.exists(export) else ['no export to check']

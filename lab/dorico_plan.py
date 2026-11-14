@@ -419,5 +419,6 @@ class Plan:
             n += count(walk) + count(s['extend'] + s['plain'] + s['edits'])
         return n
 
-    def save(self, path):
-        json.dump(dict(format=2, steps=self.steps, commands=self.commands()), open(path, 'w'), indent=1)
+    def save(self, path, requires=()):
+        """requires: the suggestions this one builds on (like ['S7']); the Accept hook runs their plans first"""
+        json.dump(dict(format=2, steps=self.steps, commands=self.commands(), requires=list(requires)), open(path, 'w'), indent=1)

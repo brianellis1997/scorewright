@@ -81,6 +81,11 @@ staff. Call `p.use(xml)` with the score as it is after a step that changes what 
 Every stop and every difference the check finds gets its cause and its rule here, in the same commit
 as the fix (Brian: "we're learning from our mistakes as we go on").
 
+- A plan that builds on another suggestion names it: `p.save(path, requires=['S7'])`. If that
+  suggestion's plan has not run, the Accept hook runs it first, withdraws it in the panel ("included
+  in S9"), waits for the autosave, then runs the plan. (Nov 13: S9 was accepted before S7 and stopped
+  at step 1, with no change, because the bar it looked for had not moved yet.)
+
 - Note values: use the names in Dorico's key-command file: kSemibreve, kMinim, kCrotchet, kQuaver,
   kSemiQuaver, kDemiSemiQuaver. `kSemiquaver` (small q) is accepted without an error and types
   whole notes: the harp's sixteenths came in two bars long.

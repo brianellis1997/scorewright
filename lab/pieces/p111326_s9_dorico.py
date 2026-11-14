@@ -25,5 +25,5 @@ def plan(x7):
 
 if __name__ == '__main__':
     p = plan(open(sys.argv[1], encoding='utf-8').read())
-    p.save(sys.argv[2])
+    p.save(sys.argv[2], requires=['S7'])
     print(f'{len(p.steps)} steps, {p.commands()} commands ->', sys.argv[2])
