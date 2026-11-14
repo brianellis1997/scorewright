@@ -126,6 +126,8 @@ rhythm and tie. Every stop came before an edit at the wrong place.
 - A status-bar read: about 190 ms.
 - The S6 probe: 56 steps, every ID start found and every caret placed, in about 25 s. The real run:
   steps 19-25 in about 10 s, steps 26-56 in 21 s, the repair (two retyped passages) in 21 s.
+- S9 (the introduction, the warmth and two fixes; 7 typed lines and 18 marks and ties): 25 steps in
+  48 s on the first try, and the export matched in every note, spelling, rhythm, tie and mark.
 
 ## How Dorico takes commands
 
