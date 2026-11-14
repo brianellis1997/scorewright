@@ -210,8 +210,10 @@ def run(plan, label='', start=0, probe=False):
                 if not step.get('spell'):
                     one_by_one(step['edits'])
                 elif there([step['expect'][0], [step['spell']]])[0]:
+                    go(step.get('group', []))
                     one_by_one(step['edits'])
-                    spelled += 1
+                    spelled += 1 + sum(int(g.partition('*')[2] or 1) for g in step.get('group', []))
+                    lost = lost or bool(step.get('group'))
                 if step.get('restore'):
                     d.loop.run_until_complete(settle(0.6))
                     for _ in range(6):

@@ -156,6 +156,18 @@ rhythm and tie. Every stop came before an edit at the wrong place.
   so the planner aims at the note that starts the chain (`Score.chain_start`); the range then covers
   the whole chain.
 
+## Repeated sharps, ranges of accents, tuplets (S15, Nov 14)
+
+- A run of repeated sharp notes (the cellos' four C sharps) is typed one after the other, and
+  Dorico spells them alike. `p.spell(..., group=k)` checks the first one; only if it shows the flat
+  does the runner extend over all k and respell them at once. A respell of a note that is already
+  right is not safe: "using note name below" turns C sharp into B double sharp.
+- `p.articulate(pid, start, end, 'kAccent')` puts one articulation on every note of a range. Values:
+  kAccent, kMarcato, kStaccato, kStaccatissimo, kTenuto, kStaccatoTenuto, kStress, kUnstress.
+- Tuplets: Dorico has `NoteInput.StartTupletRun` and `NoteInput.EndTupletRun`, but how the first
+  one takes the tuplet (3:2, 6:4) is not known yet, and the MusicXML here has 4 divisions to the
+  quarter, which no tuplet fits. Test it in a scratch project while Brian is away, never in his.
+
 ## Marks on typed notes, and carets in empty bars (S8, Nov 13)
 
 - After a mark (dynamic, slur, hairpin, technique) Dorico selects the new mark. A typed note has no

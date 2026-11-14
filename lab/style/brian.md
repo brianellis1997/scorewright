@@ -88,6 +88,20 @@ together. Bars refer to that sketch.
   about doubling it a minor third or a third down, or a sixth below, to fill out the harmony?" Give
   some of the melody instruments the line a third or a sixth below, in each octave the melody uses.
   (Nov 14 2026, after S13.)
+- **A climax keeps its rhythm.** A tutti of held half notes is static: "all the rhythm just stops,
+  it becomes this tutti with no rhythmic involvement... the rhythm should be pounded through string
+  runs or percussion or wind runs... everything is like the static half note." Keep a pulse going
+  under the melody: strings in eighths or runs, low brass and basses on the beat, timpani.
+- **In a tutti the brass lead, and the woodwinds run or support.** "The winds really cannot compete
+  with the heavy brass and even the high up strings... the horns, the trumpets should be leading
+  here, maybe some strings... the cor anglais is not going to be heard, the clarinet is not going
+  to be heard, maybe the flute and piccolo; the oboe is not going to be heard. The lower wind
+  instruments should be contributing to the harmony... the winds should be running, maybe in
+  triplets or sextuplets." (Nov 14 2026, 111326 climax, after S14.)
+- **A ff never comes out of nowhere.** Build into it with rhythm and lead-ins, and give a melody
+  that jumps to its first note a way up: "this fortissimo again is coming out of nowhere... the
+  violin going up from that B to E hasn't occurred. It's just not natural, it's not a smooth
+  transition." (Nov 14 2026, after S14.)
 - **Harmony in the theme.** One chord per 2/4 bar, a modal minor loop under a melody centred on E:
   F, G, Em, E (A minor VI, VII, v, V), with inversions in the second half (F/A, G/B).
 

@@ -437,15 +437,26 @@ class Plan:
             self.cursor = None
         return st
 
+    def articulate(self, pid, start, end, value='kAccent', staff=1):
+        """one articulation on every note of a range (rests in it are left alone); like a hairpin, no
+        return to a typed note after it, so the next step starts from a note with an ID"""
+        st = self.step(f'{value[1:]} on {self.who(pid)} bars {start[0]}-{end[0]}', pid, *start, staff, to=end,
+                       edits=[f'NoteInput.SetArticulation?Value={value}'])
+        if st.pop('restore', None):
+            self.cursor = None
+        return st
+
     def tie(self, pid, bar, onset, staff=1):
         s = self.step(f'tie for {self.who(pid)} in bar {bar}', pid, bar, onset, staff, edits=['NoteInput.Tie'])
         self.tied.add((pid, staff, bar, Fraction(onset)))
         self.cursor = None
         return s
 
-    def spell(self, pid, bar, onset, staff=1):
+    def spell(self, pid, bar, onset, staff=1, group=1):
         """MIDI input picks the spelling itself (68 came in as A flat in S6, as G sharp in S8): the runner
-        reads the note and respells it only when Dorico shows the other name"""
+        reads the note and respells it only when Dorico shows the other name. group=k: the note starts k
+        repeated notes typed one after the other, which Dorico spells alike, so a wrong first note means
+        all k are respelled at once (a respell of a right note would make B double sharp of C sharp)"""
         s = self.spec(pid, bar, onset, staff)
         (n,) = s['names']
         m = re.match(r'([A-G])(#|b)(-?\d+)$', n)
@@ -456,6 +467,9 @@ class Plan:
                        edits=[f'NoteEdit.RespellUsingNoteName{"Below" if m.group(2) == "#" else "Above"}'])
         st['spell'] = f'Note: {other}{octv} '
         st['expect'][1].append(st['spell'])
+        if group > 1:
+            st['group'] = [f'EventEdit.NavigateRightExtend*{group - 1}']
+            self.cursor = None
         return st
 
     def pitch(self, pid, bar, onset, steps, staff=1):
