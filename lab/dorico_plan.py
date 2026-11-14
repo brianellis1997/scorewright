@@ -212,7 +212,7 @@ class Plan:
         """a note with an ID (unchanged since the export) and the arrow moves from it to s"""
         pid, staff, bar, k = s['pid'], s['staff'], s['bar'], s['item']
         z = self.cur.staves.index((pid, staff))
-        for b in range(bar, max(bar - 8, 0), -1):
+        for b in range(bar, max(bar - 24, 0), -1):
             if not self.unchanged(pid, b):
                 continue
             its = self.cur.nav(pid, b, staff)
@@ -232,6 +232,20 @@ class Plan:
                 except ValueError:
                     break
                 moves = [f'EventEdit.NavigateDown*{down}'] + self.walk(pid, staff, (b, 0), (bar, k))
+                return dict(target=self.short(self.spec(vp, b, 0, vs)), moves=squeeze(moves))
+        for b in range(bar, max(bar - 4, 0), -1):
+            for i in range(z + 1, len(self.cur.staves)):
+                vp, vs = self.cur.staves[i]
+                if not self.unchanged(vp, b):
+                    continue
+                first = self.cur.items(vp, b, vs)[0]
+                if first[1] == 'Rest' or first[2] or first[0] != 0 or self.cur.items(pid, b, staff)[0][2]:
+                    continue
+                try:
+                    up = 1 + sum(self.cur.height(j, b) for j in range(z + 1, i))
+                except ValueError:
+                    break
+                moves = [f'EventEdit.NavigateUp*{up}'] + self.walk(pid, staff, (b, 0), (bar, k))
                 return dict(target=self.short(self.spec(vp, b, 0, vs)), moves=squeeze(moves))
         raise ValueError(f'{self.who(pid)} bar {bar}: no note with an ID near it')
 
@@ -371,8 +385,11 @@ class Plan:
 
     def hairpin(self, pid, start, end, up=True, staves=1, staff=1):
         kind = 'Up' if up else 'Down'
-        return self.step(f'{"cresc" if up else "dim"} for {self.who(pid)} bars {start[0]}-{end[0]}', pid, *start, staff, to=end, down=staves - 1,
-                         edits=[f'NoteInput.HairpinStart?Type=kGradualDynamic{kind}&GradualDynamicType=kCrescOrDim'])
+        st = self.step(f'{"cresc" if up else "dim"} for {self.who(pid)} bars {start[0]}-{end[0]}', pid, *start, staff, to=end, down=staves - 1,
+                       edits=[f'NoteInput.HairpinStart?Type=kGradualDynamic{kind}&GradualDynamicType=kCrescOrDim'])
+        if st.pop('restore', None):
+            self.cursor = None
+        return st
 
     def tie(self, pid, bar, onset, staff=1):
         s = self.step(f'tie for {self.who(pid)} in bar {bar}', pid, bar, onset, staff, edits=['NoteInput.Tie'])

@@ -130,6 +130,11 @@ rhythm and tie. Every stop came before an edit at the wrong place.
   to the start note in 6 tries (S10 step 27, Violin II), so the run stopped although the hairpin was
   in. The runner now marks the selection as lost instead of stopping, and the next step starts from
   a note with an ID (its `via`), never from `rel`. A run resumed with `--from` starts lost too.
+- So the planner does not plan a return step after a hairpin on typed notes: the next step starts
+  from a note with an ID. To find one, `via` looks up to 24 bars back on the same staff (the flute's
+  last note before a long rest), then on a staff above (`NavigateDown`), then on a staff below
+  (`NavigateUp`, one press into each staff, one more per extra chord note). A tied note on a staff in
+  between blocks a vertical walk, because the arrows stop on the tie chain.
 - Six replies on Nov 13-14 never reached the panel: `sw_say.py` without a session tagged them
   `current`, and the server drops those. It now uses the current piece by default.
 
