@@ -290,13 +290,16 @@ class Plan:
         self.cursor = (pid, staff, bar, s['item']) if keeps or st.get('restore') else None
         return st
 
-    def notes(self, pid, bar, onset, events, staff=1):
+    def notes(self, pid, bar, onset, events, staff=1, start=None):
         """note entry from the caret: events = [(names or None for a rest, quarters[, 'tie'])];
-        the caret starts at a note with an ID (same staff, or the nearest staff above it) and moves"""
+        the caret starts at a note with an ID (same staff, or the nearest staff above it) and moves.
+        start = (pid, staff, bar, onset) names that note when the search cannot know its ID is still
+        good (the other staff of a harp after one staff was retyped)"""
         z = self.cur.staves.index((pid, staff))
         order = sorted(range(len(self.cur.staves)), key=lambda i: (abs(i - z), i > z))
-        start = None
-        for b in list(range(bar, max(bar - 12, 0), -1)) + list(range(bar + 1, bar + 13)):
+        if start:
+            start = start[:3] + (Fraction(start[3]), self.cur.staves.index(start[:2]))
+        for b in [] if start else list(range(bar, max(bar - 12, 0), -1)) + list(range(bar + 1, bar + 13)):
             for i in order:
                 vp, vs = self.cur.staves[i]
                 if b not in self.cur.parts[vp][0] or not self.unchanged(vp, b):
@@ -376,6 +379,26 @@ class Plan:
         self.tied.add((pid, staff, bar, Fraction(onset)))
         self.cursor = None
         return s
+
+    def spell(self, pid, bar, onset, staff=1):
+        """MIDI input picks the spelling itself (68 came in as A flat in S6, as G sharp in S8): the runner
+        reads the note and respells it only when Dorico shows the other name"""
+        s = self.spec(pid, bar, onset, staff)
+        (n,) = s['names']
+        m = re.match(r'([A-G])(#|b)(-?\d+)$', n)
+        i = STEPS.index(m.group(1))
+        other = STEPS[(i + 1) % 7] + 'b' if m.group(2) == '#' else STEPS[(i - 1) % 7] + '#'
+        octv = int(m.group(3)) + (1 if m.group(1) == 'B' and m.group(2) == '#' else -1 if m.group(1) == 'C' and m.group(2) == 'b' else 0)
+        st = self.step(f'spelling of {n} for {self.who(pid)} in bar {bar}', pid, bar, onset, staff,
+                       edits=[f'NoteEdit.RespellUsingNoteName{"Below" if m.group(2) == "#" else "Above"}'])
+        st['spell'] = f'Note: {other}{octv} '
+        st['expect'][1].append(st['spell'])
+        return st
+
+    def pitch(self, pid, bar, onset, steps, staff=1):
+        """move an existing note by scale steps (NoteEdit.PitchUp is Alt+Up): it keeps its ID, ties and slurs"""
+        cmd = 'NoteEdit.PitchUp' if steps > 0 else 'NoteEdit.PitchDown'
+        return self.step(f'{self.who(pid)} bar {bar} {abs(steps)} step(s) {"up" if steps > 0 else "down"}', pid, bar, onset, staff, edits=[cmd] * abs(steps))
 
     def split_beam(self, pid, bar, onset, staff=1):
         return self.step(f'beam split for {self.who(pid)} in bar {bar}', pid, bar, onset, staff, edits=['Edit.SplitBeam'])

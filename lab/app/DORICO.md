@@ -67,7 +67,10 @@ bars 50-52 were removed, 48 undo steps in all).
 | beams in pairs | `p.split_beam('P3', 10, 1.0)` | `Edit.SplitBeam` on the note that starts the new beam |
 | respell | `p.respell('P6', 25, 0, up=True)` | `NoteEdit.RespellUsingNoteNameAbove` (E sharp to F) or `...Below` |
 | spread a chord part | `p.explode('P5', 24, 31, staves=3)` | the range, `Edit.Copy`; the start, `NavigateDownExtend` x2, `Edit.PasteExplode` |
+| spelling of a typed sharp or flat | `p.spell('P31', 3, 0)` | the runner reads the note and sends `NoteEdit.RespellUsingNoteNameBelow` (or `...Above` for a flat) only when Dorico shows the other name; the run report counts the fixes |
+| move an existing note by scale steps | `p.pitch('P6', 2, 0, 2)` | `NoteEdit.PitchUp` (Alt+Up) n times, `NoteEdit.PitchDown` for down: the note keeps its ID, ties, slurs and dynamics, so it beats retyping one note |
 | new notes | `p.notes('P3', 18, 0, [('G4', 1), ('A4', 1, 'tie'), (None, 0.5)])` | select a note with an ID, `NoteInput.Enter?Set=true`, caret moves, then for every note `NoteInput.NoteValue?LogDuration=kCrotchet&Set=true` and, only for a dotted note, `NoteInput.SetDotted?Value=1&Set=true`; then `NoteInput.MIDINoteInput?MIDIPitches=67` (a chord: `60\,64\,67`); `NoteInput.Tie` after a note ties it to the next typed note; `NoteInput.Exit` |
+| a caret from a named note | `p.notes('P26', 1, 0, events, staff=2, start=('P26', 2, 1, 0))` | when the search cannot know a note still has its ID (the left hand of a harp after the right hand was retyped) |
 | insert bars | `p.insert_bars(3, 1, check=('P3', 7, 1.0))` | `NoteInput.CreateBarLine?Duration=2\, 1&RhythmicPosition=4\, 1&RhythmicPositionIncludesLeftOfNotes=1&FlowID=0`: time in quarters as `n\, d` (the form Dorico logs for the system track's insert); then the check note, by its ID, must be one bar later. `CreateBarLine?Value=10&Location=End` adds bars at the end |
 | anything else | `p.step(label, pid, bar, onset, to=(bar, onset), down=n, edits=[...], plain=[...])` | |
 
@@ -103,6 +106,19 @@ The S6 run: steps 1-18, a stop at 19 (a bar jump over a tied note, see below), s
 at 26 (a range too long, from the dot error), a repair plan (`lab/pieces/p111326_s6_repair.py`, 8
 steps), steps 26-56, three finish steps. Then a fresh export matched S6 in every note, spelling,
 rhythm and tie. Every stop came before an edit at the wrong place.
+
+## Spelling, retyped passages and restarts (S10, Nov 14)
+
+- MIDI input picks the spelling itself, from context: the viola's single G sharp came in as A flat
+  (S6), the harp's G sharp after an E came in right (S8). So the plan has a `spell` step for every
+  typed sharp or flat, and the runner respells only a note that shows the other name.
+- To change the pitch of a note that stays (the clarinet hint in S10), move it by scale steps
+  (`p.pitch`); retyping would make a new note, and its slur and dynamic could go with the old one.
+- A builder that clears a bar must take out chord notes too (`<chord/>`). S10's first build cleared
+  only the first note of each horn chord, so the new E4 kept the old C4 and A3 under it. The change
+  listing (every part, old against new) showed it before Brian saw anything.
+- After Dorico restarts it has no autosave until the project changes. The runner reads the newest of
+  the autosave and the file Dorico last saved (the log line `Saving document: 0 to <path>`).
 
 ## Marks on typed notes, and carets in empty bars (S8, Nov 13)
 

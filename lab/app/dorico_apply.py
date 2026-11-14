@@ -21,7 +21,7 @@ from fractions import Fraction
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.dirname(HERE))
-from dorico_rc import Dorico, edits_since  # noqa: E402
+from dorico_rc import LOG, Dorico, edits_since  # noqa: E402
 import dorico_file  # noqa: E402
 from dorico_plan import midi  # noqa: E402
 
@@ -41,15 +41,28 @@ def expand(specs):
     return out
 
 
+def project_file(project):
+    """the newest copy of the open project: Dorico's autosave, or the file Dorico last saved it to
+    (after a restart there is no autosave until the project changes)"""
+    want = f'{project}.dorico'
+    paths = [f'{AUTOSAVE}/{want}']
+    for line in open(LOG, errors='replace'):
+        m = re.search(r'Saving document: \d+ to (.+\.dorico)\s*$', line)
+        if m and os.path.basename(m.group(1)) == want:
+            paths.append(m.group(1))
+    have = [p for p in paths if os.path.exists(p)]
+    return max(have, key=os.path.getmtime) if have else None
+
+
 def run(plan, label='', start=0, probe=False):
     lock = open(f'{BRIDGE}/apply.lock', 'w')
     fcntl.flock(lock, fcntl.LOCK_EX)
     d = Dorico()
-    t0, done, short = time.time(), start, 0
+    t0, done, short, spelled = time.time(), start, 0, 0
     texts = d.sb()[2]
     project = next((t.split(' in ', 1)[1] for t in texts if t.startswith('Flow ') and ' in ' in t), None)
-    auto = f'{AUTOSAVE}/{project}.dorico'
-    notes = [n for f in dorico_file.read(auto).flows for n in f.notes] if project and os.path.exists(auto) else []
+    auto = project_file(project) if project else None
+    notes = [n for f in dorico_file.read(auto).flows for n in f.notes] if auto else []
     since = datetime.datetime.fromtimestamp(os.path.getmtime(auto)).strftime('%Y-%m-%d %H:%M:%S') if notes else None
     late = edits_since(since) if since else []
 
@@ -161,7 +174,11 @@ def run(plan, label='', start=0, probe=False):
                 if 'range' in step:
                     check_range(step)
                 go(step['plain'])
-                one_by_one(step['edits'])
+                if not step.get('spell'):
+                    one_by_one(step['edits'])
+                elif there([step['expect'][0], [step['spell']]])[0]:
+                    one_by_one(step['edits'])
+                    spelled += 1
                 if step.get('restore'):
                     d.loop.run_until_complete(settle(0.6))
                     for _ in range(6):
@@ -172,12 +189,12 @@ def run(plan, label='', start=0, probe=False):
                         raise Stop(f'{step["label"]}: done, but the note was not found again after it')
             done = i + 1
         go(['Edit.SelectNone'])
-        ok, msg = True, f'{len(steps) - start} steps in {time.time() - t0:.1f} s, every target checked' + (' (probe: nothing changed)' if probe else '')
+        ok, msg = True, f'{len(steps) - start} steps in {time.time() - t0:.1f} s, every target checked' + (f', {spelled} spelling(s) fixed' if spelled else '') + (' (probe: nothing changed)' if probe else '')
     except (Stop, asyncio.TimeoutError) as e:
         ok, msg = False, f'stopped at step {done + 1} of {len(steps)} ({steps[done]["label"]}): {e or "Dorico did not answer"}'
     with open(f'{BRIDGE}/apply_log.jsonl', 'a') as f:
         f.write(json.dumps(dict(ts=datetime.datetime.now().isoformat(timespec='seconds'), plan=label, start=start, done=done,
-                                steps=len(steps), short_walks=short, ok=ok, msg=msg)) + '\n')
+                                steps=len(steps), short_walks=short, spelled=spelled, ok=ok, msg=msg)) + '\n')
     return ok, msg, done
 
 
