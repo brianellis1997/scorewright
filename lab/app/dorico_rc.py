@@ -1,5 +1,6 @@
 """Edit the Dorico project Brian has open, live, through Dorico 4's remote-control link
-(ws://127.0.0.1:4560). Every command is one undo step in his project, so Cmd+Z takes any of it back.
+(ws://127.0.0.1:4560). Dorico keeps every command in its undo history, selection and caret moves too,
+so nothing is undone blindly (DORICO.md).
 
 The first connection makes Dorico ask Brian to allow "Scorewright" (push him first). The session
 token it returns is kept outside the public repo, in $E/_bridge/dorico/session_token.txt, and later
@@ -34,7 +35,7 @@ format: app/DORICO.md.
 usage: python app/dorico_rc.py allow    asks Dorico for access and saves the token
        python app/dorico_rc.py status   prints what the status bar shows
 from code: d = Dorico(); d.cmd('EventEdit.NavigateRight'); bar, item, texts = d.sb()"""
-import asyncio, json, os, subprocess, sys
+import asyncio, json, os, re, subprocess, sys
 
 import websockets
 
@@ -122,14 +123,15 @@ class Dorico:
         return [r for r in self.recv(1.0) if r.get('message') == 'status']
 
     def sb(self):
-        """(bar, item, all texts) from the status bar, e.g. (16, 'Note: A4 (Up-stem Voice 1)', [...])"""
+        """(bar, item, all texts) from the status bar, e.g. (16, 'Note: A4 (Up-stem Voice 1)', [...]); a tied note
+        shows "Bars 24-25" with its item, and its bar is the first"""
         r = subprocess.run(['osascript', '-e', SB], capture_output=True, text=True, timeout=30).stdout.strip()
         parts = [p for p in r.split('|') if p]
-        at = next((i for i, p in enumerate(parts) if p.startswith('Bar ') and p.split()[1].isdigit()), None)
+        at = next((i for i, p in enumerate(parts) if re.match(r'Bars? \d', p)), None)
         if at is None:
             return None, 'No selection' if 'No selection' in parts else '', parts
         item = parts[at + 1] if at + 1 < len(parts) and not parts[at + 1].startswith('Flow ') else ''
-        return int(parts[at].split()[1]), item, parts
+        return int(re.findall(r'\d+', parts[at])[0]), item, parts
 
 
 if __name__ == '__main__':

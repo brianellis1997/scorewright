@@ -41,9 +41,14 @@ together. Bars refer to that sketch.
 - **Every player has the phrase slurs.** When a texture passes to new players, they get slurs
   over the same phrases: the strings in bars 16-24 slur 16-19 and 20-24, as the horns slur 8-11 and
   12-16. ("The strings need their slurs as well.")
-- **Harmony parts hold their common tones.** A note a player repeats inside a bar is one held note,
-  not two quarters; only the voices that move change: "those should be half notes, not individual
-  quarter notes. They're just harmony, so it needs to seem smooth." (Nov 13 2026)
+- **Harmony parts hold their common tones, also over the bar line.** A note a player repeats inside a
+  bar is one held note, not two quarters; only the voices that move change: "those should be half
+  notes, not individual quarter notes. They're just harmony, so it needs to seem smooth." A note
+  that continues into the next bar is tied over the bar line: "we want the horns and the
+  accompaniment as continuous as possible... if they're not changing their note, just hold them
+  over." His example: Violin I enters on A, falls to a G half note, and the next bar starts with a
+  G quarter, so the G is tied over. "When I compose, the harmony tries to be as continuous and fluid
+  as possible... sometimes there are exceptions." (Nov 13 2026)
 - **Harmony in the theme.** One chord per 2/4 bar, a modal minor loop under a melody centred on E:
   F, G, Em, E (A minor VI, VII, v, V), with inversions in the second half (F/A, G/B).
 
