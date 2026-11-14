@@ -167,6 +167,16 @@ class Score:
             b, it = b + 1, nxt[0]
         return b
 
+    def chain_start(self, pid, bar, onset, staff=1):
+        """(bar, onset) where the tie chain through (bar, onset) starts: a range that ends on a held note
+        is selected up to the note that starts it, and covers the rest of the chain"""
+        on = Fraction(onset).limit_denominator(64)
+        it = next(x for x in self.items(pid, bar, staff) if x[0] == on)
+        while it[2] and bar - 1 in self.parts[pid][0]:
+            bar -= 1
+            it = self.items(pid, bar, staff)[-1]
+        return bar, it[0]
+
     def height(self, i, bar):
         pid, staff = self.staves[i]
         first = self.items(pid, bar, staff)[0]
@@ -316,6 +326,8 @@ class Plan:
             r = None
         if r is not None:
             st['rel'] = r
+        if to and to[1] is not None:
+            to = self.cur.chain_start(pid, to[0], to[1], staff)
         if to:
             n = self.span(pid, bar, s['item'], to[0], to[1], staff)
             if n:

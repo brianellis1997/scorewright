@@ -148,6 +148,10 @@ rhythm and tie. Every stop came before an edit at the wrong place.
 - The planner now reads every slur in the file and remembers each one it adds (`Plan.slurs`), and
   expects that wider range. Replayed on S12, it gives exactly the ranges that went in. Whether a
   hairpin that starts on the first note also counts is not known yet; a stop will tell.
+- A range may end on a note that continues a tie (S13: a slur from the G to the held E, which the
+  file writes as ending in the bar after the E starts). The arrows never stop on a tie continuation,
+  so the planner aims at the note that starts the chain (`Score.chain_start`); the range then covers
+  the whole chain.
 
 ## Marks on typed notes, and carets in empty bars (S8, Nov 13)
 
