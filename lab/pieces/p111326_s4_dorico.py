@@ -5,7 +5,7 @@ That export matched S4 note for note and mark for mark.
 
 Steps, each start note checked against the status bar before the command:
 1. Horn 1 bars 8-16: select the bar-8 chord, extend bar by bar until the status bar shows
-   "Bars 8–16", Edit.Copy; select the bar-8 chord again, NavigateDownExtend twice (one staff a
+   "Bars 8-16", Edit.Copy; select the bar-8 chord again, NavigateDownExtend twice (one staff a
    press: Horn 1, Horn 2, Wagner tuba), Edit.PasteExplode. Explode carried the slurs, dynamics and
    hairpin to each staff.
 2. Violin I bars 16-24 the same way onto Violin I, Violin II and the viola.

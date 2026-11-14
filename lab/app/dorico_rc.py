@@ -18,7 +18,7 @@ Brian runs, with parameters. Found on Nov 13 2026 (Dorico 4.0.31):
   step at a time; NavigateRightExtend: extend the selection. NavigateDownNextStave goes to the bottom
   staff, not the next one. With nothing selected, NavigateRight selects the time signature in bar 1,
   where no move works.
-- NavigateRightExtendBar extends a range by bars (the status bar then shows "Bars 8–16");
+- NavigateRightExtendBar extends a range by bars (the status bar then shows "Bars 8-16");
   NavigateDownExtend adds one staff a press, a chord counting as one; Edit.Copy then
   Edit.PasteExplode spreads copied chords over the selected staves, top note to the top staff,
   with their slurs, dynamics and hairpins; NoteInput.Tie on the first of two equal notes ties
