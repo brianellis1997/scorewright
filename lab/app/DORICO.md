@@ -59,20 +59,40 @@ bars 50-52 were removed, 48 undo steps in all).
 |---|---|---|
 | dynamic | `p.dynamic('P2', 15, 1.5, 'mp')` | `NoteInput.CreateDynamic?Definition=mp&UseLocalOverride=0` |
 | articulation | `p.articulation('P2', 16, 0, 'kStaccatoTenuto')` | `NoteInput.SetArticulation?Value=kStaccatoTenuto` |
-| playing technique | `p.technique('P31', 24, 0, 'pt.pizzicato')` | `NoteInput.CreatePlayingTechnique?Definition=pt.pizzicato` |
+| playing technique | `p.technique('P31', 24, 0, 'pizz.')` | `NoteInput.CreatePlayingTechnique?Definition=pizz.`: the popover text. `Definition=pt.pizzicato` does nothing (7 ms, no error) |
 | slur | `p.slur('P28', (25, 1.0), (26, 0), staves=1)` | a range, then `NoteInput.SlurStart` |
 | hairpin | `p.hairpin('P3', (22, 1.0), (24, 0), up=False)` | a range, then `NoteInput.HairpinStart?Type=kGradualDynamicDown&GradualDynamicType=kCrescOrDim` |
 | hold a repeated note | `p.tie('P10', 14, 0)` | `NoteInput.Tie` on the first note: it ties to the next note of that pitch |
 | beams in pairs | `p.split_beam('P3', 10, 1.0)` | `Edit.SplitBeam` on the note that starts the new beam |
 | respell | `p.respell('P6', 25, 0, up=True)` | `NoteEdit.RespellUsingNoteNameAbove` (E sharp to F) or `...Below` |
 | spread a chord part | `p.explode('P5', 24, 31, staves=3)` | the range, `Edit.Copy`; the start, `NavigateDownExtend` x2, `Edit.PasteExplode` |
-| new notes | `p.notes('P3', 18, 0, [('G4', 1), ('A4', 1, 'tie'), (None, 0.5)])` | select a note with an ID, `NoteInput.Enter?Set=true`, caret moves, `NoteInput.NoteValue?LogDuration=kCrotchet&Set=true`, `NoteInput.SetDotted?Value=1&Set=true` (`Set=false` to stop), `NoteInput.MIDINoteInput?MIDIPitches=67` (a chord: `60\,64\,67`), `NoteInput.Tie` after a note to tie it to the next typed note, `NoteInput.Exit` |
+| new notes | `p.notes('P3', 18, 0, [('G4', 1), ('A4', 1, 'tie'), (None, 0.5)])` | select a note with an ID, `NoteInput.Enter?Set=true`, caret moves, then for every note `NoteInput.NoteValue?LogDuration=kCrotchet&Set=true` and, only for a dotted note, `NoteInput.SetDotted?Value=1&Set=true`; then `NoteInput.MIDINoteInput?MIDIPitches=67` (a chord: `60\,64\,67`); `NoteInput.Tie` after a note ties it to the next typed note; `NoteInput.Exit` |
 | anything else | `p.step(label, pid, bar, onset, to=(bar, onset), down=n, edits=[...], plain=[...])` | |
 
 Order the steps so that every ID is still valid when it is used: a tie merges two notes into one
 event (the second loses its ID), a paste makes new notes. In S6: the paste and its marks first, then
 the new lines, then the marks on them, then every tie between existing notes, right to left on each
 staff. Call `p.use(xml)` with the score as it is after a step that changes what later steps count.
+
+## Note entry traps (learned in the S6 run, Nov 13)
+
+- Note values: use the names in Dorico's key-command file: kSemibreve, kMinim, kCrotchet, kQuaver,
+  kSemiQuaver, kDemiSemiQuaver. `kSemiquaver` (small q) is accepted without an error and types
+  whole notes: the harp's sixteenths came in two bars long.
+- A new note value clears the dot, and `SetDotted` toggles it. `SetDotted?Value=1&Set=false` right
+  after a new value turned the dot ON, and Violin I came in a quarter too long. So send the value
+  before every note, the dot only for a dotted note, and never `Set=false`.
+- MIDI pitch 68 comes in as A flat. Respell where the plan has G sharp
+  (`NoteEdit.RespellUsingNoteNameBelow`), or plan the respell steps with the notes.
+- Typing over a region leaves the tail of a longer old note that started earlier. To clear a region,
+  start the range at the first item of its first bar on every staff (the harp kept two E3 tails).
+- The MusicXML export leaves playing techniques out. Check them in Dorico: select the note, then
+  `EventEdit.NavigateNextItemSamePosition` shows "Playing technique: Pizzicato".
+
+The S6 run: steps 1-18, a stop at 19 (a bar jump over a tied note, see below), steps 19-25, a stop
+at 26 (a range too long, from the dot error), a repair plan (`lab/pieces/p111326_s6_repair.py`, 8
+steps), steps 26-56, three finish steps. Then a fresh export matched S6 in every note, spelling,
+rhythm and tie. Every stop came before an edit at the wrong place.
 
 ## Timings (111326, 36 staves)
 
@@ -81,7 +101,8 @@ staff. Call `p.use(xml)` with the score as it is after a step that changes what 
 - A caret move in note input: 5 to 36 ms. A typed note (`MIDINoteInput`): about 22 ms.
 - Edits: split beam 125 ms, articulation 134, slur 188, tie 197, hairpin 207, dynamic 213, delete 314.
 - A status-bar read: about 190 ms.
-- The S6 probe: 56 steps, every ID start found and every caret placed, in about 25 s.
+- The S6 probe: 56 steps, every ID start found and every caret placed, in about 25 s. The real run:
+  steps 19-25 in about 10 s, steps 26-56 in 21 s, the repair (two retyped passages) in 21 s.
 
 ## How Dorico takes commands
 
@@ -95,7 +116,8 @@ staff. Call `p.use(xml)` with the score as it is after a step that changes what 
   to 12 bars).
 - A tie chain is one note event and one item: the arrows stop once on it, and the status bar shows
   "Bars 24-25" with its "Note: E5" (the bar is the first). A range that ends on it covers it to its
-  last bar.
+  last bar. `NavigateRightBar` from it jumps to the first item of the first bar after the tie ends,
+  so it skips the bars the tie covers (the planner simulates this, `Plan.walk`).
 - `NavigateDown` and `NavigateUp` pass each note of a chord, then the next staff;
   `NavigateDownNextStave` goes to the bottom staff. With nothing selected, `NavigateRight` selects
   the bar-1 time signature, where no move works.

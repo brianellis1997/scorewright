@@ -10,7 +10,9 @@ that step. After note entry the last typed note stays selected, so the next step
 there (rel).
 
 Counting follows Dorico: a tie chain is one item, a chord is one item with one stop per note for
-the up and down arrows, and a rest is one item.
+the up and down arrows, and a rest is one item. Note values use the names in Dorico's key-command
+file (kSemiQuaver, not kSemiquaver: an unknown name types whole notes). A new note value clears
+the dot, and SetDotted toggles it, so every note sends its value, then the dot only if it has one.
 
 usage:
     p = Plan(export_xml)                       # the score Dorico has now (a fresh export)
@@ -28,7 +30,7 @@ STEPS = 'CDEFGAB'
 PC = dict(C=0, D=2, E=4, F=5, G=7, A=9, B=11)
 PITCH = r'<step>(\w)</step>(?:\s*<alter>(-?\d+)</alter>)?\s*<octave>(\d+)</octave>'
 KEEPS = ('NoteInput.SetArticulation', 'Edit.SplitBeam', 'NoteEdit.RespellUsingNoteNameAbove', 'NoteEdit.RespellUsingNoteNameBelow')
-VALUE = {Fraction(1, 4): ('kSemiquaver', 0), Fraction(1, 2): ('kQuaver', 0), Fraction(3, 4): ('kQuaver', 1), Fraction(1): ('kCrotchet', 0),
+VALUE = {Fraction(1, 8): ('kDemiSemiQuaver', 0), Fraction(1, 4): ('kSemiQuaver', 0), Fraction(3, 8): ('kSemiQuaver', 1), Fraction(1, 2): ('kQuaver', 0), Fraction(3, 4): ('kQuaver', 1), Fraction(1): ('kCrotchet', 0),
          Fraction(3, 2): ('kCrotchet', 1), Fraction(2): ('kMinim', 0), Fraction(3): ('kMinim', 1), Fraction(4): ('kSemibreve', 0)}
 
 
@@ -42,6 +44,20 @@ def shift(p, d, c):
     mi = 12 * (octave + 1) + PC[step] + alter + c
     s, o = STEPS[di % 7], di // 7
     return s, mi - (12 * (o + 1) + PC[s]), o
+
+
+def squeeze(moves):
+    out = []
+    for m in moves:
+        name, _, n = m.partition('*')
+        n = int(n or 1)
+        if n <= 0:
+            continue
+        if out and out[-1][0] == name:
+            out[-1][1] += n
+        else:
+            out.append([name, n])
+    return [f'{a}*{n}' for a, n in out]
 
 
 def name(p):
@@ -85,16 +101,15 @@ class Score:
             if s.startswith('<forward'):
                 t += d
                 continue
-            if int((re.search(r'<staff>(\d+)</staff>', s) or [0, 1])[1]) != staff or '<grace' in s:
-                continue
+            mine = int((re.search(r'<staff>(\d+)</staff>', s) or [0, 1])[1]) == staff and '<grace' not in s
             if '<chord/>' in s:
-                if out and out[-1][1] != 'Rest':
+                if mine and out and out[-1][1] != 'Rest':
                     p = re.search(PITCH, s)
                     out[-1][1].append(shift((p.group(1), int(p.group(2) or 0), int(p.group(3))), *tr))
                 continue
-            if '<rest' in s:
+            if mine and '<rest' in s:
                 out.append([Fraction(t, div), 'Rest', False, False])
-            else:
+            elif mine:
                 p = re.search(PITCH, s)
                 out.append([Fraction(t, div), [shift((p.group(1), int(p.group(2) or 0), int(p.group(3))), *tr)],
                             '<tie type="stop"/>' in s, '<tie type="start"/>' in s])
@@ -159,6 +174,36 @@ class Plan:
         return dict(pid=pid, part=self.who(pid), staff=staff, bar=bar, onset=str(its[k][0]), item=k,
                     names=None if target == 'Rest' else target, expect=[bar, expect])
 
+    def landing(self, pid, staff, bar, k):
+        """where NavigateRightBar goes from item k of a bar: Dorico jumps to the first item of the first
+        bar after the item ends, so from a note tied over the bar line it skips the bars it covers"""
+        its = self.cur.nav(pid, bar, staff)
+        b = self.cur.chain_end(pid, bar, its[k][0], staff) + 1
+        while b in self.cur.parts[pid][0]:
+            if self.cur.nav(pid, b, staff):
+                return (b, 0)
+            b += 1
+        return None
+
+    def between(self, pid, staff, a, z):
+        (b1, k1), (b2, k2) = a, z
+        if b1 == b2:
+            return k2 - k1
+        return len(self.cur.nav(pid, b1, staff)) - k1 + sum(len(self.cur.nav(pid, b, staff)) for b in range(b1 + 1, b2)) + k2
+
+    def walk(self, pid, staff, a, z):
+        """arrow moves along one staff from item a = (bar, k) to the later item z"""
+        moves, pos = [], a
+        while pos != z:
+            land = self.landing(pid, staff, *pos)
+            if land and land <= z:
+                moves.append('EventEdit.NavigateRightBar')
+                pos = land
+            else:
+                moves.append(f'EventEdit.NavigateRight*{self.between(pid, staff, pos, z)}')
+                pos = z
+        return squeeze(moves)
+
     @staticmethod
     def short(s):
         return {k: s[k] for k in ('part', 'staff', 'bar', 'onset', 'names')}
@@ -173,22 +218,21 @@ class Plan:
             its = self.cur.nav(pid, b, staff)
             for j in range(len(its) - 1 if b < bar else k - 1, -1, -1):
                 if its[j][1] != 'Rest':
-                    moves = [f'EventEdit.NavigateRight*{k - j}'] if b == bar else [f'EventEdit.NavigateRightBar*{bar - b}'] + ([f'EventEdit.NavigateRight*{k}'] if k else [])
-                    return dict(target=self.short(self.spec(pid, b, its[j][0], staff)), moves=moves)
+                    return dict(target=self.short(self.spec(pid, b, its[j][0], staff)), moves=self.walk(pid, staff, (b, j), (bar, k)))
         for b in range(bar, max(bar - 4, 0), -1):
             for i in range(z - 1, -1, -1):
                 vp, vs = self.cur.staves[i]
                 if not self.unchanged(vp, b):
                     continue
                 first = self.cur.items(vp, b, vs)[0]
-                if first[1] == 'Rest' or first[2] or first[0] != 0:
+                if first[1] == 'Rest' or first[2] or first[0] != 0 or self.cur.items(pid, b, staff)[0][2]:
                     continue
                 try:
                     down = sum(self.cur.height(j, b) for j in range(i, z))
                 except ValueError:
                     break
-                moves = [f'EventEdit.NavigateDown*{down}'] + ([f'EventEdit.NavigateRightBar*{bar - b}'] if bar > b else []) + ([f'EventEdit.NavigateRight*{k}'] if k else [])
-                return dict(target=self.short(self.spec(vp, b, 0, vs)), moves=moves)
+                moves = [f'EventEdit.NavigateDown*{down}'] + self.walk(pid, staff, (b, 0), (bar, k))
+                return dict(target=self.short(self.spec(vp, b, 0, vs)), moves=squeeze(moves))
         raise ValueError(f'{self.who(pid)} bar {bar}: no note with an ID near it')
 
     def rel(self, s):
@@ -200,7 +244,7 @@ class Plan:
         if (b, k) == (b1, k1):
             return []
         if (b, k) > (b1, k1):
-            return [f'EventEdit.NavigateRight*{k - k1}'] if b == b1 else [f'EventEdit.NavigateRightBar*{b - b1}'] + ([f'EventEdit.NavigateRight*{k}'] if k else [])
+            return self.walk(s['pid'], staff, (b1, k1), (b, k))
         n = k1 - k if b == b1 else k1 + sum(len(self.cur.nav(s['pid'], x, staff)) for x in range(b + 1, b1)) + len(self.cur.nav(s['pid'], b, staff)) - k
         return [f'EventEdit.NavigateLeft*{n}']
 
@@ -276,7 +320,7 @@ class Plan:
             raise ValueError(f'{self.who(pid)} bar {bar}: onset {onset} is off the caret grid')
         if pos:
             moves.append(f'NoteInput.MoveRight*{int(pos / self.grid)}')
-        edits, value, dot = [], None, 0
+        edits = []
         for ev in events:
             names, q, tie = (list(ev) + [None])[:3]
             q = Fraction(q).limit_denominator(64)
@@ -286,18 +330,13 @@ class Plan:
                 edits.append(f'NoteInput.MoveRight*{int(q / self.grid)}')
                 continue
             v, d = VALUE[q]
-            if v != value:
-                edits.append(f'NoteInput.NoteValue?LogDuration={v}&Set=true')
-                value = v
-            if d != dot:
-                edits.append(f'NoteInput.SetDotted?Value=1&Set={"true" if d else "false"}')
-                dot = d
+            edits.append(f'NoteInput.NoteValue?LogDuration={v}&Set=true')
+            if d:
+                edits.append('NoteInput.SetDotted?Value=1&Set=true')
             names = [names] if isinstance(names, str) else names
             edits.append('NoteInput.MIDINoteInput?MIDIPitches=' + '\\,'.join(str(midi(n)) for n in names))
             if tie:
                 edits.append('NoteInput.Tie')
-        if dot:
-            edits.append('NoteInput.SetDotted?Value=1&Set=false')
         edits.append('NoteInput.Exit')
         sp = self.spec(vp, vb, von, vs)
         st = dict(label=f'{self.who(pid)}: notes from bar {bar}', caret=dict(start=self.short(sp), expect=sp['expect'], moves=moves), edits=edits)
@@ -316,8 +355,9 @@ class Plan:
     def articulation(self, pid, bar, onset, value='kStaccatoTenuto', staff=1):
         return self.step(f'{value[1:]} for {self.who(pid)} in bar {bar}', pid, bar, onset, staff, edits=[f'NoteInput.SetArticulation?Value={value}'])
 
-    def technique(self, pid, bar, onset, definition='pt.pizzicato', staff=1):
-        return self.step(f'{definition[3:]} for {self.who(pid)} in bar {bar}', pid, bar, onset, staff, edits=[f'NoteInput.CreatePlayingTechnique?Definition={definition}'])
+    def technique(self, pid, bar, onset, text='pizz.', staff=1):
+        """Dorico takes the popover text here (pizz., arco, con sord.), not an ID like pt.pizzicato"""
+        return self.step(f'{text} for {self.who(pid)} in bar {bar}', pid, bar, onset, staff, edits=[f'NoteInput.CreatePlayingTechnique?Definition={text}'])
 
     def slur(self, pid, start, end, staves=1, staff=1):
         return self.step(f'slur for {self.who(pid)} bars {start[0]}-{end[0]}', pid, *start, staff, to=end, down=staves - 1, edits=['NoteInput.SlurStart'])
