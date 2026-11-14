@@ -18,6 +18,12 @@ Brian runs, with parameters. Found on Nov 13 2026 (Dorico 4.0.31):
   step at a time; NavigateRightExtend: extend the selection. NavigateDownNextStave goes to the bottom
   staff, not the next one. With nothing selected, NavigateRight selects the time signature in bar 1,
   where no move works.
+- NavigateRightExtendBar extends a range by bars (the status bar then shows "Bars 8–16");
+  NavigateDownExtend adds one staff a press, a chord counting as one; Edit.Copy then
+  Edit.PasteExplode spreads copied chords over the selected staves, top note to the top staff,
+  with their slurs, dynamics and hairpins; NoteInput.Tie on the first of two equal notes ties
+  them (Dorico shows two tied quarters in a 2/4 bar as a half note); Edit.SplitBeam on a note
+  starts a new beam there. Worked example: lab/pieces/p111326_s4_dorico.py.
 - NoteInput.CreateDynamic?Definition=mp&UseLocalOverride=0 (no popover), NoteInput.SetArticulation?Value=kStaccatoTenuto,
   NoteInput.SlurStart and NoteInput.HairpinStart?Type=kGradualDynamicUp&GradualDynamicType=kCrescOrDim
   (Down for a diminuendo) over the selection.
