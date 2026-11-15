@@ -167,6 +167,20 @@ class Score:
             b, it = b + 1, nxt[0]
         return b
 
+    def item_end(self, pid, bar, onset, staff=1):
+        """(bar, onset) where the item at (bar, onset) stops sounding, after its whole tie chain"""
+        on = Fraction(onset).limit_denominator(64)
+        its = self.items(pid, bar, staff)
+        k = next(i for i, x in enumerate(its) if x[0] == on)
+        b = bar
+        while its[k][3] and b + 1 in self.parts[pid][0]:
+            nxt = self.items(pid, b + 1, staff)
+            if not nxt or not nxt[0][2]:
+                break
+            b, its, k = b + 1, nxt, 0
+        later = [x[0] for x in its[k + 1:] if x[0] > its[k][0]]
+        return (b, later[0]) if later else (b + 1, Fraction(0))
+
     def chain_start(self, pid, bar, onset, staff=1):
         """(bar, onset) where the tie chain through (bar, onset) starts: a range that ends on a held note
         is selected up to the note that starts it, and covers the rest of the chain"""
@@ -191,6 +205,7 @@ class Plan:
         self.grid = grid
         self.steps, self.cursor, self.tied = [], None, set()
         self.slurs = {k: list(v) for k, v in self.base.slurs.items()}
+        self.hairpins = {}
 
     def use(self, xml):
         self.cur = Score(xml)
@@ -335,7 +350,10 @@ class Plan:
                 k1 = self.cur.index(pid, to[0], to[1], staff)
                 st['end'] = self.cur.chain_end(pid, to[0], self.cur.nav(pid, to[0], staff)[k1][0], staff)
                 first = (bar, Fraction(s['onset']))
-                st['range'] = [bar, max([st['end']] + [e for a, e in self.slurs.get((pid, staff), []) if a == first])]
+                over = [(a, e) for a, e in self.hairpins.get((pid, staff), []) if a <= first < e]
+                st['range'] = [min([bar] + [a[0] for a, e in over]),
+                               max([st['end']] + [e for a, e in self.slurs.get((pid, staff), []) if a == first]
+                                   + [(e[0] if e[1] else e[0] - 1) for a, e in over])]
         if down:
             st['extend'].append(f'EventEdit.NavigateDownExtend*{down}')
         st['plain'], st['edits'] = list(plain), list(edits)
@@ -435,6 +453,8 @@ class Plan:
                        edits=[f'NoteInput.HairpinStart?Type=kGradualDynamic{kind}&GradualDynamicType=kCrescOrDim'])
         if st.pop('restore', None):
             self.cursor = None
+        last = self.cur.chain_start(pid, end[0], end[1], staff) if end[1] is not None else end
+        self.hairpins.setdefault((pid, staff), []).append(((start[0], Fraction(start[1]).limit_denominator(64)), self.cur.item_end(pid, *last, staff)))
         return st
 
     def text(self, pid, bar, onset, words, staff=1):

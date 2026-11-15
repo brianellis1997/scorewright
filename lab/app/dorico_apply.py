@@ -54,13 +54,26 @@ def project_file(project):
     return max(have, key=os.path.getmtime) if have else None
 
 
+def window_visible():
+    """Dorico's project window is on this desktop. On another desktop (Spaces) the accessibility API
+    sees no window and the status bar cannot be read; activating Dorico does not move there when
+    'switch to a Space with open windows' is off (Nov 15: S21 stopped at step 16 for this)"""
+    out = subprocess.run(['osascript', '-e', 'tell application "System Events" to tell process "Dorico 4" to '
+                          'count (windows whose subrole is "AXStandardWindow")'], capture_output=True, text=True, timeout=20)
+    return out.stdout.strip() not in ('', '0')
+
+
 def type_into_dorico(words):
     """type into Dorico's open text box; only when a text field has the focus, so the keys can never
-    land on the score as shortcuts (d, i, v and . all are). Returns 'typed' or why not"""
+    land on the score as shortcuts (d, i, v and . all are). Escape then closes the box and keeps the
+    text: Dorico runs NoteInput.TextCreateFinished itself with the position (sent over the link
+    without parameters it does nothing, S21). Returns 'typed' or why not"""
     script = (f'tell application "Dorico 4" to activate\ndelay 0.4\n'
               f'tell application "System Events" to tell process "Dorico 4"\n'
               f'set r to value of attribute "AXRole" of (value of attribute "AXFocusedUIElement")\n'
-              f'if r is "AXTextArea" or r is "AXTextField" then\nkeystroke "{words}"\nreturn "typed"\n'
+              f'if r is "AXTextArea" or r is "AXTextField" then\nkeystroke "{words}"\ndelay 0.3\nkey code 53\ndelay 0.5\n'
+              f'if (value of attribute "AXRole" of (value of attribute "AXFocusedUIElement")) is "AXTextArea" then\n'
+              f'return "typed, but the text box is still open"\nend if\nreturn "typed"\n'
               f'else\nkey code 53\nreturn "no text field has the focus (" & r & ")"\nend if\nend tell')
     out = subprocess.run(['osascript', '-e', script], capture_output=True, text=True, timeout=20)
     return (out.stdout or out.stderr).strip()
@@ -164,6 +177,8 @@ def run(plan, label='', start=0, probe=False):
 
     def check(expect, what):
         ok, shows = there(expect)
+        if not ok and shows == 'bar None nothing' and not window_visible():
+            raise Stop(f'{what}: Dorico\'s window is not on this desktop, so its status bar cannot be read; switch to it, then go on with --from')
         if not ok:
             raise Stop(f'{what}: expected bar {expect[0]} {expect[1][0].strip()}, Dorico shows {shows}')
 
@@ -174,6 +189,12 @@ def run(plan, label='', start=0, probe=False):
             raise Stop(f'{step["label"]}: the selection covers bars {got}, wanted {lo}-{hi}')
 
     steps = plan['steps']
+    if not window_visible():
+        msg = f'nothing done: Dorico\'s window is not on this desktop, so its status bar cannot be read; switch to it, then run again'
+        with open(f'{BRIDGE}/apply_log.jsonl', 'a') as f:
+            f.write(json.dumps(dict(ts=datetime.datetime.now().isoformat(timespec='seconds'), plan=label, start=start, done=start,
+                                    steps=len(steps), ok=False, msg=msg)) + '\n')
+        return False, f'stopped at step {start + 1} of {len(steps)} ({steps[start]["label"]}): {msg}', start
     try:
         d.loop.run_until_complete(burst(['NoteInput.Exit']))
         for i in range(start, len(steps)):
@@ -223,7 +244,6 @@ def run(plan, label='', start=0, probe=False):
                     one_by_one(step['edits'])
                     d.loop.run_until_complete(settle(0.8))
                     result = type_into_dorico(step['type_text'])
-                    go(['NoteInput.TextCreateFinished'])
                     d.loop.run_until_complete(settle(0.6))
                     if result != 'typed':
                         skipped.append(f'{step["label"]}: not added, {result}')
@@ -244,10 +264,14 @@ def run(plan, label='', start=0, probe=False):
                     else:
                         lost = True
             done = i + 1
-        go(['Edit.SelectNone'])
+        try:
+            go(['Edit.SelectNone'])
+        except Stop:
+            pass
         ok, msg = True, f'{len(steps) - start} steps in {time.time() - t0:.1f} s, every target checked' + (f', {spelled} spelling(s) fixed' if spelled else '') + ('; ' + '; '.join(skipped) if skipped else '') + (' (probe: nothing changed)' if probe else '')
     except (Stop, asyncio.TimeoutError) as e:
-        ok, msg = False, f'stopped at step {done + 1} of {len(steps)} ({steps[done]["label"]}): {e or "Dorico did not answer"}'
+        where = steps[done]["label"] if done < len(steps) else 'after the last step'
+        ok, msg = False, f'stopped at step {done + 1} of {len(steps)} ({where}): {e or "Dorico did not answer"}'
     with open(f'{BRIDGE}/apply_log.jsonl', 'a') as f:
         f.write(json.dumps(dict(ts=datetime.datetime.now().isoformat(timespec='seconds'), plan=label, start=start, done=done,
                                 steps=len(steps), short_walks=short, spelled=spelled, ok=ok, msg=msg)) + '\n')

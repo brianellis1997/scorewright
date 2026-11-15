@@ -149,7 +149,12 @@ rhythm and tie. Every stop came before an edit at the wrong place.
   starts on a later note of the range does not count (step 14 read "Bars 43-44" with a slur from bar
   44 to 45 inside it).
 - The planner now reads every slur in the file and remembers each one it adds (`Plan.slurs`), and
-  expects that wider range. Replayed on S12, it gives exactly the ranges that went in. Whether a
+  expects that wider range.
+- A hairpin that spans the first selected note also counts, from its first bar (S21 step 108: the
+  bassoon's crescendo over bars 46-48 made a 48-49 range read "Bars 46-49"). A hairpin that ends
+  before the first note does not (S12 step 14). `Plan.hairpins` keeps each one's exact end
+  (`Score.item_end`, after its tie chain); replayed on S12 and S21 the planner gives exactly the
+  ranges that went in. Replayed on S12, it gives exactly the ranges that went in. Whether a
   hairpin that starts on the first note also counts is not known yet; a stop will tell.
 - A range may end on a note that continues a tie (S13: a slur from the G to the held E, which the
   file writes as ending in the bar after the E starts). The arrows never stop on a tie continuation,
@@ -168,6 +173,17 @@ rhythm and tie. Every stop came before an edit at the wrong place.
   one takes the tuplet (3:2, 6:4) is not known yet, and the MusicXML here has 4 divisions to the
   quarter, which no tuplet fits. Test it in a scratch project while Brian is away, never in his.
 
+## Dorico on another desktop (S21, Nov 15)
+
+- S21 stopped at step 16 with "Dorico shows bar None nothing": Dorico's project window had moved to
+  another desktop (Spaces). There the accessibility API lists no window, so the status bar cannot be
+  read. Activating Dorico does not help, because "switch to a Space with open windows" is off on
+  this Mac (`defaults read com.apple.dock workspaces-auto-swoosh` is 0); the window server
+  (`Quartz.CGWindowListCopyWindowInfo`) still lists it, with onscreen False.
+- The runner now checks `window_visible()` before the first step (nothing is done if it is false)
+  and names the cause when a check reads nothing. The fix is Brian's: switch to Dorico's desktop.
+  Ask in the panel and by a push, and wait for the window in the background, then go on with --from.
+
 ## Staff text (S21, Nov 15)
 
 - Dorico 4 has no "div." or "unis." playing technique (`playingTechniqueDefinitions.xml` has none),
@@ -176,7 +192,14 @@ rhythm and tie. Every stop came before an edit at the wrong place.
   types the words only if the focused element is a text field (AXTextArea or AXTextField), so the
   keys can never land on the score as shortcuts; otherwise it presses Escape and the run report
   says the text was not added. Then `NoteInput.TextCreateFinished`. Text steps go last.
-- First use: S21. Check the export for the words after the run (dorico_check does not compare text).
+- First use, S21: the words went in, but `NoteInput.TextCreateFinished` sent over the link (no
+  parameters) did nothing, and the text box stayed open, so Dorico refused the next command. Escape
+  closes it and keeps the text: Dorico then runs `TextCreateFinished?FlowID=..&EventBlockID=..&
+  AboveOrBelow=kAbove&IsSystemText=0&RhythmicPositionPair=..` itself. The runner now types, then
+  presses Escape, and checks that the text box closed.
+- The MusicXML export leaves staff text out (only text such as "Con dolcezza" on a tempo or
+  expression comes through), so the check cannot see it: look at Dorico's window (a screenshot of
+  that window only) to confirm.
 
 ## Marks on typed notes, and carets in empty bars (S8, Nov 13)
 
