@@ -102,6 +102,19 @@ together. Bars refer to that sketch.
   that jumps to its first note a way up: "this fortissimo again is coming out of nowhere... the
   violin going up from that B to E hasn't occurred. It's just not natural, it's not a smooth
   transition." (Nov 14 2026, after S14.)
+- **Runs complement the melody; they never step on it.** Keep a run in its own register, above or
+  below every melody octave, so the two never cross: "they are interrupting with the melody, they're
+  spanning similar notes... getting intertwined, and then there's this dissonance... make sure the
+  runs are complementing the melody, not interrupting or stepping on top of it." Check each run
+  against the melody note above or below it. (Nov 14 2026, 111326 climax, after S15: the E flat
+  clarinet was "way too high in its register"; the flute's register was right.)
+- **Runs may be chromatic.** "Runs don't have to be just broken chords; they can be chromatic at
+  times... I'm thinking of how Tchaikovsky orchestrates: running winds, sometimes some chromaticism,
+  passing notes... it adds color and movement, especially when there's a lot of vibrance. That's
+  what I like composing." Use chromatic passing and neighbor notes in fast runs where they fit.
+- **Climax harmony in 111326 (bars 49-56):** after the G falls to E, "definitely F major", then G,
+  E minor, and a chain of falling fifths: "slide to A major... then D minor, G7, E minor again".
+  (Nov 14 2026, after S15.)
 - **Harmony in the theme.** One chord per 2/4 bar, a modal minor loop under a melody centred on E:
   F, G, Em, E (A minor VI, VII, v, V), with inversions in the second half (F/A, G/B).
 
