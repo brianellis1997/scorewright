@@ -82,7 +82,10 @@ from 111326 (Nov 2026); what belongs to that piece only is in `lab/pieces/p11132
   runs or steps there (a scale, a sextuplet run): "the violin one literally goes up like an
   octave... it needs to be a fluid transition, maybe a sextuplet run or some type of thing, to make
   it a more natural transition"; "to go from that high B all the way down more than an octave to a
-  lower A, it's just kind of awkward." (Nov 14-15 2026)
+  lower A, it's just kind of awkward." An instrument that joins a line in a far register gets a
+  bar or two to reach it, then doubles: "we could have bar 41 and 42 be a transition for the
+  violins to start to reach up to that register and then be fully doubling the flutes... this is a
+  pattern, I will point this out every single time." (Nov 14-15 2026)
 - **A loud arrival never comes out of nowhere.** Build into it with rhythm and lead-ins: "this
   fortissimo again is coming out of nowhere... it's just not natural, it's not a smooth transition."
 - **Loud passages keep their rhythm.** Held notes everywhere make a static tutti: "all the rhythm
