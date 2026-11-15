@@ -16,7 +16,7 @@ also holds every selection and caret move, so a stopped run is never undone blin
 before the step whose target does not match, says which step, and can go on from there (--from).
 usage (whisperer env): python app/dorico_apply.py <S<n>.dorico.json> [--from k] [--probe]      exit 0 done, 1 stopped
 --probe jumps to every start that has an ID and checks it, and places each caret, but types and edits nothing."""
-import asyncio, datetime, fcntl, glob, json, os, re, sys, time
+import asyncio, datetime, fcntl, glob, json, os, re, subprocess, sys, time
 from fractions import Fraction
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -54,6 +54,18 @@ def project_file(project):
     return max(have, key=os.path.getmtime) if have else None
 
 
+def type_into_dorico(words):
+    """type into Dorico's open text box; only when a text field has the focus, so the keys can never
+    land on the score as shortcuts (d, i, v and . all are). Returns 'typed' or why not"""
+    script = (f'tell application "Dorico 4" to activate\ndelay 0.4\n'
+              f'tell application "System Events" to tell process "Dorico 4"\n'
+              f'set r to value of attribute "AXRole" of (value of attribute "AXFocusedUIElement")\n'
+              f'if r is "AXTextArea" or r is "AXTextField" then\nkeystroke "{words}"\nreturn "typed"\n'
+              f'else\nkey code 53\nreturn "no text field has the focus (" & r & ")"\nend if\nend tell')
+    out = subprocess.run(['osascript', '-e', script], capture_output=True, text=True, timeout=20)
+    return (out.stdout or out.stderr).strip()
+
+
 def check_ids(plan, project=None):
     """the probe without Dorico: every note the plan selects by its ID is in the newest copy of the
     project. No command goes to Dorico, so nothing moves in his score (Brian, Nov 14, about the live
@@ -89,7 +101,7 @@ def run(plan, label='', start=0, probe=False):
     lock = open(f'{BRIDGE}/apply.lock', 'w')
     fcntl.flock(lock, fcntl.LOCK_EX)
     d = Dorico()
-    t0, done, short, spelled, lost = time.time(), start, 0, 0, start > 0
+    t0, done, short, spelled, lost, skipped = time.time(), start, 0, 0, start > 0, []
     texts = d.sb()[2]
     project = next((t.split(' in ', 1)[1] for t in texts if t.startswith('Flow ') and ' in ' in t), None)
     auto = project_file(project) if project else None
@@ -207,7 +219,16 @@ def run(plan, label='', start=0, probe=False):
                 if 'range' in step:
                     check_range(step)
                 go(step['plain'])
-                if not step.get('spell'):
+                if step.get('type_text'):
+                    one_by_one(step['edits'])
+                    d.loop.run_until_complete(settle(0.8))
+                    result = type_into_dorico(step['type_text'])
+                    go(['NoteInput.TextCreateFinished'])
+                    d.loop.run_until_complete(settle(0.6))
+                    if result != 'typed':
+                        skipped.append(f'{step["label"]}: not added, {result}')
+                    lost = True
+                elif not step.get('spell'):
                     one_by_one(step['edits'])
                 elif there([step['expect'][0], [step['spell']]])[0]:
                     go(step.get('group', []))
@@ -224,7 +245,7 @@ def run(plan, label='', start=0, probe=False):
                         lost = True
             done = i + 1
         go(['Edit.SelectNone'])
-        ok, msg = True, f'{len(steps) - start} steps in {time.time() - t0:.1f} s, every target checked' + (f', {spelled} spelling(s) fixed' if spelled else '') + (' (probe: nothing changed)' if probe else '')
+        ok, msg = True, f'{len(steps) - start} steps in {time.time() - t0:.1f} s, every target checked' + (f', {spelled} spelling(s) fixed' if spelled else '') + ('; ' + '; '.join(skipped) if skipped else '') + (' (probe: nothing changed)' if probe else '')
     except (Stop, asyncio.TimeoutError) as e:
         ok, msg = False, f'stopped at step {done + 1} of {len(steps)} ({steps[done]["label"]}): {e or "Dorico did not answer"}'
     with open(f'{BRIDGE}/apply_log.jsonl', 'a') as f:

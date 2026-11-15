@@ -168,6 +168,16 @@ rhythm and tie. Every stop came before an edit at the wrong place.
   one takes the tuplet (3:2, 6:4) is not known yet, and the MusicXML here has 4 divisions to the
   quarter, which no tuplet fits. Test it in a scratch project while Brian is away, never in his.
 
+## Staff text (S21, Nov 15)
+
+- Dorico 4 has no "div." or "unis." playing technique (`playingTechniqueDefinitions.xml` has none),
+  and `NoteInput.CreateText?ParagraphStyleID=paragraph.defaulttext` opens a text box but takes no
+  words. `p.text(pid, bar, onset, 'div.')` sends it, then the runner brings Dorico to the front and
+  types the words only if the focused element is a text field (AXTextArea or AXTextField), so the
+  keys can never land on the score as shortcuts; otherwise it presses Escape and the run report
+  says the text was not added. Then `NoteInput.TextCreateFinished`. Text steps go last.
+- First use: S21. Check the export for the words after the run (dorico_check does not compare text).
+
 ## Marks on typed notes, and carets in empty bars (S8, Nov 13)
 
 - After a mark (dynamic, slur, hairpin, technique) Dorico selects the new mark. A typed note has no

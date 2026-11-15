@@ -437,6 +437,18 @@ class Plan:
             self.cursor = None
         return st
 
+    def text(self, pid, bar, onset, words, staff=1):
+        """staff text such as 'div.' (Dorico 4 has no such playing technique): NoteInput.CreateText opens
+        Dorico's text box at the note, the runner types the words only if a text field has the focus,
+        then NoteInput.TextCreateFinished. The selection is unknown afterwards, so the next step starts
+        from an ID; put text steps last"""
+        st = self.step(f'text "{words}" for {self.who(pid)} in bar {bar}', pid, bar, onset, staff,
+                       edits=['NoteInput.CreateText?ParagraphStyleID=paragraph.defaulttext'])
+        st.pop('restore', None)
+        st['type_text'] = words
+        self.cursor = None
+        return st
+
     def articulate(self, pid, start, end, value='kAccent', staff=1):
         """one articulation on every note of a range (rests in it are left alone); like a hairpin, no
         return to a typed note after it, so the next step starts from a note with an ID"""
