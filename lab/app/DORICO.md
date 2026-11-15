@@ -184,6 +184,17 @@ rhythm and tie. Every stop came before an edit at the wrong place.
   and names the cause when a check reads nothing. The fix is Brian's: switch to Dorico's desktop.
   Ask in the panel and by a push, and wait for the window in the background, then go on with --from.
 
+## Beaming in pairs (S22, Nov 15)
+
+- In this project 2/4 eighths beam in fours. A time signature does not change that:
+  `NoteInput.CreateTimeSignature?Definition=...` took `2/4\,2+2` (a comma in a value must be sent as
+  `\,`, as in chords; a bare comma split it into `2/4` and a stray `2+2=`) and `[1+1]/4`, and the
+  export still showed four-note beams. It is the project setting Notation Options > Beam Grouping,
+  eighth notes in quarter-note time signatures: break the beams at each beat.
+- That dialog cannot be driven from outside: its category list ignores AX clicks, keyboard
+  selection and the search box (tried Nov 15; closed with Escape, nothing applied). Brian sets it
+  himself in a few seconds, or every group is split with `p.split_beam(pid, bar, 1.0)`.
+
 ## Staff text (S21, Nov 15)
 
 - Dorico 4 has no "div." or "unis." playing technique (`playingTechniqueDefinitions.xml` has none),
