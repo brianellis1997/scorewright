@@ -472,9 +472,10 @@ class Plan:
             self.cursor = None
         return st
 
-    def pitch(self, pid, bar, onset, steps, staff=1):
-        """move an existing note by scale steps (NoteEdit.PitchUp is Alt+Up): it keeps its ID, ties and slurs"""
-        cmd = 'NoteEdit.PitchUp' if steps > 0 else 'NoteEdit.PitchDown'
+    def pitch(self, pid, bar, onset, steps, staff=1, chromatic=False):
+        """move an existing note by scale steps (NoteEdit.PitchUp is Alt+Up), or by semitones with
+        chromatic=True (G sharp to G): it keeps its ID, ties and slurs"""
+        cmd = ('NoteEdit.PitchUp' if steps > 0 else 'NoteEdit.PitchDown') + ('Chromatic' if chromatic else '')
         return self.step(f'{self.who(pid)} bar {bar} {abs(steps)} step(s) {"up" if steps > 0 else "down"}', pid, bar, onset, staff, edits=[cmd] * abs(steps))
 
     def split_beam(self, pid, bar, onset, staff=1):

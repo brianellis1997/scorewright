@@ -115,6 +115,19 @@ together. Bars refer to that sketch.
 - **Climax harmony in 111326 (bars 49-56):** after the G falls to E, "definitely F major", then G,
   E minor, and a chain of falling fifths: "slide to A major... then D minor, G7, E minor again".
   (Nov 14 2026, after S15.)
+- **Brass state, strings sing.** The brass take the simple statement of a motif, with force, and
+  the strings take the fluid, ornamented line: "notice how the trumpets are playing the first
+  statements, the G fall into the E; it's a very easy thing for brass to play. A brass can't play
+  these fluid lines that you're going to see the violins take over... violin 2 doubling an octave
+  below... the more ornamental version of the melody, while the trumpets played the more
+  simplistic part, but they came in with force, which they can easily do." The melody trades
+  between them. (Nov 14 2026, 111326 bars 48-60, the phrase he wrote after S16.)
+- **No hard clashes between the lines and the harmony.** "Be mindful of how the individual lines
+  are interacting with the harmonies, that there's not some awkward dissonance between the
+  harmonies and the melodies. Some passing tones are fine of course, but no obvious hard
+  dissonances, notes within semitones." A chord tone a minor second or minor ninth from a held
+  melody note is wrong (his viola's F4 against the trumpet's E4 in bar 49 moved to the bass); a
+  short passing note is fine. Check every suggestion with `lab/clash_check.py`. (Nov 14 2026.)
 - **Harmony in the theme.** One chord per 2/4 bar, a modal minor loop under a melody centred on E:
   F, G, Em, E (A minor VI, VII, v, V), with inversions in the second half (F/A, G/B).
 
