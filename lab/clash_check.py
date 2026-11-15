@@ -71,6 +71,36 @@ def leaps(score, lo, hi, limit=7):
     return sorted(out)
 
 
+SECTIONS = [('Violin I', 'Violin II'), ('Violin II', 'Viola'), ('Viola', 'Violoncello')]
+
+
+def pairs_of(names):
+    """parts that must keep their order: the string sections, and 1 above 2 of the same instrument"""
+    out = [p for p in SECTIONS if p[0] in names and p[1] in names]
+    for n in names:
+        if n.endswith(' 1') and n[:-1] + '2' in names:
+            out.append((n, n[:-1] + '2'))
+    return out
+
+
+def crossings(score, lo, hi):
+    """[(bar, beat, upper part, its note, lower part, its note)]: the lower part sounds above the upper
+    one. Brian, Nov 15 2026: "violin two is playing higher than violin one... and then they cross
+    again... that just doesn't make sense from a school writing perspective" """
+    ns = notes(score, lo, hi)
+    tops = {}
+    for n in ns:
+        tops.setdefault(n[0], []).append(n)
+    out = []
+    for up, low in pairs_of(set(tops)):
+        for a in tops[up]:
+            for c in tops[low]:
+                if c[1] < a[2] and a[1] < c[2] and c[3] > a[3]:
+                    t = max(a[1], c[1])
+                    out.append((lo + int(t // 2), t % 2, up, a[4], low, c[4]))
+    return sorted(set(out))
+
+
 if __name__ == '__main__':
     xml = open(sys.argv[1], encoding='utf-8').read()
     lo, hi = int(sys.argv[2]), int(sys.argv[3])
@@ -79,6 +109,8 @@ if __name__ == '__main__':
     for kind, bar, beat, a, c in shown:
         print(f'bar {bar} beat {float(beat) + 1:g}: {kind:7} {a[0]} {a[4]} / {c[0]} {c[4]}')
     print(f'{sum(f[0] == "strong" for f in found)} strong, {sum(f[0] == "passing" for f in found)} passing')
+    for bar, beat, up, x, low, y in crossings(Score(xml), lo, hi):
+        print(f'crossing: bar {bar} beat {float(beat) + 1:g}: {low} {y} above {up} {x}')
     if '--leaps' in sys.argv:
         for bar, beat, part, x, y, d in leaps(Score(xml), lo, hi):
             print(f'leap: bar {bar} beat {float(beat) + 1:g}: {part} {x} to {y} ({d:+d})')

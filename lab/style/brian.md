@@ -31,6 +31,11 @@ from 111326 (Nov 2026); what belongs to that piece only is in `lab/pieces/p11132
   and high strings, woodwinds in their middle registers are not heard ("the cor anglais is not going
   to be heard, the clarinet is not going to be heard... the lower wind instruments should be
   contributing to the harmony"): give them figures that cut through, or let them support.
+- **Parts of a section keep their order.** Violin I stays above Violin II, Violin II above the
+  violas, part 1 above part 2: "violin two is playing higher than violin one... and then they cross
+  again... that just doesn't make sense from a school writing perspective, from an orchestration
+  perspective." A fix for one problem (a clash) must not make another (a crossing): check again
+  after every change. (Nov 15 2026)
 - **Every part is heard, or it supports.** Ask of each part whether it can be heard where it is;
   if not, give it a supporting role or let it rest: "if not, should they be supporting some harmonic
   texture?"
@@ -72,11 +77,12 @@ from 111326 (Nov 2026); what belongs to that piece only is in `lab/pieces/p11132
 - **Melody hand-offs overlap, and accompaniment dovetails.** The new instrument enters on the
   upbeat while the old one finishes; an accompaniment passes to the next section on the same chord
   and voicing, on a downbeat, the leaving section fading as the entering one comes in softly.
-- **Hand-offs are fluid.** An instrument that takes over a line arrives smoothly. If its first
-  note is far from where it was, it runs or steps into it (a scale, a sextuplet run): "the violin
-  one literally goes up like an octave... it needs to be a fluid transition, maybe a sextuplet run
-  or some type of thing, to make it a more natural transition." He had said it before: "the violin
-  going up from that B to E hasn't occurred." (Nov 14 2026)
+- **Hand-offs are fluid.** An instrument that takes over a line arrives smoothly, and one that
+  leaves a line for a new role leaves it smoothly. If the next note is far from where it was, it
+  runs or steps there (a scale, a sextuplet run): "the violin one literally goes up like an
+  octave... it needs to be a fluid transition, maybe a sextuplet run or some type of thing, to make
+  it a more natural transition"; "to go from that high B all the way down more than an octave to a
+  lower A, it's just kind of awkward." (Nov 14-15 2026)
 - **A loud arrival never comes out of nowhere.** Build into it with rhythm and lead-ins: "this
   fortissimo again is coming out of nowhere... it's just not natural, it's not a smooth transition."
 - **Loud passages keep their rhythm.** Held notes everywhere make a static tutti: "all the rhythm
@@ -91,6 +97,10 @@ from 111326 (Nov 2026); what belongs to that piece only is in `lab/pieces/p11132
 - **Breath in the line.** An eighth-note upbeat is slurred into the next downbeat quarter, and that
   quarter is portato (tenuto-staccato): "somewhere in between a normal note and a staccato... a lot
   of breath into the melody." Long slurs cover flowing runs.
+- **Flowing runs are slurred.** A run in a flowing texture is played legato, in one bow or one
+  breath: "they should be slurred... it should be a flowing texture, therefore the run should be
+  slurred... the violin playing detache up that run just doesn't make sense." Repeated notes that
+  only add texture can stay detached. (Nov 15 2026)
 - **Phrase marks go with the music.** A theme that moves to another instrument keeps its slurs and
   articulation, and every player in a texture gets the phrase slurs ("the strings need their slurs
   as well").
