@@ -69,7 +69,7 @@ He talks or types in the page, or in the MuseScore panel. Each message becomes a
 - plain text: what he wants
 - `[ACCEPT S<n>]`, `[REJECT S<n>]`: a button press, usually with no text
 - `[S<n> reason] ...`: whatever he says or types right after a button. After a Reject it is his reason. After an Accept it is often what he wants next, so read it as a request too.
-- `[CONTINUE] propose the next bars from where the working score stops`: the ▶ continue button
+- `[CONTINUE] propose the next bars from where the working score stops`: the "write next bars…" button, which asks first (until Nov 14 it was "▶ continue" beside "▶ play", and Brian pressed it by accident while he wanted to hear a suggestion: "That button is so misleading and mislabeled"). If it arrives while a suggestion he has not answered is open, ask in one panel line before writing
 - `[TAKE take_HHMMSS] ...` or `[TAKE upload_HHMMSS] ...`: notes he played or uploaded. The JSON line carries `take` (the `.abc` file), `wav` and `midi` paths. See [docs/input.md](docs/input.md).
 - `[HUM] I heard: D#5(2) E5(1) ... | ...`: hummed notes, possibly corrected by him, lengths in eighths
 - `[NEW PIECE <name>] ...`: he made a new piece from the header menu

@@ -82,7 +82,7 @@ audio{height:32px;vertical-align:middle}
    <button onclick="showScore('', true)">working</button>
    <button id=latest onclick="showLatest()">latest suggestion</button>
    <button id=playbtn onclick="playAudio()">▶ play</button><audio id=au controls hidden></audio>
-   <button class=go onclick="cont()" title="ask Claude to propose the next bars">▶ continue</button><button class=desk onclick="openIn('Dorico')" title="opens in Dorico with NotePerformer playback">open in Dorico</button>
+   <button onclick="cont()" title="ask Claude to write new bars after the end of the working score (asks first)">write next bars…</button><button class=desk onclick="openIn('Dorico')" title="opens in Dorico with NotePerformer playback">open in Dorico</button>
    <button class=desk onclick="openIn('MuseScore')">open in MuseScore</button>
   </div>
   <div id=svg></div>
@@ -114,7 +114,7 @@ function render(){
   const open=state.suggestions.filter(s=>s.status==='open'); document.getElementById('latest').hidden=!open.length;
   npUpdate();
 }
-function npUpdate(){ const key=showingId||'working'; const np=(state.np_audio||{})[key]; const b=document.getElementById('playbtn'); if(b) b.textContent = np? '▶ NotePerformer' : ((state.np_pending||[]).includes(key)? '▶ play (NotePerformer rendering)' : '▶ play');
+function npUpdate(){ const key=showingId||'working'; const np=(state.np_audio||{})[key]; const b=document.getElementById('playbtn'); if(b) b.textContent = (np? '▶ NotePerformer' : '▶ play') + ' from bar ' + playStart();
   window.__np = window.__np||{}; if(window.__np[key]!==undefined && window.__np[key]!==np){ const au=document.getElementById('au'); if(au.paused){ au.removeAttribute('src'); au.hidden=true; } } window.__np[key]=np; }
 // pieces: switch, or start a new one with an empty score
 async function loadSessions(){ const r=await api('/api/sessions'); const sel=document.getElementById('sess'); if(!r.sessions) return;
@@ -167,7 +167,7 @@ function wireBars(){
 function selLabel(){ return !selBar? '' : (selHi>selBar? 'bars '+selBar+'–'+selHi : 'bar '+selBar); }
 function tapBar(n, ext){ if((ext||armed) && selBar) selectRange(Math.min(selBar,n), Math.max(selHi,n)); else selectRange(n, n); }
 function selectRange(lo, hi){
-  armed=false; selBar=lo||null; selHi=lo?(hi||lo):null; drawRects();
+  armed=false; selBar=lo||null; selHi=lo?(hi||lo):null; drawRects(); if(state) npUpdate();
   const x=document.getElementById('extend'); x.textContent='↔ to…'; x.classList.remove('go'); x.hidden=!selBar; document.getElementById('selx').hidden=!selBar;
   document.getElementById('showing').textContent=(showingId?('suggestion '+showingId+' (green = new)'):'working score')+(selBar?' · '+selLabel()+' selected':'');
 }
@@ -197,17 +197,18 @@ async function gotoComment(id){ const c=((state&&state.review)||[]).find(x=>x.id
   if((c.sid||'')!==(showingId||'')) await showScore(c.sid||'', true); selectRange(c.lo, c.hi); setTimeout(()=>scrollToBar(c.lo), 120); }
 async function playFrom(n){ const au=document.getElementById('au'); if(!au.src || au.hidden){ const r=await fetch('/audio?id='+encodeURIComponent(showingId)); const uri=await r.text(); if(!uri){ alert('audio still rendering, try again in a few seconds'); return; } au.src=uri; au.hidden=false; } const b=bars.find(x=>x[0]===n); au.currentTime = b? b[1] : 0; au.play(); }
 document.addEventListener('keydown', e=>{ if(e.target.tagName==='TEXTAREA'||e.target.tagName==='INPUT') return; const au=document.getElementById('au');
-  if(e.key==='p'||e.key==='P'||e.key===' '){ e.preventDefault(); if(!au.paused){ au.pause(); return; } playFrom(selBar||1); }
+  if(e.key==='p'||e.key==='P'||e.key===' '){ e.preventDefault(); if(!au.paused){ au.pause(); return; } playFrom(playStart()); }
   if(e.key==='Escape'){ au.pause(); }
   if(e.key==='ArrowRight'&&selBar){ if(e.shiftKey) selectRange(selBar, selHi+1); else selectRange(selBar+1, selBar+1); }
   if(e.key==='ArrowLeft'&&selBar>1){ if(e.shiftKey) selectRange(selBar, Math.max(selBar, selHi-1)); else selectRange(selBar-1, selBar-1); } });
 function showLatest(){ const open=state.suggestions.filter(s=>s.status==='open'); if(open.length) showScore(open[open.length-1].id, true); const b=document.getElementById('latest'); b.textContent='latest suggestion'; b.style.background=''; b.style.color=''; }
-async function playAudio(){ playFrom(selBar||1); }
-async function cont(){ await api('/api/message',{text:'[CONTINUE] propose the next bars from where the working score stops'}); refresh(); }
+function playStart(){ const sg=showingId&&state&&(state.suggestions||[]).find(x=>x.id===showingId); return selBar||(sg?sg.lo:1); }
+async function playAudio(){ playFrom(playStart()); }
+async function cont(){ if(!confirm('Ask Claude to write new bars after the end of the working score?')) return; await api('/api/message',{text:'[CONTINUE] propose the next bars from where the working score stops'}); refresh(); }
 async function openIn(app){ await fetch('/open?app='+app+'&id='+encodeURIComponent(showingId)); }
 async function send(){ const t=document.getElementById('msg'); const typed=t.value.trim(); if(!typed) return; const text=(selBar? '['+(showingId||'working')+' '+selLabel()+'] ' : '')+typed; stopMic(); t.value=''; try{ localStorage.removeItem('sw_draft'); }catch(e){} if(pending){ const p=pending; pending=null; t.placeholder='talk or type…'; await api('/api/verdict_note',{id:p.id,text}); } else await api('/api/message',{text}); refresh(); }
 let pending=null;
-async function verdict(id, ok){ await api(ok?'/api/accept':'/api/reject',{id,text:''}); pending={id,ok}; const t=document.getElementById('msg'); t.placeholder = ok? 'Accepted '+id+'. Talk or type what you want next, or press ▶ continue to let Claude propose' : 'Rejected '+id+'. Why not? talk or type'; t.focus(); if(!ok && mic && !mic.disabled) mic.click(); refresh(); }
+async function verdict(id, ok){ await api(ok?'/api/accept':'/api/reject',{id,text:''}); pending={id,ok}; const t=document.getElementById('msg'); t.placeholder = ok? 'Accepted '+id+'. Talk or type what you want next, or press write next bars… to let Claude propose' : 'Rejected '+id+'. Why not? talk or type'; t.focus(); if(!ok && mic && !mic.disabled) mic.click(); refresh(); }
 // the text box survives reloads: every keystroke is saved, restored on load, cleared on send
 (function(){ const t=document.getElementById('msg'); try{ const d=localStorage.getItem('sw_draft'); if(d && !t.value) t.value=d; }catch(e){}
   t.addEventListener('input',()=>{ try{ localStorage.setItem('sw_draft', t.value); }catch(e){} }); })();
