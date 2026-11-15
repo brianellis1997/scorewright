@@ -5,7 +5,8 @@ Brian, Nov 14 2026: "be mindful of how the individual lines are interacting with
 some passing tones are fine of course, but no obvious hard dissonances, notes within semitones."
 Each clash is listed with its weight: 'strong' when both notes are held over the beat or one starts
 on the beat, 'passing' when one is a short note (a sixteenth or an eighth) that starts off the beat.
-usage (whisperer env): python lab/clash_check.py <score.xml> <first bar> <last bar> [--all]"""
+usage (whisperer env): python lab/clash_check.py <score.xml> <first bar> <last bar> [--all] [--leaps]
+--leaps also lists each part leaping more than a fifth with no breath (an entry into a melody needs a way up)."""
 import sys
 from fractions import Fraction
 
@@ -51,6 +52,25 @@ def clashes(score, lo, hi):
     return sorted(found, key=lambda f: (f[1], f[2]))
 
 
+def leaps(score, lo, hi, limit=7):
+    """[(bar, beat, part, from, to, semitones)]: each part's top line jumping more than a fifth with no
+    breath (a quarter or less) between the notes. Brian, Nov 14 2026, on Violin I leaping an octave
+    into the melody it took over: "it needs to be a fluid transition, maybe a sextuplet run"."""
+    by_part = {}
+    for n in notes(score, lo, hi):
+        by_part.setdefault(n[0], {})
+        top = by_part[n[0]].get(n[1])
+        if top is None or n[3] > top[3]:
+            by_part[n[0]][n[1]] = n
+    out = []
+    for part, ns in by_part.items():
+        seq = [ns[t] for t in sorted(ns)]
+        for a, c in zip(seq, seq[1:]):
+            if c[1] - a[2] <= 1 and abs(c[3] - a[3]) > limit:
+                out.append((lo + int(c[1] // 2), c[1] % 2, part, a[4], c[4], c[3] - a[3]))
+    return sorted(out)
+
+
 if __name__ == '__main__':
     xml = open(sys.argv[1], encoding='utf-8').read()
     lo, hi = int(sys.argv[2]), int(sys.argv[3])
@@ -59,3 +79,6 @@ if __name__ == '__main__':
     for kind, bar, beat, a, c in shown:
         print(f'bar {bar} beat {float(beat) + 1:g}: {kind:7} {a[0]} {a[4]} / {c[0]} {c[4]}')
     print(f'{sum(f[0] == "strong" for f in found)} strong, {sum(f[0] == "passing" for f in found)} passing')
+    if '--leaps' in sys.argv:
+        for bar, beat, part, x, y, d in leaps(Score(xml), lo, hi):
+            print(f'leap: bar {bar} beat {float(beat) + 1:g}: {part} {x} to {y} ({d:+d})')
