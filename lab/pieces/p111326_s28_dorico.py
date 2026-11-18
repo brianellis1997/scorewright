@@ -1,6 +1,7 @@
 """The Dorico steps for 111326 S28 (lab/pieces/p111326_s28.py), on S27. The held C of the bassoon and
 the held E of the violas end at bar 78 (EventEdit.DurationShortenByGrid); both violin lines of bars
-78-86 are deleted; then each line is typed (the bass turn in bar 77, the cellos' and violas' sixteenths
+78-86 and his viola double stops of bars 78-85 are deleted (a rest in note entry leaves an old note
+in place: S30, Nov 17); then each line is typed (the bass turn in bar 77, the cellos' and violas' sixteenths
 over his double stops, the two violin lines swapped, the clarinet, the flute, the horns, the
 bassoon), its sharps and flats checked; then the slurs, and last the mf and the swells.
 usage (whisperer env): python lab/pieces/p111326_s28_dorico.py <S27.xml> <S28.dorico.json>"""
@@ -18,11 +19,13 @@ import p111326_s28 as s28  # noqa: E402
 
 
 def events(bars, start):
-    """typed events from (bar, onset) start: rests before it are skipped, ties kept"""
+    """typed events from (bar, onset) start: rests before it are skipped, ties kept; a bar the line
+    leaves out is a bar of rest (S31, Nov 17: the timpani's empty bar 88 was skipped, and every later
+    timpani note came in a bar early)"""
     out, b0, o0 = [], start[0], Fraction(start[1])
-    for b in sorted(bars):
+    for b in range(min(bars), max(bars) + 1):
         t = Fraction(0)
-        for n, d, tie in bars[b]:
+        for n, d, tie in bars.get(b, [(None, 8, None)]):
             q = Fraction(d, 4)
             if (b, t) >= (b0, o0):
                 out.append((n, q, 'tie' if tie in ('start', 'both') else None))
@@ -70,12 +73,16 @@ def plan(x):
     tune_end = [it[0] for it in p.cur.items('P28', 85) if it[1] != 'Rest'][-1]
     p.step('Violin I: the tune of bars 78-85 out', 'P28', 78, 0, to=(85, tune_end), edits=['Edit.Delete'])
     p.step('Violin II: the descant of bars 78-86 out', 'P29', 78, Fraction(3, 2), to=(86, 0), edits=['Edit.Delete'])
+    viola_end = [it[0] for it in p.cur.items('P30', 85) if it[1] != 'Rest'][-1]
+    p.step('Viola: his double stops of bars 78-85 out', 'P30', 78, Fraction(1, 2), to=(85, viola_end), edits=['Edit.Delete'])
     final = s28.notes(x)
     want = Score(final)
     state = s28.untie_77(s28.untie_77(x, 'P7'), 'P30')
     for b in range(78, 79):
         state = put(state, 'P7', b, [(None, 8, None)])
     state = first_to_rest(state, 'P30', 78)
+    for b in range(78, 86):
+        state = put(state, 'P30', b, [(None, 8, None)])
     for pid, bars in (('P28', range(78, 87)), ('P29', range(78, 87))):
         for b in bars:
             state = put(state, pid, b, [(None, 8, None)])

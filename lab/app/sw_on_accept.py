@@ -54,6 +54,28 @@ def fresh_autosave(session, sid):
     return False
 
 
+def put_in_requires(session, folder, sid, needs, seen=()):
+    """the suggestions a plan builds on go in first, each after the ones it builds on itself (Nov 17:
+    S31 needed S30, which needed S27; the hook ran S30 and never S27). False if one of them stops."""
+    for need in needs:
+        done = f'{folder}/{need}.dorico.result.json'
+        if need in seen or (os.path.exists(done) and json.load(open(done)).get('ok')):
+            continue
+        sub = json.load(open(f'{folder}/{need}.dorico.json'))
+        if not put_in_requires(session, folder, need, sub.get('requires', []), seen + (need,)):
+            return False
+        say(session, f'{sid} builds on {need}, which is not in Dorico yet. Putting {need} in first.', working=True)
+        ok, msg, k = run(sub, f'{folder}/{need}.dorico.json')
+        json.dump(dict(ok=ok, msg=msg, done=k, ts=datetime.datetime.now().isoformat(timespec='seconds'), by=sid), open(done, 'w'))
+        if not ok:
+            say(session, f'{need} is not all in Dorico yet: it {msg}. I stop here, so {sid} does not go in on top of it.')
+            return False
+        urllib.request.urlopen(urllib.request.Request('http://localhost:8790/api/withdraw', data=json.dumps(dict(id=need, text=f'included in {sid}')).encode(), headers={'Content-Type': 'application/json'}))
+        if not fresh_autosave(session, need):
+            return False
+    return True
+
+
 for line in sys.stdin:
     try:
         rec = json.loads(line)
@@ -68,15 +90,9 @@ for line in sys.stdin:
         continue
     plan = json.load(open(base + '.json'))
     folder = f'{E}/_scorewright_out/session/{session}'
-    for need in plan.get('requires', []):
-        done = f'{folder}/{need}.dorico.result.json'
-        if os.path.exists(done) and json.load(open(done)).get('ok'):
-            continue
-        say(session, f'{sid} builds on {need}, which is not in Dorico yet. Putting {need} in first.', working=True)
-        ok, msg, k = run(json.load(open(f'{folder}/{need}.dorico.json')), f'{folder}/{need}.dorico.json')
-        json.dump(dict(ok=ok, msg=msg, done=k, ts=datetime.datetime.now().isoformat(timespec='seconds'), by=sid), open(done, 'w'))
-        if ok:
-            urllib.request.urlopen(urllib.request.Request('http://localhost:8790/api/withdraw', data=json.dumps(dict(id=need, text=f'included in {sid}')).encode(), headers={'Content-Type': 'application/json'}))
+    if not put_in_requires(session, folder, sid, plan.get('requires', [])):
+        print(f'[DORICO {sid}] STOPPED: a suggestion it builds on did not go in', flush=True)
+        continue
     if not fresh_autosave(session, sid):
         continue
     say(session, f'Putting {sid} into Dorico now: {len(plan["steps"])} steps.', working=True)

@@ -96,18 +96,36 @@ def tie(x, pid, b0, b1):
     return x[:last[1]] + add_tie(last[3], 'start') + x[last[2]:]
 
 
+def rest_pieces(t, dur, beat=4, bar=8):
+    """a rest as Dorico writes it in 2/4: a whole bar stays one rest, any other rest is cut at the
+    beats (S31, Nov 17: Dorico wrote the oboe's dotted-quarter rest as a quarter and an eighth, one item
+    more for the arrows than the file had)"""
+    if t == 0 and dur == bar:
+        return [dur]
+    out = []
+    while dur:
+        piece = min(dur, beat - t % beat)
+        out.append(piece)
+        t, dur = t + piece, dur - piece
+    return out
+
+
 def write_bar(x, pid, bar, events):
     """replace a bar of rests with events [(concert name or None, divisions, tie)] in Dorico's encoding"""
     d, c = transpose_of(x, pid)
     fifths, state = key_of(x, pid), {}
     old = voice_one(x, pid, bar)
     assert all('<rest' in n for _, _, _, n in old), f'{pid} bar {bar} is not empty'
-    out = []
+    out, t = [], 0
     for name, dur, tied in events:
         typ, dots = TYPE[dur]
         if name is None:
-            out.append(f'<note><rest/><duration>{dur}</duration><voice>1</voice><type>{typ}</type>{"<dot/>" * dots}<staff>1</staff></note>')
+            for piece in rest_pieces(t, dur):
+                ptyp, pdots = TYPE[piece]
+                out.append(f'<note><rest/><duration>{piece}</duration><voice>1</voice><type>{ptyp}</type>{"<dot/>" * pdots}<staff>1</staff></note>')
+            t += dur
             continue
+        t += dur
         step, alter, octave = shift(parse(name), -d, -c)
         acc = accidental((step, alter, octave), fifths, state)
         kinds = {'start': ['start'], 'stop': ['stop'], 'both': ['stop', 'start'], None: []}[tied]

@@ -93,7 +93,8 @@ as the fix (Brian: "we're learning from our mistakes as we go on").
 - A plan that builds on another suggestion names it: `p.save(path, requires=['S7'])`. If that
   suggestion's plan has not run, the Accept hook runs it first, withdraws it in the panel ("included
   in S9"), waits for the autosave, then runs the plan. (Nov 13: S9 was accepted before S7 and stopped
-  at step 1, with no change, because the bar it looked for had not moved yet.)
+  at step 1, with no change, because the bar it looked for had not moved yet.) The hook follows the
+  chain to the end, deepest plan first (Nov 17, see "The S31 accept chain").
 
 - Note values: use the names in Dorico's key-command file: kSemibreve, kMinim, kCrotchet, kQuaver,
   kSemiQuaver, kDemiSemiQuaver. `kSemiquaver` (small q) is accepted without an error and types
@@ -161,8 +162,8 @@ rhythm and tie. Every stop came before an edit at the wrong place.
   bassoon's crescendo over bars 46-48 made a 48-49 range read "Bars 46-49"). A hairpin that ends
   before the first note does not (S12 step 14). `Plan.hairpins` keeps each one's exact end
   (`Score.item_end`, after its tie chain); replayed on S12 and S21 the planner gives exactly the
-  ranges that went in. Replayed on S12, it gives exactly the ranges that went in. Whether a
-  hairpin that starts on the first note also counts is not known yet; a stop will tell.
+  ranges that went in. Replayed on S12, it gives exactly the ranges that went in. A hairpin
+  that starts on the first note does not count (S27 step 5, Nov 17).
 - A range may end on a note that continues a tie (S13: a slur from the G to the held E, which the
   file writes as ending in the bar after the E starts). The arrows never stop on a tie continuation,
   so the planner aims at the note that starts the chain (`Score.chain_start`); the range then covers
@@ -320,3 +321,47 @@ right after the fixes (a new export matched in every note, rhythm and tie).
   step. An export before and after showed that no note changed.
 - A run also stops when Brian edits the notes a plan targets after its last export (S25 step 9: "no ID
   for Flute bar 76 D5"). Export again, build the step on his new notes, and run it alone.
+
+## The S31 accept chain: rests, empty bars and hairpins (S27-S31, Nov 17)
+
+Brian accepted S31 at 18:53. S31 builds on S30, and S30 on S27. The run put every note in, but two
+plans stopped before an edit, the violas of bars 79-85 came out garbled and the timpani came in a bar
+early. A repair plan fixed both, and a new export then matched S27, S30 and S31 in every note. S32
+ran next on the fixed tools: 37 steps in 65 s, every target checked, and its check matched in every
+note and mark.
+
+- The hook ran S30 and S31 but not S27: it followed `requires` one level only. `put_in_requires` in
+  `sw_on_accept.py` now runs every plan in the chain, deepest first, withdraws each in the panel and
+  waits for the autosave. If one stops, the hook stops too: "a suggestion it builds on did not go in".
+- Result files: each run writes `S<n>.dorico.result.json`, and the hook skips a plan whose result is
+  ok. `dorico_apply.py S<n>.dorico.json --from k` writes it too when a plan finished by hand ends ok.
+- `/api/accept` with `"who":"claude"` queues an `[ACCEPT S<n>]` line in the inbox, like his button,
+  and sets the working score to that suggestion's file. The waiter then hands the line to the hook,
+  which runs the plan again. For a plan already put in by hand: write its result file first, then
+  record the verdict, then load the working score from a fresh export (`sw_working.py`).
+- A rest in note entry only moves the caret. An old note under it stays, and the caret can stop on
+  it, so the notes after come in shifted. S30 typed the violas (an eighth rest, then six sixteenths)
+  over his double stops of bars 79-85: the double stops on the downbeats stayed, and the sixteenths
+  came in a sixteenth late. `Plan.notes` now refuses a line with a rest over an old note
+  (`check_rests`). Delete the region first (`p.step(..., to=..., edits=['Edit.Delete'])`, then
+  `p.use` a score with rests there). The S28 builder now deletes his viola bars 78-85 before it
+  types; `pieces/p111326_s31_repair.py` deleted and typed the region again.
+- A typed line must cover every bar from its first to its last. S31's timpani line skipped its empty
+  bar 88, so every later timpani note came in a bar early (step 115). `events()` in
+  `pieces/p111326_s28_dorico.py` now fills a bar the line leaves out with a bar of rest.
+- Dorico cuts a rest at the beats: a dotted-quarter rest on the downbeat of a 2/4 bar is a quarter
+  rest and an eighth rest, and the arrows stop on each. The plan's file had one rest, so three oboe
+  walks of S31 (steps 52, 70, 92) came out one stop short. `write_bar` in `pieces/p111326_s5.py` now
+  cuts every rest at the beats, except a whole-bar rest (`rest_pieces`). Rebuilt with it, S31's plan
+  gives exactly the steps that ran.
+- Typing over the first or last note of a hairpin takes the hairpin away. S31 step 32: S30's Violin I
+  crescendo ended on the note that S31's run replaced, and a range from bar 85 then read "Bars 85-86",
+  not 82-86. `Plan.notes` drops such hairpins from its records (`drop_hairpins`).
+- A hairpin that starts on the first selected note does not widen the range. S27 step 5: the flute's
+  crescendo from bar 73 started on the slur's first note; Dorico showed "Bars 73-74", the plan wanted
+  73-76. Only a hairpin that starts before the first note and runs through it counts, or one that ends
+  on it with a dynamic there.
+- A slur that ends on a downbeat counts that bar when its last note is tied on. S30 step 67: the
+  flute's slur from bar 82 ended on the downbeat of bar 86, on a note tied on, and Dorico showed "Bars
+  82-86". After S31 made that note one dotted quarter, the same range read "Bars 82-85". Rebuilt now,
+  S30's plan expects 82-86 there, and adds the viola delete step; nothing else changes.

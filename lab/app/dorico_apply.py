@@ -286,4 +286,9 @@ if __name__ == '__main__':
     k = int(sys.argv[sys.argv.index('--from') + 1]) - 1 if '--from' in sys.argv else 0
     ok, msg, done = run(json.load(open(sys.argv[1])), sys.argv[1], k, '--probe' in sys.argv)
     print(('done: ' if ok else 'STOPPED: ') + msg)
+    if ok and re.search(r'/S\d+\.dorico\.json$', os.path.abspath(sys.argv[1])) and '--probe' not in sys.argv:
+        # a session plan finished by hand: its result file tells the Accept hook it is in, so an Accept
+        # recorded later (or one of a suggestion that builds on it) does not run it a second time (Nov 17)
+        json.dump(dict(ok=True, msg=f'finished by hand: {msg}', done=done, ts=datetime.datetime.now().isoformat(timespec='seconds')),
+                  open(sys.argv[1][:-len('.json')] + '.result.json', 'w'))
     sys.exit(0 if ok else 1)

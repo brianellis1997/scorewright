@@ -134,7 +134,8 @@ class Score:
                         open_[key] = (b, on)
                     elif kind == 'stop' and key in open_:
                         a = open_.pop(key)
-                        last = b - 1 if on == 0 and '<tie type="stop"/>' not in s and b > a[0] else b
+                        tied_on = '<tie type="start"/>' in s
+                        last = b - 1 if on == 0 and '<tie type="stop"/>' not in s and not tied_on and b > a[0] else b
                         self.slurs.setdefault((pid, staff), []).append((a, last))
 
     def items(self, pid, bar, staff=1):
@@ -389,7 +390,7 @@ class Plan:
                 first = (bar, Fraction(s['onset']))
                 ends = self.dyns.get((pid, staff), set())
                 over = [(a, e) for a, e in self.hairpins.get((pid, staff), []) + self.wedges.get((pid, staff), [])
-                        if a <= first < e or (first == e and e in ends)]
+                        if a < first < e or (first == e and e in ends)]
                 st['range'] = [min([bar] + [a[0] for a, e in over]),
                                max([st['end']] + [e for a, e in self.slurs.get((pid, staff), []) if a == first]
                                    + [(e[0] if e[1] else e[0] - 1) for a, e in over])]
@@ -443,6 +444,8 @@ class Plan:
             raise ValueError(f'{self.who(pid)} bar {bar}: onset {onset} is off the caret grid')
         if pos:
             moves.append(f'NoteInput.MoveRight*{int(pos / self.grid)}')
+        self.check_rests(pid, bar, onset, events, staff)
+        self.drop_hairpins(pid, bar, onset, events, staff)
         edits = []
         for i, ev in enumerate(events):
             if ev[0] == 'tuplet':
@@ -473,6 +476,55 @@ class Plan:
         self.cursor = None
         return st
 
+    @staticmethod
+    def timed(events):
+        """[(names, sounding quarters, event)]: tuplet notes at their real length (a sextuplet sixteenth
+        is 1/6)"""
+        out, ratio = [], Fraction(1)
+        for ev in events:
+            if ev[0] == 'tuplet':
+                actual, normal = ev[1].split(':')
+                ratio = Fraction(int(normal), int(actual))
+            elif ev[0] == 'end tuplet':
+                ratio = Fraction(1)
+            else:
+                out.append((ev[0], Fraction(ev[1]).limit_denominator(64) * ratio, ev))
+        return out
+
+    def drop_hairpins(self, pid, bar, onset, events, staff=1):
+        """Dorico takes a hairpin away (or cuts it) when the note it starts or ends on is typed over (S31,
+        Nov 17: S30's Violin I crescendo ended on the note S31's run replaced, and a range from bar 85
+        then read "Bars 85-86", not 82-86); so do the plan's records"""
+        per_bar = Fraction(2)
+        t0 = (bar - 1) * per_bar + Fraction(onset)
+        t1 = t0 + sum(q for _, q, _ in self.timed(events))
+        pos = lambda p: (p[0] - 1) * per_bar + Fraction(p[1])
+        for store in (self.hairpins, self.wedges):
+            kept = [(a, e) for a, e in store.get((pid, staff), []) if not (t0 <= pos(a) < t1 or t0 < pos(e) <= t1)]
+            if (pid, staff) in store:
+                store[(pid, staff)] = kept
+
+    def check_rests(self, pid, bar, onset, events, staff=1):
+        """a rest in note entry only moves the caret, so an old note under it stays, and the caret can
+        stop on it and shift every note after (S30, Nov 17: his viola double stops on the downbeats
+        of bars 79-85 stayed under the new eighth rests and the sixteenths came in a sixteenth off):
+        the region must be cleared first"""
+        per_bar = Fraction(2)
+        t = (bar - 1) * per_bar + Fraction(onset)
+        spans = []
+        for names, q, _ in self.timed(events):
+            if names is None:
+                spans.append((t, t + q))
+            t += q
+        for a, z in spans:
+            for b in range(int(a // per_bar) + 1, int((z - Fraction(1, 64)) // per_bar) + 2):
+                if b not in self.cur.parts[pid][0]:
+                    continue
+                for it in self.cur.items(pid, b, staff):
+                    pos = (b - 1) * per_bar + it[0]
+                    if it[1] != 'Rest' and a <= pos < z:
+                        raise ValueError(f'{self.who(pid)} bar {b}: a note at {it[0]} lies under a rest of the new line; delete the region first')
+
     def after_notes(self, xml, pid, bar, onset, staff=1):
         """the score with the notes typed, and where the last typed note is (it stays selected)"""
         self.use(xml)
@@ -495,7 +547,8 @@ class Plan:
         st = self.step(f'slur for {self.who(pid)} bars {start[0]}-{end[0]}', pid, *start, staff, to=end, down=staves - 1, edits=['NoteInput.SlurStart'])
         last = st.get('end', end[0])
         b, on = self.cur.chain_start(pid, end[0], end[1], staff) if end[1] is not None else (end[0], None)
-        if on == 0 and last == b and b > start[0]:
+        tied_on = on is not None and any(it[0] == on and it[3] for it in self.cur.items(pid, b, staff))
+        if on == 0 and last == b and b > start[0] and not tied_on:
             last = b - 1
         self.slurs.setdefault((pid, staff), []).append(((start[0], Fraction(start[1]).limit_denominator(64)), last))
         return st
