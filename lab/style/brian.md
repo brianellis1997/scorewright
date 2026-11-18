@@ -24,6 +24,8 @@ from 111326 (Nov 2026); what belongs to that piece only is in `lab/pieces/p11132
 - **Players warm up.** A player who has been resting does not come in on a high, exposed note at
   full force: "you expect them to start on that high E? That's just unrealistic. Either move them
   down an octave or have them warm up." An earlier, softer entry can also lead into the new phrase.
+  The same holds for woodwinds: "a clarinet way up high, like there's no way a clarinetist can hit
+  that, so just off rip." (Nov 17 2026)
 - **Strings are the most fluid.** They can take the ornamented, singing lines; when they really
   sing a melody, they double it in octaves.
 - **Each instrument has a register where it sounds right, and a tutti covers some of them.** "The
@@ -114,6 +116,8 @@ from 111326 (Nov 2026); what belongs to that piece only is in `lab/pieces/p11132
   pattern, I will point this out every single time." (Nov 14-15 2026)
 - **A loud arrival never comes out of nowhere.** Build into it with rhythm and lead-ins: "this
   fortissimo again is coming out of nowhere... it's just not natural, it's not a smooth transition."
+  A forte never follows a diminuendo; the bars before it grow into it: "a diminuendo in the strings
+  and then that forte on bar 86 doesn't make sense." (Nov 17 2026)
 - **Loud passages keep their rhythm.** Held notes everywhere make a static tutti: "all the rhythm
   just stops... the rhythm should be pounded, through string runs or percussion or wind runs."
 
@@ -126,6 +130,11 @@ from 111326 (Nov 2026); what belongs to that piece only is in `lab/pieces/p11132
 - **Breath in the line.** An eighth-note upbeat is slurred into the next downbeat quarter, and that
   quarter is portato (tenuto-staccato): "somewhere in between a normal note and a staccato... a lot
   of breath into the melody." Long slurs cover flowing runs.
+- **Winds slur by phrase and breath; strings slur by bow.** A wind part does not copy the strings'
+  slurs one to one: "the winds in general shouldn't be following slurring patterns of the strings;
+  the strings' slurring patterns are for their bowing techniques, but the winds are for actual
+  phrases and breaths... in fact winds should be slurring more most of the time." One slur over each
+  phrase, with a breath at its end. (Nov 17 2026)
 - **Flowing runs are slurred.** A run in a flowing texture is played legato, in one bow or one
   breath: "they should be slurred... it should be a flowing texture, therefore the run should be
   slurred... the violin playing detache up that run just doesn't make sense." Repeated notes that
