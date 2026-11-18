@@ -72,6 +72,8 @@ bars 50-52 were removed, 48 undo steps in all).
 | respell | `p.respell('P6', 25, 0, up=True)` | `NoteEdit.RespellUsingNoteNameAbove` (E sharp to F) or `...Below` |
 | spread a chord part | `p.explode('P5', 24, 31, staves=3)` | the range, `Edit.Copy`; the start, `NavigateDownExtend` x2, `Edit.PasteExplode` |
 | spelling of a typed sharp or flat | `p.spell('P31', 3, 0)` | the runner reads the note and sends `NoteEdit.RespellUsingNoteNameBelow` (or `...Above` for a flat) only when Dorico shows the other name; the run report counts the fixes |
+| shorten a note that stays | `p.shorten('P30', 60, 0, 2)` | `EventEdit.DurationShortenByGrid` n times (grid: an eighth); one step per chord note, each selected by its own ID |
+| tuplets in note entry | events `('tuplet', '6:4')`, notes at their written value (1/4), `('end tuplet', '6:4')` | `NoteValue` first, then `NoteInput.StartTupletRun?Definition=6:4&Set=true`, the notes, `...&Set=false` |
 | move an existing note by scale steps | `p.pitch('P6', 2, 0, 2)` | `NoteEdit.PitchUp` (Alt+Up) n times, `NoteEdit.PitchDown` for down: the note keeps its ID, ties, slurs and dynamics, so it beats retyping one note |
 | new notes | `p.notes('P3', 18, 0, [('G4', 1), ('A4', 1, 'tie'), (None, 0.5)])` | select a note with an ID, `NoteInput.Enter?Set=true`, caret moves, then for every note `NoteInput.NoteValue?LogDuration=kCrotchet&Set=true` and, only for a dotted note, `NoteInput.SetDotted?Value=1&Set=true`; then `NoteInput.MIDINoteInput?MIDIPitches=67` (a chord: `60\,64\,67`); `NoteInput.Tie` after a note ties it to the next typed note; `NoteInput.Exit` |
 | a caret from a named note | `p.notes('P26', 1, 0, events, staff=2, start=('P26', 2, 1, 0))` | when the search cannot know a note still has its ID (the left hand of a harp after the right hand was retyped) |
@@ -169,9 +171,7 @@ rhythm and tie. Every stop came before an edit at the wrong place.
   right is not safe: "using note name below" turns C sharp into B double sharp.
 - `p.articulate(pid, start, end, 'kAccent')` puts one articulation on every note of a range. Values:
   kAccent, kMarcato, kStaccato, kStaccatissimo, kTenuto, kStaccatoTenuto, kStress, kUnstress.
-- Tuplets: Dorico has `NoteInput.StartTupletRun` and `NoteInput.EndTupletRun`, but how the first
-  one takes the tuplet (3:2, 6:4) is not known yet, and the MusicXML here has 4 divisions to the
-  quarter, which no tuplet fits. Test it in a scratch project while Brian is away, never in his.
+- Tuplets: see "Tuplets, shortened notes and hairpins already in the score" below (S24).
 
 ## Dorico on another desktop (S21, Nov 15)
 
@@ -263,3 +263,35 @@ rhythm and tie. Every stop came before an edit at the wrong place.
 - The MusicXML export has no layout, so click positions cannot be computed; they are not needed.
 - The log has our commands too. `Remote Control Client N connected` and `socket disconnected` frame
   our runs; `edits_since` leaves them out.
+
+## Tuplets, shortened notes and hairpins already in the score (S23-S24, Nov 16-17)
+
+Brian accepted S24 (which ran S23 first) before the scratch test below had run. S23 went in, all 91
+steps, with one wrong note length; S24 stopped twice before an edit, and every note of both came out
+right after the fixes (a new export matched in every note, rhythm and tie).
+
+- Tuplets: `NoteInput.StartTupletRun?Definition=6:4&Set=true` starts a run of sixteenth sextuplets
+  and `...&Set=false` ends it (both are in Brian's own log). The tuplet takes the note value that is
+  set when it starts, so the plan sends `NoteInput.NoteValue?LogDuration=kSemiQuaver&Set=true` first.
+  A run goes on over groups of the same ratio. `NoteInput.Tie` before the run ties a quarter into the
+  first tuplet note. 3:2 works the same way for sixteenth triplets.
+- A note tied into a tuplet from a note outside it is a second event in Dorico. The right arrow and
+  `NavigateRightExtend` stop on it once more; the left arrow does not. S24 stopped at step 26: a range
+  from such a quarter ended one note short ("Bars 49-50", wanted 49-51). `Score.stops` and
+  `Score.forward` count the right-arrow stops, and ranges and forward walks use them.
+- `EventEdit.DurationShortenByGrid` shortens the selected note by the rhythmic grid (an eighth) and
+  keeps its ID, tie and slur. It shortens only the selected note. S23 selected the violas' chord by
+  the ID of its top note, so their E and B held on; a two-step repair fixed it. `p.shorten` makes one
+  step per chord note, each selected by its own ID.
+- A hairpin that is already in the score and stops on the first selected note widens the status bar's
+  range, like one that spans it: S24 step 39 read "Bars 47-52" for a 49-52 range, because the
+  clarinet's crescendo from bar 47 stops at bar 49. `Score.wedges` reads the score's hairpins, and the
+  range check counts those that end on the first note.
+- MusicXML: sextuplets need 12 divisions to the quarter. Raise them only in the bars with tuplets (an
+  `<attributes><divisions>` in the first one and back to 4 after them), so the other bars stay byte for
+  byte and their notes keep their IDs in the plan. `Score` and `color_xml.py` read divisions bar by
+  bar, and the colorer compares lengths in quarters.
+- `app/dorico_scratch_test.py` tries commands in a scratch project beside his: it opens a small
+  MusicXML, saves it so its notes have IDs, runs the commands, reads the result back from the file,
+  then closes the project and moves it to the Trash. It has not run yet. Run it, after a panel line
+  and his OK, before a plan uses a command that no run has used.

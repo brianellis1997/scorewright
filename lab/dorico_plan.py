@@ -71,11 +71,12 @@ def midi(n):
 
 
 class Score:
-    """one state of the score: per part its measures, transposition and staves"""
+    """one state of the score: per part its measures, transposition and staves, and the divisions to
+    the quarter in each bar (a part with tuplets may change them between bars)"""
 
     def __init__(self, xml):
         self.names = dict(re.findall(r'<score-part id="([^"]+)">\s*<part-name>([^<]*)</part-name>', xml))
-        self.parts, self.staves, self.slurs = {}, [], {}
+        self.parts, self.staves, self.slurs, self.wedges = {}, [], {}, {}
         for pid in re.findall(r'<score-part id="([^"]+)"', xml):
             body = re.search(rf'<part id="{pid}">(.*?)</part>', xml, re.S).group(1)
             t = re.search(r'<transpose\b.*?</transpose>', body, re.S)
@@ -84,19 +85,34 @@ class Score:
             tr = (g('diatonic') + 7 * g('octave-change'), g('chromatic') + 12 * g('octave-change'))
             n = int((re.search(r'<staves>(\d+)</staves>', body) or [0, 1])[1])
             bars = {int(m.group(1)): m.group(2) for m in re.finditer(r'<measure number="(\d+)"[^>]*>(.*?)</measure>', body, re.S)}
-            div = re.findall(r'<divisions>(\d+)</divisions>', body)
-            self.parts[pid] = (bars, tr, int(div[0]) if div else 1)
+            divs, cur = {}, 1
+            for b in sorted(bars):
+                d = re.findall(r'<divisions>(\d+)</divisions>', bars[b])
+                cur = int(d[-1]) if d else cur
+                divs[b] = cur
+            self.parts[pid] = (bars, tr, divs)
             self.staves += [(pid, s) for s in range(1, n + 1)]
             self.read_slurs(pid)
 
     def read_slurs(self, pid):
-        """self.slurs[(pid, staff)]: [((bar, onset), last bar)] for each slur in the file"""
-        bars, tr, div = self.parts[pid]
-        open_ = {}
+        """self.slurs[(pid, staff)]: [((bar, onset), last bar)] for each slur in the file, and
+        self.wedges[(pid, staff)]: [((bar, onset), (bar, onset))] from start to stop of each hairpin"""
+        bars, tr, divs = self.parts[pid]
+        open_, wedge = {}, {}
         for b in sorted(bars):
             t = on = 0
-            for ev in re.finditer(r'<note[ >].*?</note>|<backup>.*?</backup>|<forward>.*?</forward>', bars[b], re.S):
+            div = divs[b]
+            for ev in re.finditer(r'<note[ >].*?</note>|<backup>.*?</backup>|<forward>.*?</forward>|<direction[ >].*?</direction>', bars[b], re.S):
                 s = ev.group(0)
+                if s.startswith('<direction'):
+                    staff = int((re.search(r'<staff>(\d+)</staff>', s) or [0, 1])[1])
+                    for kind, num in re.findall(r'<wedge type="(\w+)"(?: number="(\d+)")?', s):
+                        key = (num or '1', staff)
+                        if kind == 'stop' and key in wedge:
+                            self.wedges.setdefault((pid, staff), []).append((wedge.pop(key), (b, Fraction(t, div))))
+                        elif kind != 'stop':
+                            wedge[key] = (b, Fraction(t, div))
+                    continue
                 d = int((re.search(r'<duration>(\d+)</duration>', s) or [0, 0])[1])
                 if s.startswith('<backup'):
                     t -= d
@@ -116,9 +132,10 @@ class Score:
                         self.slurs.setdefault((pid, staff), []).append((open_.pop(key), b))
 
     def items(self, pid, bar, staff=1):
-        """[(onset, 'Rest' or [concert names, top first], tied from before, tied on)], voice by voice in file order"""
-        bars, tr, div = self.parts[pid]
-        t, out = 0, []
+        """[(onset, 'Rest' or [concert names, top first], tied from before, tied on, in a tuplet)], voice by voice
+        in file order"""
+        bars, tr, divs = self.parts[pid]
+        t, out, div = 0, [], divs[bar]
         for ev in re.finditer(r'<note[ >].*?</note>|<backup>.*?</backup>|<forward>.*?</forward>', bars[bar], re.S):
             s = ev.group(0)
             d = int((re.search(r'<duration>(\d+)</duration>', s) or [0, 0])[1])
@@ -135,11 +152,11 @@ class Score:
                     out[-1][1].append(shift((p.group(1), int(p.group(2) or 0), int(p.group(3))), *tr))
                 continue
             if mine and '<rest' in s:
-                out.append([Fraction(t, div), 'Rest', False, False])
+                out.append([Fraction(t, div), 'Rest', False, False, False])
             elif mine:
                 p = re.search(PITCH, s)
                 out.append([Fraction(t, div), [shift((p.group(1), int(p.group(2) or 0), int(p.group(3))), *tr)],
-                            '<tie type="stop"/>' in s, '<tie type="start"/>' in s])
+                            '<tie type="stop"/>' in s, '<tie type="start"/>' in s, '<time-modification>' in s])
             t += d
         for it in out:
             if it[1] != 'Rest':
@@ -149,6 +166,22 @@ class Score:
     def nav(self, pid, bar, staff=1):
         """the items the arrows stop at: a tie continuation belongs to the chain that started earlier"""
         return [it for it in self.items(pid, bar, staff) if not it[2]]
+
+    def stops(self, pid, bar, staff=1):
+        """the items the RIGHT arrow stops at: those of nav, plus a note tied into a tuplet from a note
+        outside it, which Dorico keeps as a second event. The left arrow skips it. (S24, Nov 17: a range
+        from a quarter tied into a sextuplet ended one note short; going left over such a tie, the
+        spelling steps counted right)"""
+        out, prev = [], None
+        for it in self.items(pid, bar, staff):
+            if not it[2] or (it[4] and prev is not None and not prev[4]):
+                out.append(it)
+            prev = it
+        return out
+
+    def forward(self, pid, staff, a, z):
+        """right-arrow moves from (bar, onset) a to the later (bar, onset) z"""
+        return sum(1 for b in range(a[0], z[0] + 1) for it in self.stops(pid, b, staff) if a < (b, it[0]) <= z)
 
     def index(self, pid, bar, onset=None, staff=1):
         its = self.nav(pid, bar, staff)
@@ -205,6 +238,7 @@ class Plan:
         self.grid = grid
         self.steps, self.cursor, self.tied = [], None, set()
         self.slurs = {k: list(v) for k, v in self.base.slurs.items()}
+        self.wedges = {k: list(v) for k, v in self.base.wedges.items()}
         self.hairpins = {}
 
     def use(self, xml):
@@ -240,9 +274,7 @@ class Plan:
 
     def between(self, pid, staff, a, z):
         (b1, k1), (b2, k2) = a, z
-        if b1 == b2:
-            return k2 - k1
-        return len(self.cur.nav(pid, b1, staff)) - k1 + sum(len(self.cur.nav(pid, b, staff)) for b in range(b1 + 1, b2)) + k2
+        return self.cur.forward(pid, staff, (b1, self.cur.nav(pid, b1, staff)[k1][0]), (b2, self.cur.nav(pid, b2, staff)[k2][0]))
 
     def walk(self, pid, staff, a, z):
         """arrow moves along one staff from item a = (bar, k) to the later item z"""
@@ -319,9 +351,7 @@ class Plan:
         k1 = self.cur.index(pid, b1, o1, staff)
         if any(t[:2] == (pid, staff) and b0 <= t[2] <= b1 for t in self.tied):
             raise ValueError(f'{self.who(pid)} bars {b0}-{b1}: a tie in the range merges two items; put ties last, or call use()')
-        if b1 == b0:
-            return k1 - k0
-        return len(self.cur.nav(pid, b0, staff)) - k0 + sum(len(self.cur.nav(pid, b, staff)) for b in range(b0 + 1, b1)) + k1
+        return self.cur.forward(pid, staff, (b0, self.cur.nav(pid, b0, staff)[k0][0]), (b1, self.cur.nav(pid, b1, staff)[k1][0]))
 
     def step(self, label, pid, bar, onset, staff=1, to=None, down=0, edits=(), plain=()):
         s = self.spec(pid, bar, onset, staff)
@@ -351,6 +381,7 @@ class Plan:
                 st['end'] = self.cur.chain_end(pid, to[0], self.cur.nav(pid, to[0], staff)[k1][0], staff)
                 first = (bar, Fraction(s['onset']))
                 over = [(a, e) for a, e in self.hairpins.get((pid, staff), []) if a <= first < e]
+                over += [(a, e) for a, e in self.wedges.get((pid, staff), []) if a <= first <= e]
                 st['range'] = [min([bar] + [a[0] for a, e in over]),
                                max([st['end']] + [e for a, e in self.slurs.get((pid, staff), []) if a == first]
                                    + [(e[0] if e[1] else e[0] - 1) for a, e in over])]
@@ -366,6 +397,9 @@ class Plan:
 
     def notes(self, pid, bar, onset, events, staff=1, start=None):
         """note entry from the caret: events = [(names or None for a rest, quarters[, 'tie'])];
+        ('tuplet', '6:4') and ('end tuplet', '6:4') go around tuplet notes, which are given at their
+        written value (a sextuplet sixteenth is 1/4) and never as rests; the tuplet takes the note value
+        set when it starts, so the first tuplet note's value is sent before StartTupletRun;
         the caret starts at a note with an ID (same staff, or the nearest staff above it) and moves.
         start = (pid, staff, bar, onset) names that note when the search cannot know its ID is still
         good (the other staff of a harp after one staff was retyped)"""
@@ -402,7 +436,13 @@ class Plan:
         if pos:
             moves.append(f'NoteInput.MoveRight*{int(pos / self.grid)}')
         edits = []
-        for ev in events:
+        for i, ev in enumerate(events):
+            if ev[0] == 'tuplet':
+                nxt = next(e for e in events[i + 1:] if e[0] not in ('tuplet', 'end tuplet'))
+                edits.append(f'NoteInput.NoteValue?LogDuration={VALUE[Fraction(nxt[1]).limit_denominator(64)][0]}&Set=true')
+            if ev[0] in ('tuplet', 'end tuplet'):
+                edits.append(f'NoteInput.StartTupletRun?Definition={ev[1]}&Set={"true" if ev[0] == "tuplet" else "false"}')
+                continue
             names, q, tie = (list(ev) + [None])[:3]
             q = Fraction(q).limit_denominator(64)
             if names is None:
@@ -509,6 +549,23 @@ class Plan:
         chromatic=True (G sharp to G): it keeps its ID, ties and slurs"""
         cmd = ('NoteEdit.PitchUp' if steps > 0 else 'NoteEdit.PitchDown') + ('Chromatic' if chromatic else '')
         return self.step(f'{self.who(pid)} bar {bar} {abs(steps)} step(s) {"up" if steps > 0 else "down"}', pid, bar, onset, staff, edits=[cmd] * abs(steps))
+
+    def shorten(self, pid, bar, onset, steps, staff=1):
+        """EventEdit.DurationShortenByGrid `steps` times (the rhythmic grid is an eighth): the note keeps
+        its ID, ties and slurs. Dorico shortens the selected note only, and a selection by ID is one
+        note, so each note of a chord gets its own step (S23, Nov 17: the violas' G sharp ended on beat
+        2 and their E and B held on)"""
+        s = self.spec(pid, bar, onset, staff)
+        out = []
+        for n in s['names']:
+            st = self.step(f'{self.who(pid)} bar {bar}: {n} {steps} grid step(s) shorter', pid, bar, onset, staff,
+                           edits=['EventEdit.DurationShortenByGrid'] * steps)
+            if not st['target']:
+                raise ValueError(f'{self.who(pid)} bar {bar}: shorten a note with an ID, not a typed one')
+            st['target'] = dict(st['target'], names=[n])
+            st['expect'] = [bar, [f'Note: {n} ']]
+            out.append(st)
+        return out
 
     def split_beam(self, pid, bar, onset, staff=1):
         return self.step(f'beam split for {self.who(pid)} in bar {bar}', pid, bar, onset, staff, edits=['Edit.SplitBeam'])

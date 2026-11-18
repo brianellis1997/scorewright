@@ -43,6 +43,18 @@ from 111326 (Nov 2026); what belongs to that piece only is in `lab/pieces/p11132
   each: spread the chord across the players, copy slurs and dynamics to each, check every range.
   "The horn can only play one note at a time... This is basic school writing... it has to be
   obvious." (Nov 13 2026)
+- **In a tutti, a wind with no line of its own doubles the strings in its register.** The
+  woodwinds mirror the string section: flutes and oboes with the violins, clarinets with the
+  violas, bassoons with the cellos, the contrabassoon with the double basses. A wind that doubles a
+  string part keeps doing it to the end of the phrase, and a part that crescendos into a bar plays
+  in that bar: "the clarinets completely drop off, they have a crescendo in bar 48 but then they
+  completely drop off in bar 49... maybe the bassoons are doubling what the cellos are doing, maybe
+  the clarinets are doubling what the violas are doing... an obvious pattern that we can mimic."
+  (Nov 16 2026)
+- **The piccolo is not a second flute.** A unison with the flute adds nothing: "a piccolo directly
+  doubling the flute at the same register is just awkward orchestration." It plays an octave above
+  the flute, or a third or a sixth above where the octave would screech (its top fifth, A7 to C8).
+  (Nov 16 2026)
 
 ### Lines and harmony
 
@@ -62,6 +74,20 @@ from 111326 (Nov 2026); what belongs to that piece only is in `lab/pieces/p11132
 - **Runs may be chromatic.** "Runs don't have to be just broken chords; they can be chromatic at
   times... like Tchaikovsky orchestrates: running winds, sometimes some chromaticism, passing
   notes... it adds color and movement, especially when there's a lot of vibrance."
+- **Runs flow across the beat.** A run in sextuplets (twelve to a 2/4 bar) or in sixteenth-note
+  triplets that starts just after a beat and arrives on the next one flows; sixteenths that start
+  on the beat sound square: "I kind of prefer non on the beat runs... sextuplets... everything is
+  just too on the nose... look at what Tchaikovsky does, it's a lot of offbeat fluid stuff that's
+  flowing." (Nov 16 2026)
+- **Chords under a solo are spread out.** Close triads in a low register turn to mud: "there's a lot
+  of tri-chords but maybe we want to space those out better cuz I can imagine it would be very
+  muddy." Put the bass low, keep the other chord notes apart, give each note its own player, and
+  keep them all under the solo: "nothing really over the cor anglais, it would just be supporting
+  harmony underneath." (Nov 16 2026)
+- **An imitation answers the solo; it never competes.** A second line can echo the solo's figure in
+  its gaps, softly: "a mimicking thing... like a canon almost, but not taking away from the cor
+  anglais... the cor anglais is really the central part." It drops out when the solo reaches its
+  key moment: "especially when it hits that A B... the flute should kind of drop out." (Nov 16 2026)
 
 ### Phrases and transitions
 
@@ -106,7 +132,9 @@ from 111326 (Nov 2026); what belongs to that piece only is in `lab/pieces/p11132
   only add texture can stay detached. (Nov 15 2026)
 - **Phrase marks go with the music.** A theme that moves to another instrument keeps its slurs and
   articulation, and every player in a texture gets the phrase slurs ("the strings need their slurs
-  as well").
+  as well"). A new melody in the same style takes the same marks: "the quarter notes should be like
+  that same quarter notes accents that we've been using this whole time... similar slurring as
+  before." (Nov 16 2026)
 
 ## Songs
 

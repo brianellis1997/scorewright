@@ -6,6 +6,7 @@ working score, every note of bars lo..hi is green (MuseScore, Sibelius and Doric
 MusicXML note color attribute).
 usage: python color_xml.py <in.xml> <out.xml> <lo> <hi> [#hex]"""
 import os, re, sys
+from fractions import Fraction
 
 GREEN, RED = '#0B8A3E', '#C02626'
 STEPS = 'CDEFGAB'
@@ -22,8 +23,19 @@ def transposes(xml):
     return out
 
 
-def notes(body):
-    """[(onset, sounding key, start, end, chord)] for the pitched notes of a bar, in voice order"""
+def divisions_by_bar(part):
+    """{bar: divisions to the quarter there}: Dorico writes 4, and more in a part with tuplets"""
+    out, cur = {}, 1
+    for mm in re.finditer(r'<measure number="(\d+)"[^>]*>(.*?)</measure>', part, re.S):
+        d = re.search(r'<divisions>(\d+)</divisions>', mm.group(2))
+        cur = int(d.group(1)) if d else cur
+        out[int(mm.group(1))] = cur
+    return out
+
+
+def notes(body, div=1):
+    """[(onset, sounding key, start, end, chord)] for the pitched notes of a bar, in voice order; onset
+    and length in quarters, so parts written with different divisions compare"""
     t, last, out = 0, 0, []
     for m in NOTE.finditer(body):
         s = m.group(0)
@@ -42,7 +54,8 @@ def notes(body):
         p = re.search(r'<step>(\w)</step>(?:\s*<alter>(-?\d+)</alter>)?\s*<octave>(\d+)</octave>', s)
         if p and '<grace' not in s:
             midi = 12 * (int(p.group(3)) + 1) + PC[p.group(1)] + int(p.group(2) or 0)
-            out.append((last, (last, midi, d), m.start(), m.end(), chord))
+            on = Fraction(last, div)
+            out.append((on, (on, midi, Fraction(d, div)), m.start(), m.end(), chord))
     return out
 
 
@@ -55,8 +68,9 @@ def ghost(note):
 
 def diff(xml, old, lo, hi):
     tr_new, tr_old = transposes(xml), transposes(old)
-    measures = {}
+    measures, old_div = {}, {}
     for pm in re.finditer(r'<part id="([^"]*)">(.*?)</part>', old, re.S):
+        old_div[pm.group(1)] = divisions_by_bar(pm.group(2))
         for mm in re.finditer(r'<measure number="(\d+)"[^>]*>(.*?)</measure>', pm.group(2), re.S):
             if lo <= int(mm.group(1)) <= hi:
                 measures[(pm.group(1), int(mm.group(1)))] = mm.group(2)
@@ -66,6 +80,7 @@ def diff(xml, old, lo, hi):
         pid = pm.group(1)
         out.append(xml[pos:pm.start(2)])
         part, ppos, pout = pm.group(2), 0, []
+        new_div = divisions_by_bar(part)
         for mm in re.finditer(r'<measure number="(\d+)"[^>]*>(.*?)</measure>', part, re.S):
             bar, body = int(mm.group(1)), mm.group(2)
             pout.append(part[ppos:mm.start(2)])
@@ -73,9 +88,9 @@ def diff(xml, old, lo, hi):
             if not lo <= bar <= hi:
                 pout.append(body)
                 continue
-            new = [(on, (k[0], k[1] + tr_new.get(pid, 0), k[2]), s, e, c) for on, k, s, e, c in notes(body)]
+            new = [(on, (k[0], k[1] + tr_new.get(pid, 0), k[2]), s, e, c) for on, k, s, e, c in notes(body, new_div.get(bar, 1))]
             ob = measures.get((pid, bar), '')
-            gone = [(on, (k[0], k[1] + tr_old.get(pid, 0), k[2]), ob[s:e]) for on, k, s, e, c in notes(ob)]
+            gone = [(on, (k[0], k[1] + tr_old.get(pid, 0), k[2]), ob[s:e]) for on, k, s, e, c in notes(ob, old_div.get(pid, {}).get(bar, 1))]
             pool = [k for _, k, _ in gone]
             edits = []
             for on, k, s, e, c in new:
