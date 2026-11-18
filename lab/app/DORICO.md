@@ -286,9 +286,11 @@ right after the fixes (a new export matched in every note, rhythm and tie).
 - A hairpin that is already in the score and stops on the first selected note widens the status bar's
   range, like one that spans it: S24 step 39 read "Bars 47-52" for a 49-52 range, because the
   clarinet's crescendo from bar 47 stops at bar 49. `Score.wedges` reads the score's hairpins, and the
-  range check counts those that end on the first note. It counts a hairpin that an earlier step of the
-  same plan made in the same way (S25: a diminuendo that starts where the crescendo ends expects the
-  crescendo's bars too); S25 is the first run of that half of the rule.
+  range check counts those that end on the first note, but only when a dynamic sits at that end: the
+  "f" that step 38 had put on bar 49 joined the crescendo to the note. Without a dynamic it does not
+  count. S25's last step expected "Bars 73-77" for a decrescendo starting where its crescendo ended,
+  and Dorico showed "Bars 76-77"; the plan now counts a hairpin's end only with a dynamic there
+  (`Score.dyns`, and the dynamics the plan makes).
 - MusicXML: sextuplets need 12 divisions to the quarter. Raise them only in the bars with tuplets (an
   `<attributes><divisions>` in the first one and back to 4 after them), so the other bars stay byte for
   byte and their notes keep their IDs in the plan. `Score` and `color_xml.py` read divisions bar by
@@ -297,3 +299,19 @@ right after the fixes (a new export matched in every note, rhythm and tie).
   MusicXML, saves it so its notes have IDs, runs the commands, reads the result back from the file,
   then closes the project and moves it to the Trash. It has not run yet. Run it, after a panel line
   and his OK, before a plan uses a command that no run has used.
+
+## The export takes the front, and how an extra hairpin was taken back (S25, Nov 17)
+
+- `dorico_export.py` brings Dorico to the front to click File > Export. At 17:32:34, while it did,
+  Dorico ran `NoteInput.RepeatLast` (the R key) on the selected crescendo and made a copy from bar 76
+  to 79: most likely a key Brian was typing in the panel went to Dorico. So: before an export, a panel
+  line asks him not to type, then wait about 10 seconds; the export now gives the front back to the
+  app that had it. A server signal that he is typing would be better (the page keeps its draft only in
+  the browser).
+- Taking the copy back: stepping through the items at the note where it started
+  (`EventEdit.NavigateNextItemSamePosition`) found only the note, and Dorico 4 has no command that
+  selects only hairpins. The undo history did it, by the rule above: six "Undo Select" steps (from
+  that probe), then "Undo Repeat", undone once, with the Edit menu's first item read before each
+  step. An export before and after showed that no note changed.
+- A run also stops when Brian edits the notes a plan targets after its last export (S25 step 9: "no ID
+  for Flute bar 76 D5"). Export again, build the step on his new notes, and run it alone.

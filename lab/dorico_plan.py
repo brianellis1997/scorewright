@@ -76,7 +76,7 @@ class Score:
 
     def __init__(self, xml):
         self.names = dict(re.findall(r'<score-part id="([^"]+)">\s*<part-name>([^<]*)</part-name>', xml))
-        self.parts, self.staves, self.slurs, self.wedges = {}, [], {}, {}
+        self.parts, self.staves, self.slurs, self.wedges, self.dyns = {}, [], {}, {}, {}
         for pid in re.findall(r'<score-part id="([^"]+)"', xml):
             body = re.search(rf'<part id="{pid}">(.*?)</part>', xml, re.S).group(1)
             t = re.search(r'<transpose\b.*?</transpose>', body, re.S)
@@ -106,6 +106,8 @@ class Score:
                 s = ev.group(0)
                 if s.startswith('<direction'):
                     staff = int((re.search(r'<staff>(\d+)</staff>', s) or [0, 1])[1])
+                    if '<dynamics>' in s:
+                        self.dyns.setdefault((pid, staff), set()).add((b, Fraction(t, div)))
                     for kind, num in re.findall(r'<wedge type="(\w+)"(?: number="(\d+)")?', s):
                         key = (num or '1', staff)
                         if kind == 'stop' and key in wedge:
@@ -239,6 +241,7 @@ class Plan:
         self.steps, self.cursor, self.tied = [], None, set()
         self.slurs = {k: list(v) for k, v in self.base.slurs.items()}
         self.wedges = {k: list(v) for k, v in self.base.wedges.items()}
+        self.dyns = {k: set(v) for k, v in self.base.dyns.items()}
         self.hairpins = {}
 
     def use(self, xml):
@@ -380,7 +383,9 @@ class Plan:
                 k1 = self.cur.index(pid, to[0], to[1], staff)
                 st['end'] = self.cur.chain_end(pid, to[0], self.cur.nav(pid, to[0], staff)[k1][0], staff)
                 first = (bar, Fraction(s['onset']))
-                over = [(a, e) for a, e in self.hairpins.get((pid, staff), []) + self.wedges.get((pid, staff), []) if a <= first <= e]
+                ends = self.dyns.get((pid, staff), set())
+                over = [(a, e) for a, e in self.hairpins.get((pid, staff), []) + self.wedges.get((pid, staff), [])
+                        if a <= first < e or (first == e and e in ends)]
                 st['range'] = [min([bar] + [a[0] for a, e in over]),
                                max([st['end']] + [e for a, e in self.slurs.get((pid, staff), []) if a == first]
                                    + [(e[0] if e[1] else e[0] - 1) for a, e in over])]
@@ -470,6 +475,7 @@ class Plan:
         self.cursor = (pid, staff, bar, self.cur.index(pid, bar, onset, staff))
 
     def dynamic(self, pid, bar, onset, mark, staff=1):
+        self.dyns.setdefault((pid, staff), set()).add((bar, Fraction(onset).limit_denominator(64)))
         return self.step(f'{mark} for {self.who(pid)} in bar {bar}', pid, bar, onset, staff, edits=[f'NoteInput.CreateDynamic?Definition={mark}&UseLocalOverride=0'])
 
     def articulation(self, pid, bar, onset, value='kStaccatoTenuto', staff=1):

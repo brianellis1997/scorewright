@@ -82,6 +82,7 @@ def main(args):
         return 0
     trash(old)
     marker = time.time()
+    front = osa('tell application "System Events" to get name of first process whose frontmost is true').strip()
     osa(f'tell application "{PROC}" to activate\ndelay 0.4\ntell application "System Events" to tell process "{PROC}" to '
         f'click menu item "MusicXML..." of menu 1 of menu item "Export" of menu 1 of menu bar item "File" of menu bar 1')
     if not wait(lambda: any(w[0] == DIALOG for w in wins()), 12):
@@ -92,6 +93,8 @@ def main(args):
     if not wait(lambda: not any(w[0] == DIALOG for w in wins()), 60):
         print('failed: the export dialog is still open:', wins())
         return 1
+    if front and front not in (PROC, 'Dorico'):
+        osa(f'tell application "System Events" to set frontmost of process "{front}" to true')
 
     def full():
         new = [f for f in glob.glob(f'{glob.escape(folder)}/*.xml') if os.path.getmtime(f) >= marker]
