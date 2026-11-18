@@ -95,7 +95,9 @@ class Score:
             self.read_slurs(pid)
 
     def read_slurs(self, pid):
-        """self.slurs[(pid, staff)]: [((bar, onset), last bar)] for each slur in the file, and
+        """self.slurs[(pid, staff)]: [((bar, onset), last bar)] for each slur in the file (the bar before,
+        when it ends on a note that starts a bar: Dorico's status bar counts a slur up to where its last
+        note starts, S26 Nov 17: a slur to a downbeat of bar 72 read "Bars 70-71"), and
         self.wedges[(pid, staff)]: [((bar, onset), (bar, onset))] from start to stop of each hairpin"""
         bars, tr, divs = self.parts[pid]
         open_, wedge = {}, {}
@@ -131,7 +133,9 @@ class Score:
                     if kind == 'start':
                         open_[key] = (b, on)
                     elif kind == 'stop' and key in open_:
-                        self.slurs.setdefault((pid, staff), []).append((open_.pop(key), b))
+                        a = open_.pop(key)
+                        last = b - 1 if on == 0 and '<tie type="stop"/>' not in s and b > a[0] else b
+                        self.slurs.setdefault((pid, staff), []).append((a, last))
 
     def items(self, pid, bar, staff=1):
         """[(onset, 'Rest' or [concert names, top first], tied from before, tied on, in a tuplet)], voice by voice
@@ -489,7 +493,11 @@ class Plan:
         """Dorico's status bar counts a slur that starts on the first selected note as part of a range
         (S12: a 42-43 range read "Bars 42-44"), so each slur is remembered for the ranges after it"""
         st = self.step(f'slur for {self.who(pid)} bars {start[0]}-{end[0]}', pid, *start, staff, to=end, down=staves - 1, edits=['NoteInput.SlurStart'])
-        self.slurs.setdefault((pid, staff), []).append(((start[0], Fraction(start[1]).limit_denominator(64)), st.get('end', end[0])))
+        last = st.get('end', end[0])
+        b, on = self.cur.chain_start(pid, end[0], end[1], staff) if end[1] is not None else (end[0], None)
+        if on == 0 and last == b and b > start[0]:
+            last = b - 1
+        self.slurs.setdefault((pid, staff), []).append(((start[0], Fraction(start[1]).limit_denominator(64)), last))
         return st
 
     def hairpin(self, pid, start, end, up=True, staves=1, staff=1):

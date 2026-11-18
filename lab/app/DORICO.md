@@ -152,6 +152,11 @@ rhythm and tie. Every stop came before an edit at the wrong place.
   44 to 45 inside it).
 - The planner now reads every slur in the file and remembers each one it adds (`Plan.slurs`), and
   expects that wider range.
+- It counts a slur up to where its last note starts. A slur that ends on a note at the start of a
+  bar counts only to the bar before: S26 step 4 selected the cor anglais from bar 70 to 71 on a note
+  that starts a slur to the downbeat of bar 72, and Dorico showed "Bars 70-71" (step 5 then read
+  "Bars 72-73" for the same case). S12's slur ended on beat 1.5 of bar 44, so bar 44 counted. A slur
+  that ends on a tie continuation keeps the bar where the chain ends (S13).
 - A hairpin that spans the first selected note also counts, from its first bar (S21 step 108: the
   bassoon's crescendo over bars 46-48 made a 48-49 range read "Bars 46-49"). A hairpin that ends
   before the first note does not (S12 step 14). `Plan.hairpins` keeps each one's exact end
