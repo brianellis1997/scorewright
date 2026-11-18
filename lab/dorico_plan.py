@@ -380,8 +380,7 @@ class Plan:
                 k1 = self.cur.index(pid, to[0], to[1], staff)
                 st['end'] = self.cur.chain_end(pid, to[0], self.cur.nav(pid, to[0], staff)[k1][0], staff)
                 first = (bar, Fraction(s['onset']))
-                over = [(a, e) for a, e in self.hairpins.get((pid, staff), []) if a <= first < e]
-                over += [(a, e) for a, e in self.wedges.get((pid, staff), []) if a <= first <= e]
+                over = [(a, e) for a, e in self.hairpins.get((pid, staff), []) + self.wedges.get((pid, staff), []) if a <= first <= e]
                 st['range'] = [min([bar] + [a[0] for a, e in over]),
                                max([st['end']] + [e for a, e in self.slurs.get((pid, staff), []) if a == first]
                                    + [(e[0] if e[1] else e[0] - 1) for a, e in over])]

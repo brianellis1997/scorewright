@@ -286,7 +286,9 @@ right after the fixes (a new export matched in every note, rhythm and tie).
 - A hairpin that is already in the score and stops on the first selected note widens the status bar's
   range, like one that spans it: S24 step 39 read "Bars 47-52" for a 49-52 range, because the
   clarinet's crescendo from bar 47 stops at bar 49. `Score.wedges` reads the score's hairpins, and the
-  range check counts those that end on the first note.
+  range check counts those that end on the first note. It counts a hairpin that an earlier step of the
+  same plan made in the same way (S25: a diminuendo that starts where the crescendo ends expects the
+  crescendo's bars too); S25 is the first run of that half of the rule.
 - MusicXML: sextuplets need 12 divisions to the quarter. Raise them only in the bars with tuplets (an
   `<attributes><divisions>` in the first one and back to 4 after them), so the other bars stay byte for
   byte and their notes keep their IDs in the plan. `Score` and `color_xml.py` read divisions bar by
