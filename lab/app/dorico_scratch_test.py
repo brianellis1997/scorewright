@@ -9,8 +9,10 @@ Tests (Nov 16 2026, for S23 and S24 of 111326):
             and three times on a half note
   tuplets   in note input: a quarter tied into a 6:4 run (NoteInput.StartTupletRun?Definition=6:4&Set=true),
             twelve sixteenths, Set=false, a quarter, an eighth, then a 3:2 run of three sixteenths
-usage (whisperer env): python app/dorico_scratch_test.py   (Brian's OK first: it opens a window in his Dorico)"""
-import glob, os, re, shutil, subprocess, sys, time
+  gliss     NoteInput.CreateGlissando on a range of two notes (flute bar 1) and of three (bars 4-5):
+            the lines it makes are read back from the file (GlissandoLineEventDefinition) (Nov 18, S33)
+usage (whisperer env): python app/dorico_scratch_test.py [gliss]   (Brian's OK first: it opens a window in his Dorico)"""
+import glob, os, re, shutil, subprocess, sys, time, zipfile
 from fractions import Fraction
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -69,11 +71,24 @@ def notes_of(path):
     return {k: sorted(v, key=lambda n: (n.position, -(n.pitch or 0))) for k, v in out.items()}
 
 
+def glissandi(path):
+    """[(kind, fields)] of every glissando line in the file"""
+    with zipfile.ZipFile(path) as z:
+        tree, _ = dorico_file._parse(z.read('score.dtn'))
+    out = []
+    for f in tree.items(tree.child(0, 'flows')):
+        for b in tree.items(tree.child(f, 'blocks')):
+            for e in tree.items(tree.child(b, 'events')):
+                if 'liss' in tree.name(e):
+                    out.append((tree.name(e), tree.text(e)))
+    return out
+
+
 def show(ns):
     return ' '.join(f'{n.bar}@{n.onset}:{n.pitch_name}/{n.duration}' for n in ns)
 
 
-def main():
+def main(mode='shorten'):
     if len(projects()) != 1 or dialogs(exclude=()):
         print('busy: need his one project window and no dialog:', projects(), dialogs(exclude=()))
         return 2
@@ -112,7 +127,21 @@ def main():
                 if err:
                     print('  refused:', c, err)
 
-        pick = lambda ns, bar, name: next(n for n in ns if n.bar == bar and n.pitch_name == name)
+        pick = lambda ns, bar, name: next(n for n in ns if (n.bar or int(n.position // 2) + 1) == bar and n.pitch_name == name)
+        if mode == 'gliss':
+            print('glissandi before:', glissandi(path))
+            run([pick(fl, 1, 'C5').select_command, 'EventEdit.NavigateRightExtend', 'NoteInput.CreateGlissando'])
+            time.sleep(0.5)
+            run([pick(fl, 4, 'G4').select_command, 'EventEdit.NavigateRightExtend', 'EventEdit.NavigateRightExtend', 'NoteInput.CreateGlissando'])
+            time.sleep(1)
+            before = os.path.getmtime(path)
+            keys('keystroke "s" using command down', raise_window=mine)
+            wait(lambda: os.path.getmtime(path) > before, 20, 1)
+            ids = {n.event_id: f'{n.bar}@{n.onset}:{n.pitch_name}' for n in notes_of(path)['Flute']}
+            for kind, f in glissandi(path):
+                print('after:', kind, {k: ids.get(int(v), v) if k.lower().endswith('eventid') and str(v).isdigit() else v for k, v in f.items()})
+            print('notes after:', show(notes_of(path)['Flute']))
+            return 0
         run([pick(fl, 2, 'E5').select_command] + ['EventEdit.DurationShortenByGrid'] * 2)
         run([pick(va, 1, 'E4').select_command] + ['EventEdit.DurationShortenByGrid'] * 2)
         run([pick(fl, 5, 'F5').select_command] + ['EventEdit.DurationShortenByGrid'] * 3)
@@ -157,4 +186,4 @@ def main():
 
 
 if __name__ == '__main__':
-    sys.exit(main())
+    sys.exit(main(*sys.argv[1:2]))

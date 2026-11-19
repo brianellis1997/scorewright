@@ -74,6 +74,7 @@ bars 50-52 were removed, 48 undo steps in all).
 | spelling of a typed sharp or flat | `p.spell('P31', 3, 0)` | the runner reads the note and sends `NoteEdit.RespellUsingNoteNameBelow` (or `...Above` for a flat) only when Dorico shows the other name; the run report counts the fixes |
 | shorten a note that stays | `p.shorten('P30', 60, 0, 2)` | `EventEdit.DurationShortenByGrid` n times (grid: an eighth); one step per chord note, each selected by its own ID |
 | tuplets in note entry | events `('tuplet', '6:4')`, notes at their written value (1/4), `('end tuplet', '6:4')` | `NoteValue` first, then `NoteInput.StartTupletRun?Definition=6:4&Set=true`, the notes, `...&Set=false` |
+| glissando line | `p.gliss('P26', (101, 1), (102, 0))` | the two notes as a range, then `NoteInput.CreateGlissando` (no parameters): one line from the first selected note to the last, in Dorico's default style; a down-and-up gesture is two steps |
 | move an existing note by scale steps | `p.pitch('P6', 2, 0, 2)` | `NoteEdit.PitchUp` (Alt+Up) n times, `NoteEdit.PitchDown` for down: the note keeps its ID, ties, slurs and dynamics, so it beats retyping one note |
 | new notes | `p.notes('P3', 18, 0, [('G4', 1), ('A4', 1, 'tie'), (None, 0.5)])` | select a note with an ID, `NoteInput.Enter?Set=true`, caret moves, then for every note `NoteInput.NoteValue?LogDuration=kCrotchet&Set=true` and, only for a dotted note, `NoteInput.SetDotted?Value=1&Set=true`; then `NoteInput.MIDINoteInput?MIDIPitches=67` (a chord: `60\,64\,67`); `NoteInput.Tie` after a note ties it to the next typed note; `NoteInput.Exit` |
 | a caret from a named note | `p.notes('P26', 1, 0, events, staff=2, start=('P26', 2, 1, 0))` | when the search cannot know a note still has its ID (the left hand of a harp after the right hand was retyped) |
@@ -365,3 +366,25 @@ note and mark.
   flute's slur from bar 82 ended on the downbeat of bar 86, on a note tied on, and Dorico showed "Bars
   82-86". After S31 made that note one dotted quarter, the same range read "Bars 82-85". Rebuilt now,
   S30's plan expects 82-86 there, and adds the viola delete step; nothing else changes.
+
+## Glissandi, and the first run of the scratch test (S33, Nov 18)
+
+- `NoteInput.CreateGlissando` (no default key; Dorico calls it "Create Glissando") puts a glissando
+  line between selected notes. On a range of two notes it made one line. On a range of three notes it
+  also made one line, from the first note to the last, with nothing at the middle note. So
+  `p.gliss` takes two notes, and the harp's down-and-up in bar 104 of S33 is two steps.
+- The file keeps each line as a `GlissandoLineEventDefinition` with the IDs of its two notes
+  (`fromNoteEventAndBlockInstanceIDs`, `toNoteEventAndBlockInstanceIDs`); `glissandi()` in
+  `app/dorico_scratch_test.py` reads them back.
+- Dorico imports glissando lines from MusicXML as the file draws them (wavy or straight). A plan's
+  lines take Dorico's default style, so the picture of a suggestion and his score can differ there.
+- When two glissandi share a note (D6 to D4 to A5), the plan makes the second line first. Then no
+  selection starts on a note that already has a glissando. A slur that starts on a later note of a
+  range does not widen it; whether a glissando does is not known yet.
+- The test was the first run of `app/dorico_scratch_test.py` (`... gliss`, with a panel line and
+  his OK). It opened, saved, closed and trashed its project in about 30 seconds, and his project stayed
+  the only one open. `dorico_file` gives the notes of that imported project no bar numbers, so the
+  harness picks them by position (two quarters to a bar).
+- A part that comes in after a long rest needs a dynamic at its entry, or it plays at whatever it had
+  last: S32 brought the tuba in at bar 94 under ff brass with its mf from bar 53. `clash_check.py` now
+  lists every entry after four bars of rest or more with no dynamic.

@@ -563,6 +563,16 @@ class Plan:
         self.hairpins.setdefault((pid, staff), []).append(((start[0], Fraction(start[1]).limit_denominator(64)), self.cur.item_end(pid, *last, staff)))
         return st
 
+    def gliss(self, pid, start, end, staff=1):
+        """a glissando line from the first selected note to the last (NoteInput.CreateGlissando, tried in
+        a scratch project on Nov 18: on three notes it makes one line, first to last, so each line is
+        its own step of two notes)"""
+        st = self.step(f'gliss for {self.who(pid)} bars {start[0]}-{end[0]}', pid, *start, staff, to=end,
+                       edits=['NoteInput.CreateGlissando'])
+        if st.pop('restore', None):
+            self.cursor = None
+        return st
+
     def text(self, pid, bar, onset, words, staff=1):
         """staff text such as 'div.' (Dorico 4 has no such playing technique): NoteInput.CreateText opens
         Dorico's text box at the note, the runner types the words only if a text field has the focus,

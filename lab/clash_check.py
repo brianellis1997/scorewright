@@ -5,8 +5,12 @@ Brian, Nov 14 2026: "be mindful of how the individual lines are interacting with
 some passing tones are fine of course, but no obvious hard dissonances, notes within semitones."
 Each clash is listed with its weight: 'strong' when both notes are held over the beat or one starts
 on the beat, 'passing' when one is a short note (a sixteenth or an eighth) that starts off the beat.
+It also lists each part that comes in after four bars of rest or more with no dynamic at its entry:
+it plays at whatever dynamic it had last (S32, Nov 17: the tuba came in at bar 94, under ff brass,
+with the mf it had in bar 53).
 usage (whisperer env): python lab/clash_check.py <score.xml> <first bar> <last bar> [--all] [--leaps]
 --leaps also lists each part leaping more than a fifth with no breath (an entry into a melody needs a way up)."""
+import re
 import sys
 from fractions import Fraction
 
@@ -101,6 +105,27 @@ def crossings(score, lo, hi):
     return sorted(set(out))
 
 
+def entries(score, lo, hi, gap=4):
+    """[(bar, part, bars of rest, last dynamic)]: entries in [lo, hi] after gap or more bars of rest
+    with no dynamic in the entry bar at or before the first note (any staff of the part)"""
+    out = []
+    for pid in score.parts:
+        bars = score.parts[pid][0]
+        staves = [st for p, st in score.staves if p == pid]
+        dyns = set().union(*(score.dyns.get((pid, st), set()) for st in staves))
+        quiet, last = 0, None
+        for b in sorted(bars):
+            if b > hi:
+                break
+            starts = [it[0] for st in staves for it in score.items(pid, b, st) if it[1] != 'Rest']
+            if starts and b >= lo and quiet >= gap and not any(d[0] == b and d[1] <= min(starts) for d in dyns):
+                out.append((b, score.names[pid], quiet, last))
+            found = re.findall(r'<dynamics>\s*<(\w+)/>', bars[b])
+            last = f'{found[-1]} in bar {b}' if found else last
+            quiet = 0 if starts else quiet + 1
+    return sorted(out)
+
+
 if __name__ == '__main__':
     xml = open(sys.argv[1], encoding='utf-8').read()
     lo, hi = int(sys.argv[2]), int(sys.argv[3])
@@ -111,6 +136,8 @@ if __name__ == '__main__':
     print(f'{sum(f[0] == "strong" for f in found)} strong, {sum(f[0] == "passing" for f in found)} passing')
     for bar, beat, up, x, low, y in crossings(Score(xml), lo, hi):
         print(f'crossing: bar {bar} beat {float(beat) + 1:g}: {low} {y} above {up} {x}')
+    for bar, part, quiet, last in entries(Score(xml), lo, hi):
+        print(f'entry with no dynamic: bar {bar}: {part} after {quiet} bars of rest; it plays at {last or "no dynamic yet"}')
     if '--leaps' in sys.argv:
         for bar, beat, part, x, y, d in leaps(Score(xml), lo, hi):
             print(f'leap: bar {bar} beat {float(beat) + 1:g}: {part} {x} to {y} ({d:+d})')

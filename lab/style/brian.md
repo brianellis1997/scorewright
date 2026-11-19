@@ -44,7 +44,9 @@ from 111326 (Nov 2026); what belongs to that piece only is in `lab/pieces/p11132
 - **A chord on one staff is a sketch for the section.** Single-line instruments play one note
   each: spread the chord across the players, copy slurs and dynamics to each, check every range.
   "The horn can only play one note at a time... This is basic school writing... it has to be
-  obvious." (Nov 13 2026)
+  obvious." (Nov 13 2026) The same for a harmony he writes as chords on one string staff: "the
+  harmony in the violas again... don't have the violas with that line, exploded out across...
+  instruments." (Nov 18 2026)
 - **In a tutti, a wind with no line of its own doubles the strings in its register.** The
   woodwinds mirror the string section: flutes and oboes with the violins, clarinets with the
   violas, bassoons with the cellos, the contrabassoon with the double basses. A wind that doubles a
@@ -57,6 +59,11 @@ from 111326 (Nov 2026); what belongs to that piece only is in `lab/pieces/p11132
   doubling the flute at the same register is just awkward orchestration." It plays an octave above
   the flute, or a third or a sixth above where the octave would screech (its top fifth, A7 to C8).
   (Nov 16 2026)
+
+- **The harp accents with glissandi.** In a full texture its job is the glissando that marks a
+  figure: "glissandi... accenting certain figures... like a sudden run up and then accenting that
+  percussion hit... it can also go down and then up... contrasting with the phrase." A glissando up
+  arrives with a stroke (timpani, a low chord in the left hand). (Nov 18 2026)
 
 ### Lines and harmony
 
@@ -102,6 +109,10 @@ from 111326 (Nov 2026); what belongs to that piece only is in `lab/pieces/p11132
 - **A phrase keeps its lead-in.** When a phrase comes back, its pickup comes back with it; if the
   instruments with the melody are busy, instruments that are free take it: "you're missing the G
   fall into that E... it comes out of nowhere."
+- **The section that gives up the melody supports the one that takes it.** It accents the new
+  melody's figures or holds harmony above it; it does not double it: "the trumpets kind of take
+  over... they lead the melody; the violins will be in support, either accenting certain figures or
+  provide harmonies on top." (Nov 18 2026)
 - **Melody hand-offs overlap, and accompaniment dovetails.** The new instrument enters on the
   upbeat while the old one finishes; an accompaniment passes to the next section on the same chord
   and voicing, on a downbeat, the leaving section fading as the entering one comes in softly.
