@@ -131,6 +131,9 @@ from 111326 (Nov 2026); what belongs to that piece only is in `lab/pieces/p11132
   and then that forte on bar 86 doesn't make sense." (Nov 17 2026)
 - **Loud passages keep their rhythm.** Held notes everywhere make a static tutti: "all the rhythm
   just stops... the rhythm should be pounded, through string runs or percussion or wind runs."
+  One bar of pause after a climax is fine; then the rhythm and the low end come back: "I really like
+  how things pause almost like at a climax on bar 97, but then the rhythm and all the supporting
+  shit needs to come back... the bottom fell out." (Nov 18 2026)
 
 ### Dynamics and articulation
 
