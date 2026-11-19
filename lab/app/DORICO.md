@@ -379,8 +379,9 @@ note and mark.
 - Dorico imports glissando lines from MusicXML as the file draws them (wavy or straight). A plan's
   lines take Dorico's default style, so the picture of a suggestion and his score can differ there.
 - When two glissandi share a note (D6 to D4 to A5), the plan makes the second line first. Then no
-  selection starts on a note that already has a glissando. A slur that starts on a later note of a
-  range does not widen it; whether a glissando does is not known yet.
+  selection starts on a note that already has a glissando. A glissando that starts on the last
+  selected note does not widen the range, like a slur: S34's step 34 (D6 to D4, the D4 already
+  starting the line to bar 105) read bar 104 alone, and all 131 steps went in on the first run.
 - The test was the first run of `app/dorico_scratch_test.py` (`... gliss`, with a panel line and
   his OK). It opened, saved, closed and trashed its project in about 30 seconds, and his project stayed
   the only one open. `dorico_file` gives the notes of that imported project no bar numbers, so the
