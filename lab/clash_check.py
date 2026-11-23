@@ -152,7 +152,7 @@ BREATH = ('piccolo', 'flute', 'oboe', 'anglais', 'clarinet', 'bassoon', 'horn', 
 
 
 def fades(score, lo, hi):
-    """[(part, bar, onset)]: a wind or brass note where a decrescendo ends, right after a note, with no slur or
+    """[(part, bar, onset, starts a phrase)]: a wind or brass note where a decrescendo ends, right after a note, with no slur or
     tie into it: the player tongues it (Brian, Nov 23 2026: "there should be a slur to that final
     note... when we're fading out or doing these transitions or dovetails, slurring is vital")"""
     out = []
@@ -181,8 +181,13 @@ def fades(score, lo, hi):
                     found = x
                     break
                 t += d
+            if found and '<tie type="start"' in found and '<slur type="stop"' not in found:
+                nb = e[0] + 1
+                nxt = re.search(r'<note[ >].*?</note>', bars.get(nb, ''), re.S)
+                if nxt and '<slur type="stop"' in nxt.group(0):
+                    continue
             if before and found and '<slur type="stop"' not in found and '<tie type="stop"' not in found:
-                out.append((score.names[pid], e[0], e[1]))
+                out.append((score.names[pid], e[0], e[1], '<slur type="start"' in found))
     return sorted(out, key=lambda r: (r[1], r[2], r[0]))
 
 
@@ -200,8 +205,10 @@ if __name__ == '__main__':
         print(f'entry with no dynamic: bar {bar}: {part} after {quiet} bars of rest; it plays at {last or "no dynamic yet"}')
     for part, a, e in targets(Score(xml), lo, hi):
         print(f'hairpin with no target dynamic: {part}, from bar {a[0]} beat {float(a[1]) + 1:g} to bar {e[0]} beat {float(e[1]) + 1:g}')
-    for part, bar, onset in fades(Score(xml), lo, hi):
-        print(f'unslurred last note of a fade: bar {bar} beat {float(onset) + 1:g}: {part} (a wind player tongues it)')
+    for part, bar, onset, phrase in fades(Score(xml), lo, hi):
+        why = ('it starts a new phrase slur: a breath between phrases is fine, a fade or a dovetail into it is not'
+               if phrase else 'a wind player tongues it')
+        print(f'unslurred last note of a fade: bar {bar} beat {float(onset) + 1:g}: {part} ({why})')
     if '--leaps' in sys.argv:
         for bar, beat, part, x, y, d in leaps(Score(xml), lo, hi):
             print(f'leap: bar {bar} beat {float(beat) + 1:g}: {part} {x} to {y} ({d:+d})')
