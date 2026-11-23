@@ -11,6 +11,9 @@ Tests (Nov 16 2026, for S23 and S24 of 111326):
             twelve sixteenths, Set=false, a quarter, an eighth, then a 3:2 run of three sixteenths
   gliss     NoteInput.CreateGlissando on a range of two notes (flute bar 1) and of three (bars 4-5):
             the lines it makes are read back from the file (GlissandoLineEventDefinition) (Nov 18, S33)
+  tuplet    a bar of two eighth-note triplets: the second triplet and the next three bars deleted as one
+            range (Edit.Delete), then G F as plain eighths typed where it was, then E. F | E: are the
+            tuplet's records gone, and where do the new notes land? (Nov 23, S38)
 usage (whisperer env): python app/dorico_scratch_test.py [gliss]   (Brian's OK first: it opens a window in his Dorico)"""
 import glob, os, re, shutil, subprocess, sys, time, zipfile
 from fractions import Fraction
@@ -20,9 +23,10 @@ sys.path.insert(0, HERE)
 sys.path.insert(0, os.path.dirname(HERE))
 import dorico_file  # noqa: E402
 from dorico_rc import Dorico  # noqa: E402
-from dorico_render import dialogs, keys, menu, osa, projects, wait  # noqa: E402
+from dorico_render import dialogs, keys, menu, osa, projects, wait, wins  # noqa: E402
 
 LOG = os.path.expanduser('~/Library/Application Support/Steinberg/Dorico 4/application.log')
+XSD = '/Applications/Dorico 4.app/Contents/Resources/musicxml/musicxml.xsd'
 TRASH = os.path.expanduser('~/.Trash')
 
 
@@ -33,6 +37,42 @@ def note(step, octave, dur, typ, extra='', alter=0, chord=False):
 
 def rest(dur=8, typ='whole'):
     return f'<note><rest/><duration>{dur}</duration><voice>1</voice><type>{typ}</type></note>'
+
+
+def plain(step, octave, dur, typ, dot=False, tm=False, tup=None):
+    """a note with its elements in the order the schema wants (Nov 23: a tuplet mark before <voice> made
+    Dorico stop on "MusicXML validation failed", and the test went wrong behind that warning)"""
+    t = '<time-modification><actual-notes>3</actual-notes><normal-notes>2</normal-notes></time-modification>' if tm else ''
+    n = f'<notations><tuplet type="{tup}" bracket="yes"/></notations>' if tup else ''
+    return (f'<note><pitch><step>{step}</step><octave>{octave}</octave></pitch><duration>{dur}</duration><voice>1</voice>'
+            f'<type>{typ}</type>{"<dot/>" if dot else ""}{t}{n}</note>')
+
+
+def tuplet_xml():
+    """one flute: C D E | E F G as eighth triplets, then G F (quarters) | E. F | E, at 12 divisions"""
+    trip = lambda st, k: plain(st, 5, 4, 'eighth', tm=True, tup={0: 'start', 2: 'stop'}.get(k))
+    bars = {1: ''.join(trip(st, k) for k, st in enumerate('CDE')) + ''.join(trip(st, k) for k, st in enumerate('EFG')),
+            2: plain('G', 5, 12, 'quarter') + plain('F', 5, 12, 'quarter'),
+            3: plain('E', 5, 18, 'quarter', dot=True) + plain('F', 5, 6, 'eighth'),
+            4: plain('E', 5, 12, 'quarter') + rest(12, 'quarter')}
+    head = ('<attributes><divisions>12</divisions><key><fifths>0</fifths></key><time><beats>2</beats><beat-type>4</beat-type></time>'
+            '<clef><sign>G</sign><line>2</line></clef></attributes>')
+    body = ''.join(f'<measure number="{b}">' + (head if b == 1 else '') + bars.get(b, rest(24, 'whole')) + '</measure>' for b in range(1, 9))
+    return ('<?xml version="1.0" encoding="UTF-8"?><score-partwise version="3.1"><part-list>'
+            f'<score-part id="P1"><part-name>Flute</part-name></score-part></part-list><part id="P1">{body}</part></score-partwise>')
+
+
+def tuplets(path):
+    """[(kind, fields)] of every tuplet record in the file"""
+    with zipfile.ZipFile(path) as z:
+        tree, _ = dorico_file._parse(z.read('score.dtn'))
+    out = []
+    for f in tree.items(tree.child(0, 'flows')):
+        for b in tree.items(tree.child(f, 'blocks')):
+            for e in tree.items(tree.child(b, 'events')):
+                if 'uplet' in tree.name(e):
+                    out.append((tree.name(e), tree.text(e)))
+    return out
 
 
 def scratch_xml():
@@ -49,6 +89,42 @@ def scratch_xml():
     return ('<?xml version="1.0" encoding="UTF-8"?><score-partwise version="3.1"><part-list>'
             '<score-part id="P1"><part-name>Flute</part-name></score-part><score-part id="P2"><part-name>Viola</part-name></score-part>'
             f'</part-list>{parts}</score-partwise>')
+
+
+def validate(xml):
+    """the schema errors of a MusicXML text, checked against Dorico's own copy of the schema ([] = valid)"""
+    from lxml import etree
+    text = open(XSD, encoding='utf-8').read().replace('http://www.musicxml.org/xsd/', '')
+    schema = etree.XMLSchema(etree.fromstring(text.encode('utf-8'), base_url=XSD))
+    doc = etree.fromstring(xml.encode('utf-8'))
+    return [] if schema.validate(doc) else [f'line {e.line}: {e.message}' for e in schema.error_log][:5]
+
+
+def close_scratch(stem, his):
+    """close the scratch project and nothing else. Nov 23: the old cleanup clicked File > Close Project three
+    times while a warning was open; Dorico queued them as forced commands, and when the warning went, the
+    second one closed Brian's project. Now: nothing while any dialog is open, the scratch project must be
+    in front, one Close Project only, and Don't Save only for a prompt that sits over the scratch project"""
+    if dialogs(exclude=()):
+        print('a dialog is open, so nothing was sent; close it by hand:', dialogs(exclude=()))
+        return False
+    w = next((w[0] for w in projects() if stem in w[0]), None)
+    if not w:
+        return True
+    keys('', raise_window=w)
+    time.sleep(0.6)
+    if stem not in front():
+        print('the scratch project is not in front, so nothing was sent:', front())
+        return False
+    menu('File', 'Close Project')
+    if wait(lambda: dialogs(exclude=()), 6):
+        order = [x[0] for x in wins() if x[1] == 'AXStandardWindow']
+        if not order or stem not in order[0]:
+            print('a prompt is open but the scratch project is not under it; nothing sent:', order)
+            return False
+        keys('keystroke "d" using command down')
+    gone = wait(lambda: not any(stem in x[0] for x in projects()), 10)
+    return bool(gone) and any(x[0] == his for x in projects())
 
 
 def front():
@@ -85,7 +161,7 @@ def glissandi(path):
 
 
 def show(ns):
-    return ' '.join(f'{n.bar}@{n.onset}:{n.pitch_name}/{n.duration}' for n in ns)
+    return ' '.join(f'{n.position}:{n.pitch_name}/{n.duration}' for n in ns)
 
 
 def main(mode='shorten'):
@@ -97,14 +173,22 @@ def main(mode='shorten'):
     tmp = os.path.join(os.path.dirname(LOG), 'sw_scratch')
     os.makedirs(tmp, exist_ok=True)
     src = f'{tmp}/{stem}.musicxml'
-    open(src, 'w').write(scratch_xml())
+    xml = tuplet_xml() if mode == 'tuplet' else scratch_xml()
+    bad = validate(xml)
+    if bad:
+        print('the scratch MusicXML is not valid, so Dorico was not touched:', bad)
+        return 1
+    open(src, 'w').write(xml)
     start = time.time()
     subprocess.run(['open', '-a', 'Dorico 4', src])
     mine = wait(lambda: next((w[0] for w in projects() if stem in w[0]), None), 120, 2)
     if not mine:
-        print('failed: the scratch project did not open', projects())
+        print('failed: the scratch project did not open', projects(), dialogs(exclude=()))
         return 1
     time.sleep(2)
+    if dialogs(exclude=()):
+        print('a dialog opened with the scratch project, so nothing was sent:', dialogs(exclude=()))
+        return 1
     path = None
     try:
         keys('keystroke "s" using command down', raise_window=mine)
@@ -115,7 +199,7 @@ def main(mode='shorten'):
             print('failed: no save of the scratch project in the log', dialogs(exclude=()))
             return 1
         ns = notes_of(path)
-        fl, va = ns['Flute'], ns['Viola']
+        fl, va = ns['Flute'], ns.get('Viola', [])
         print('before:', show(fl), '|', show(va))
         d = Dorico()
 
@@ -128,6 +212,31 @@ def main(mode='shorten'):
                     print('  refused:', c, err)
 
         pick = lambda ns, bar, name: next(n for n in ns if (n.bar or int(n.position // 2) + 1) == bar and n.pitch_name == name)
+        if mode == 'tuplet':
+            at = lambda pos: next(n for n in fl if n.position == pos)
+            print('tuplets before:', [(k, f.get('position'), f.get('duration')) for k, f in tuplets(path)])
+            run([at(1).select_command] + ['EventEdit.NavigateRightExtend'] * 7 + ['Edit.Delete'])
+            time.sleep(0.8)
+            before = os.path.getmtime(path)
+            keys('keystroke "s" using command down', raise_window=mine)
+            wait(lambda: os.path.getmtime(path) > before, 20, 1)
+            print('after delete:', show(notes_of(path)['Flute']))
+            print('tuplets after delete:', [(k, f.get('position'), f.get('duration')) for k, f in tuplets(path)])
+            fl = notes_of(path)['Flute']
+            run([at(0).select_command, 'NoteInput.Enter?Set=true'])
+            time.sleep(0.6)
+            typed = [('kQuaver', 0, 91), ('kQuaver', 0, 89), ('kCrotchet', 1, 88), ('kQuaver', 0, 89), ('kCrotchet', 0, 88)]
+            cmds = ['NoteInput.MoveRight', 'NoteInput.MoveRight']
+            for v, dot, m in typed:
+                cmds += [f'NoteInput.NoteValue?LogDuration={v}&Set=true'] + (['NoteInput.SetDotted?Value=1&Set=true'] if dot else []) + [f'NoteInput.MIDINoteInput?MIDIPitches={m}']
+            run(cmds + ['NoteInput.Exit'])
+            time.sleep(1)
+            before = os.path.getmtime(path)
+            keys('keystroke "s" using command down', raise_window=mine)
+            wait(lambda: os.path.getmtime(path) > before, 20, 1)
+            print('after typing:', show(notes_of(path)['Flute']))
+            print('tuplets after typing:', [(k, f.get('position'), f.get('duration')) for k, f in tuplets(path)])
+            return 0
         if mode == 'gliss':
             print('glissandi before:', glissandi(path))
             run([pick(fl, 1, 'C5').select_command, 'EventEdit.NavigateRightExtend', 'NoteInput.CreateGlissando'])
@@ -168,18 +277,8 @@ def main(mode='shorten'):
         print('after: ', show(ns['Flute']), '|', show(ns['Viola']))
         return 0
     finally:
-        if stem in front():
-            keys('key code 53')
-        for _ in range(3):
-            w = next((w[0] for w in projects() if stem in w[0]), None)
-            if not w:
-                break
-            keys('', raise_window=w)
-            menu('File', 'Close Project')
-            if wait(lambda: dialogs(), 6):
-                keys('keystroke "d" using command down')
-            wait(lambda: not any(stem in w[0] for w in projects()), 10)
-        print('left open:', [w[0] for w in projects()], '(his:', his + ')')
+        closed = close_scratch(stem, his)
+        print('scratch closed:', closed, '| left open:', [w[0] for w in projects()], '(his:', his + ')')
         for f in glob.glob(f'{tmp}/{stem}*') + ([path] if path else []):
             if f and os.path.exists(f):
                 shutil.move(f, os.path.join(TRASH, os.path.basename(f)))

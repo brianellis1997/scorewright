@@ -448,6 +448,12 @@ class Plan:
             raise ValueError(f'{self.who(pid)} bar {bar}: onset {onset} is off the caret grid')
         if pos:
             moves.append(f'NoteInput.MoveRight*{int(pos / self.grid)}')
+            frm = von if vb == bar else Fraction(0)
+            crossed = [it for it in self.cur.items(pid, bar, staff) if it[4] and frm <= it[0] < Fraction(onset)]
+            if crossed:
+                raise ValueError(f'{self.who(pid)} bar {bar}: the caret would move through a tuplet note at {crossed[0][0]}; '
+                                 'inside a tuplet it moves by the tuplet\'s notes (scratch test, Nov 23), so start it at the '
+                                 'onset from another staff (start=...)')
         self.check_rests(pid, bar, onset, events, staff)
         self.drop_hairpins(pid, bar, onset, events, staff)
         edits = []

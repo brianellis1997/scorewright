@@ -86,6 +86,22 @@ def check_ids(plan, project=None):
     if not project:
         saves = glob.glob(f'{AUTOSAVE}/*.dorico')
         project = os.path.basename(max(saves, key=os.path.getmtime))[:-len('.dorico')] if saves else None
+    if not project:
+        # no autosave (a project closed and opened again keeps none until it changes): the open project
+        # window's name ("Flow 1 in 111326", read without sending Dorico anything), else the last project
+        # Dorico saved that is not a scratch test (Nov 23: the newest save was a scratch project in the Trash)
+        out = subprocess.run(['osascript', '-e', 'tell application "System Events" to tell process "Dorico" to '
+                              'get name of (windows whose subrole is "AXStandardWindow")'], capture_output=True, text=True, timeout=20)
+        names = [n.strip() for n in out.stdout.split(',') if ' in ' in n and 'sw_test' not in n]
+        if names:
+            project = names[0].split(' in ', 1)[1]
+        else:
+            last = None
+            for line in open(LOG, errors='replace'):
+                m = re.search(r'Saving document: \d+ to (.+\.dorico)\s*$', line)
+                if m and '/sw_scratch/' not in m.group(1):
+                    last = m.group(1)
+            project = os.path.basename(last)[:-len('.dorico')] if last else None
     path = project_file(project) if project else None
     if not path:
         return False, 'no copy of the project to read'

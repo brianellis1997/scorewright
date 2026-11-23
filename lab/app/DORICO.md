@@ -389,3 +389,37 @@ note and mark.
 - A part that comes in after a long rest needs a dynamic at its entry, or it plays at whatever it had
   last: S32 brought the tuba in at bar 94 under ff brass with its mf from bar 53. `clash_check.py` now
   lists every entry after four bars of rest or more with no dynamic.
+
+## The scratch test that closed his project, and tuplets (S38, Nov 23)
+
+What happened. The tuplet test's MusicXML put a `<dot/>` and a tuplet mark before `<voice>`, so Dorico
+stopped on "MusicXML validation failed". The harness sent Cmd+S and Return into that warning; its OK
+button takes no keys and has no accessibility element. The cleanup then clicked File > Close Project
+three times while the warning was open, and Dorico queued them as forced commands ("Posting command
+(force): File.CloseProject" in its log). When the warning went (a click at its OK button's screen
+position), the scratch project's Save sheet and save prompt came up; after its Don't Save, the second
+queued Close Project closed Brian's project. It had no unsaved changes (last save 07:18), so nothing
+was lost, and it was open again at 07:39. Rules, all now in `app/dorico_scratch_test.py`:
+
+- Check every scratch MusicXML against Dorico's own schema before Dorico sees it
+  (`Contents/Resources/musicxml/musicxml.xsd`, its imports pointed at the local `xml.xsd` and
+  `xlink.xsd`); write notes in the schema's order (`plain()`).
+- After the scratch project opens, stop if any dialog is open, and send nothing.
+- Never click a menu command while a dialog is open: Dorico queues it and runs it later on whatever
+  project is in front.
+- Close only the scratch project: it must be in front, one Close Project, and Don't Save only for a
+  prompt whose window under it is the scratch project (`close_scratch`).
+- Send a key in the same AppleScript that brings Dorico to the front and checks the front window; in
+  separate calls the key can land in another app.
+
+Tuplets, from the test that then ran cleanly:
+
+- A range delete that covers a whole tuplet removes the tuplet too; the tuplet before it stays.
+- Inside a tuplet the caret moves by the tuplet's notes, not by the grid: two MoveRight from the first
+  note of an eighth-note triplet stopped at 2/3, and the first typed note went into the tuplet.
+  `Plan.notes` now refuses a caret path through tuplet notes. Start the caret at the onset from a note
+  on another staff (`start=(pid, staff, bar, onset)`), as S38 does from the cellos.
+
+After a project is closed and opened again, Dorico keeps no autosave until it changes. The offline
+check (`dorico_apply.py --check`) then reads the open project window's name, or else the last saved
+project that is not a scratch test (the newest save was a scratch project in the Trash).
