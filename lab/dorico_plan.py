@@ -140,6 +140,13 @@ class Score:
                         a = open_.pop(key)
                         tied_on = '<tie type="start"/>' in s
                         last = b - 1 if on == 0 and '<tie type="stop"/>' not in s and not tied_on and b > a[0] else b
+                        if '<tie type="stop"/>' in s:
+                            # the file ends the slur on a tie continuation: a chain that starts on a downbeat
+                            # counts its first bar (S38 step 31, Nov 23: a slur to the E of bar 108, tied into
+                            # 109, read "Bars 105-108"); a chain from the middle of a bar counts where it ends (S13)
+                            cb, con = self.chain_start(pid, b, Fraction(on), staff)
+                            if con == 0 and cb < b:
+                                last = cb
                         self.slurs.setdefault((pid, staff), []).append((a, last))
 
     def items(self, pid, bar, staff=1):
@@ -395,8 +402,9 @@ class Plan:
                 ends = self.dyns.get((pid, staff), set())
                 over = [(a, e) for a, e in self.hairpins.get((pid, staff), []) + self.wedges.get((pid, staff), [])
                         if a < first < e or (first == e and e in ends)]
+                last_sel = (to[0], Fraction(to[1]) if to[1] is not None else Fraction(2))
                 st['range'] = [min([bar] + [a[0] for a, e in over]),
-                               max([st['end']] + [e for a, e in self.slurs.get((pid, staff), []) if a == first]
+                               max([st['end']] + [e for a, e in self.slurs.get((pid, staff), []) if first <= a <= last_sel]
                                    + [(e[0] if e[1] else e[0] - 1) for a, e in over])]
         if down:
             st['extend'].append(f'EventEdit.NavigateDownExtend*{down}')

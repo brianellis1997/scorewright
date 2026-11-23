@@ -150,15 +150,19 @@ rhythm and tie. Every stop came before an edit at the wrong place.
 - The status bar reads a range as far as the last bar of a slur that starts on the range's first
   note: S12 step 13 selected the flute from bar 42 to bar 43, on a note that starts a slur to bar 44,
   and Dorico showed "Bars 42-44", so the range check stopped the run before the hairpin. A slur that
-  starts on a later note of the range does not count (step 14 read "Bars 43-44" with a slur from bar
-  44 to 45 inside it).
+  starts on a later note of the range counts too (S38 step 31, Nov 23: a range from bar 105 to the
+  first note of a slur to bar 108 read "Bars 105-108"). S12 step 14 seemed to show the opposite
+  ("Bars 43-44" with a slur from bar 44 inside it), but that slur ended on the downbeat of bar 45,
+  so by the rule below it counts only to bar 44.
 - The planner now reads every slur in the file and remembers each one it adds (`Plan.slurs`), and
   expects that wider range.
 - It counts a slur up to where its last note starts. A slur that ends on a note at the start of a
   bar counts only to the bar before: S26 step 4 selected the cor anglais from bar 70 to 71 on a note
   that starts a slur to the downbeat of bar 72, and Dorico showed "Bars 70-71" (step 5 then read
   "Bars 72-73" for the same case). S12's slur ended on beat 1.5 of bar 44, so bar 44 counted. A slur
-  that ends on a tie continuation keeps the bar where the chain ends (S13).
+  that ends on a tie continuation keeps the bar where the chain ends (S13), unless the chain starts on
+  a downbeat: then it counts the chain's first bar (S38 step 31: a slur to the E on the downbeat of
+  bar 108, tied into 109, counted to 108).
 - A hairpin that spans the first selected note also counts, from its first bar (S21 step 108: the
   bassoon's crescendo over bars 46-48 made a 48-49 range read "Bars 46-49"). A hairpin that ends
   before the first note does not (S12 step 14). `Plan.hairpins` keeps each one's exact end
@@ -380,7 +384,7 @@ note and mark.
   lines take Dorico's default style, so the picture of a suggestion and his score can differ there.
 - When two glissandi share a note (D6 to D4 to A5), the plan makes the second line first. Then no
   selection starts on a note that already has a glissando. A glissando that starts on the last
-  selected note does not widen the range, like a slur: S34's step 34 (D6 to D4, the D4 already
+  selected note does not widen the range (a slur there does, S38): S34's step 34 (D6 to D4, the D4 already
   starting the line to bar 105) read bar 104 alone, and all 131 steps went in on the first run.
 - The test was the first run of `app/dorico_scratch_test.py` (`... gliss`, with a panel line and
   his OK). It opened, saved, closed and trashed its project in about 30 seconds, and his project stayed
