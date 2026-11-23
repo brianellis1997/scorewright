@@ -149,6 +149,18 @@ from 111326 (Nov 2026); what belongs to that piece only is in `lab/pieces/p11132
   the strings' slurring patterns are for their bowing techniques, but the winds are for actual
   phrases and breaths... in fact winds should be slurring more most of the time." One slur over each
   phrase, with a breath at its end. (Nov 17 2026)
+- **Slur into the last note of a fade, a transition or a dovetail.** A wind or brass player tongues
+  a note with no slur, and the tongue adds an attack; under a slur the air goes on and only the
+  fingers or the slide change: "there should be a slur to that final note... the trombonist needs to
+  tongue that note, whereas if it was a slur they would just keep breathing and switch the notes with
+  their hands... when we're fading out or doing these transitions or dovetails, slurring is vital...
+  a detached note... will add some percussiveness that we don't want." A held common tone is tied,
+  not struck again. (Nov 23 2026)
+- **Every hairpin ends on a dynamic.** A crescendo or a decrescendo, at least at the end of a
+  phrase, shows where it goes: "they don't even have a dynamic marking for what they're fading out
+  to... a decrescendo to what? ...we want them to decrescendo to piano... that's very important for
+  playback and also for real-life instrumentalists." `lab/clash_check.py` lists hairpins with no
+  target. (Nov 23 2026)
 - **Flowing runs are slurred.** A run in a flowing texture is played legato, in one bow or one
   breath: "they should be slurred... it should be a flowing texture, therefore the run should be
   slurred... the violin playing detache up that run just doesn't make sense." Repeated notes that

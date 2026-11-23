@@ -77,6 +77,7 @@ class Score:
     def __init__(self, xml):
         self.names = dict(re.findall(r'<score-part id="([^"]+)">\s*<part-name>([^<]*)</part-name>', xml))
         self.parts, self.staves, self.slurs, self.wedges, self.dyns = {}, [], {}, {}, {}
+        self.wedge_kinds = {}
         for pid in re.findall(r'<score-part id="([^"]+)"', xml):
             body = re.search(rf'<part id="{pid}">(.*?)</part>', xml, re.S).group(1)
             t = re.search(r'<transpose\b.*?</transpose>', body, re.S)
@@ -98,9 +99,10 @@ class Score:
         """self.slurs[(pid, staff)]: [((bar, onset), last bar)] for each slur in the file (the bar before,
         when it ends on a note that starts a bar: Dorico's status bar counts a slur up to where its last
         note starts, S26 Nov 17: a slur to a downbeat of bar 72 read "Bars 70-71"), and
-        self.wedges[(pid, staff)]: [((bar, onset), (bar, onset))] from start to stop of each hairpin"""
+        self.wedges[(pid, staff)]: [((bar, onset), (bar, onset))] from start to stop of each hairpin, and
+        self.wedge_kinds[(pid, staff)]: 'crescendo' or 'diminuendo' for each of them, in the same order"""
         bars, tr, divs = self.parts[pid]
-        open_, wedge = {}, {}
+        open_, wedge, kinds = {}, {}, {}
         for b in sorted(bars):
             t = on = 0
             div = divs[b]
@@ -114,8 +116,10 @@ class Score:
                         key = (num or '1', staff)
                         if kind == 'stop' and key in wedge:
                             self.wedges.setdefault((pid, staff), []).append((wedge.pop(key), (b, Fraction(t, div))))
+                            self.wedge_kinds.setdefault((pid, staff), []).append(kinds.pop(key))
                         elif kind != 'stop':
                             wedge[key] = (b, Fraction(t, div))
+                            kinds[key] = kind
                     continue
                 d = int((re.search(r'<duration>(\d+)</duration>', s) or [0, 0])[1])
                 if s.startswith('<backup'):
