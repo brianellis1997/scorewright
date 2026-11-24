@@ -141,7 +141,7 @@ def targets(score, lo, hi):
                 if not lo <= e[0] <= hi or e in dyns:
                     continue
                 starts = sorted(it[0] for s2 in staves if e[0] in score.parts[pid][0]
-                                for it in score.items(pid, e[0], s2) if it[1] != 'Rest' and it[0] >= e[1])
+                                for it in score.items(pid, e[0], s2) if it[1] != 'Rest' and not it[2] and it[0] >= e[1])
                 if starts and (e[0], starts[0]) in dyns:
                     continue
                 out.append((score.names[pid], a, e))
