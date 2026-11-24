@@ -164,7 +164,11 @@ rhythm and tie. Every stop came before an edit at the wrong place.
   a downbeat: then it counts the chain's first bar (S38 step 31: a slur to the E on the downbeat of
   bar 108, tied into 109, counted to 108).
 - A hairpin that spans the first selected note also counts, from its first bar (S21 step 108: the
-  bassoon's crescendo over bars 46-48 made a 48-49 range read "Bars 46-49"). A hairpin that ends
+  bassoon's crescendo over bars 46-48 made a 48-49 range read "Bars 46-49"). That holds for a hairpin the
+  same run made, not for one already in his score: S41 step 21 selected the clarinet from beat 2 of bar
+  109, under his decrescendo of bars 108-109, and Dorico showed "Bars 109-110" (Nov 24). A hairpin from
+  the score counts only when it ends on the first selected note with a dynamic there (S24). Rebuilt with
+  this rule, the S31, S34 and S38 plans come out as they ran. A hairpin that ends
   before the first note does not (S12 step 14). `Plan.hairpins` keeps each one's exact end
   (`Score.item_end`, after its tie chain); replayed on S12 and S21 the planner gives exactly the
   ranges that went in. Replayed on S12, it gives exactly the ranges that went in. A hairpin

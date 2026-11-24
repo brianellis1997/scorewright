@@ -400,8 +400,9 @@ class Plan:
                 st['end'] = self.cur.chain_end(pid, to[0], self.cur.nav(pid, to[0], staff)[k1][0], staff)
                 first = (bar, Fraction(s['onset']))
                 ends = self.dyns.get((pid, staff), set())
-                over = [(a, e) for a, e in self.hairpins.get((pid, staff), []) + self.wedges.get((pid, staff), [])
-                        if a < first < e or (first == e and e in ends)]
+                over = [(a, e) for a, e in self.hairpins.get((pid, staff), []) if a < first < e]
+                over += [(a, e) for a, e in self.hairpins.get((pid, staff), []) + self.wedges.get((pid, staff), [])
+                         if first == e and e in ends]
                 last_sel = (to[0], Fraction(to[1]) if to[1] is not None else Fraction(2))
                 st['range'] = [min([bar] + [a[0] for a, e in over]),
                                max([st['end']] + [e for a, e in self.slurs.get((pid, staff), []) if first <= a <= last_sel]
