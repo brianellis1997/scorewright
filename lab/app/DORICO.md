@@ -73,6 +73,7 @@ bars 50-52 were removed, 48 undo steps in all).
 | spread a chord part | `p.explode('P5', 24, 31, staves=3)` | the range, `Edit.Copy`; the start, `NavigateDownExtend` x2, `Edit.PasteExplode` |
 | spelling of a typed sharp or flat | `p.spell('P31', 3, 0)` | the runner reads the note and sends `NoteEdit.RespellUsingNoteNameBelow` (or `...Above` for a flat) only when Dorico shows the other name; the run report counts the fixes |
 | shorten a note that stays | `p.shorten('P30', 60, 0, 2)` | `EventEdit.DurationShortenByGrid` n times (grid: an eighth); one step per chord note, each selected by its own ID |
+| lengthen a note or a tie chain | `p.step(label, 'P3', 127, 1, edits=['EventEdit.DurationLengthenByGrid'])` | on the chain's first note: the whole chain grows by an eighth and keeps its tie (scratch test Nov 25: half tied to quarter, 3 to 3.5 quarters; a quarter became a dotted quarter); S44 held the oboe's E into the violins this way |
 | tuplets in note entry | events `('tuplet', '6:4')`, notes at their written value (1/4), `('end tuplet', '6:4')` | `NoteValue` first, then `NoteInput.StartTupletRun?Definition=6:4&Set=true`, the notes, `...&Set=false` |
 | glissando line | `p.gliss('P26', (101, 1), (102, 0))` | the two notes as a range, then `NoteInput.CreateGlissando` (no parameters): one line from the first selected note to the last, in Dorico's default style; a down-and-up gesture is two steps |
 | move an existing note by scale steps | `p.pitch('P6', 2, 0, 2)` | `NoteEdit.PitchUp` (Alt+Up) n times, `NoteEdit.PitchDown` for down: the note keeps its ID, ties, slurs and dynamics, so it beats retyping one note |
@@ -442,3 +443,10 @@ project that is not a scratch test (the newest save was a scratch project in the
   and a rest is an item. The clarinet's F flat, rest, F flat of bar 127 was one group of two, so the
   widened selection took the rest, and the second note stayed E (a one-step fix respelled it).
   `accidentals()` now closes a group at a rest; spell notes with rests between them one by one.
+
+## Ask less: basic commands are tested at once (S44, Nov 25)
+
+S44 waited for his OK to test `EventEdit.DurationLengthenByGrid`. Brian: "you need to know how to do
+that... this is a basic request... go ahead and test it". The scratch harness is safe now (it validates
+the file, stops on any dialog, closes only its own project), so a new command for a basic edit is tested at
+once with a line in the panel, and the suggestion goes up when it passes.
