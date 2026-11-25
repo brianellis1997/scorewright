@@ -11,6 +11,8 @@ Tests (Nov 16 2026, for S23 and S24 of 111326):
             twelve sixteenths, Set=false, a quarter, an eighth, then a 3:2 run of three sixteenths
   gliss     NoteInput.CreateGlissando on a range of two notes (flute bar 1) and of three (bars 4-5):
             the lines it makes are read back from the file (GlissandoLineEventDefinition) (Nov 18, S33)
+  lengthen  EventEdit.DurationLengthenByGrid on a tied E (half, tied to a quarter, then a rest) and on a
+            plain quarter note: does the chain end an eighth later, tie kept? (Nov 25, S44)
   tuplet    a bar of two eighth-note triplets: the second triplet and the next three bars deleted as one
             range (Edit.Delete), then G F as plain eighths typed where it was, then E. F | E: are the
             tuplet's records gone, and where do the new notes land? (Nov 23, S38)
@@ -58,6 +60,19 @@ def tuplet_xml():
     head = ('<attributes><divisions>12</divisions><key><fifths>0</fifths></key><time><beats>2</beats><beat-type>4</beat-type></time>'
             '<clef><sign>G</sign><line>2</line></clef></attributes>')
     body = ''.join(f'<measure number="{b}">' + (head if b == 1 else '') + bars.get(b, rest(24, 'whole')) + '</measure>' for b in range(1, 9))
+    return ('<?xml version="1.0" encoding="UTF-8"?><score-partwise version="3.1"><part-list>'
+            f'<score-part id="P1"><part-name>Flute</part-name></score-part></part-list><part id="P1">{body}</part></score-partwise>')
+
+
+def lengthen_xml():
+    """one flute: E (half) tied to E (quarter), a quarter rest | G (quarter), a quarter rest"""
+    tie = lambda kind: f'<tie type="{kind}"/>'
+    bars = {1: plain('E', 5, 8, 'half').replace('<voice>', tie('start') + '<voice>', 1).replace('</note>', '<notations><tied type="start"/></notations></note>'),
+            2: plain('E', 5, 4, 'quarter').replace('<voice>', tie('stop') + '<voice>', 1).replace('</note>', '<notations><tied type="stop"/></notations></note>') + rest(4, 'quarter'),
+            3: plain('G', 4, 4, 'quarter') + rest(4, 'quarter')}
+    head = ('<attributes><divisions>4</divisions><key><fifths>0</fifths></key><time><beats>2</beats><beat-type>4</beat-type></time>'
+            '<clef><sign>G</sign><line>2</line></clef></attributes>')
+    body = ''.join(f'<measure number="{b}">' + (head if b == 1 else '') + bars.get(b, rest(8, 'whole')) + '</measure>' for b in range(1, 9))
     return ('<?xml version="1.0" encoding="UTF-8"?><score-partwise version="3.1"><part-list>'
             f'<score-part id="P1"><part-name>Flute</part-name></score-part></part-list><part id="P1">{body}</part></score-partwise>')
 
@@ -173,7 +188,7 @@ def main(mode='shorten'):
     tmp = os.path.join(os.path.dirname(LOG), 'sw_scratch')
     os.makedirs(tmp, exist_ok=True)
     src = f'{tmp}/{stem}.musicxml'
-    xml = tuplet_xml() if mode == 'tuplet' else scratch_xml()
+    xml = tuplet_xml() if mode == 'tuplet' else lengthen_xml() if mode == 'lengthen' else scratch_xml()
     bad = validate(xml)
     if bad:
         print('the scratch MusicXML is not valid, so Dorico was not touched:', bad)
@@ -212,6 +227,17 @@ def main(mode='shorten'):
                     print('  refused:', c, err)
 
         pick = lambda ns, bar, name: next(n for n in ns if (n.bar or int(n.position // 2) + 1) == bar and n.pitch_name == name)
+        if mode == 'lengthen':
+            at = lambda pos: next(n for n in fl if n.position == pos)
+            run([at(0).select_command, 'EventEdit.DurationLengthenByGrid'])
+            time.sleep(0.5)
+            run([at(4).select_command, 'EventEdit.DurationLengthenByGrid'])
+            time.sleep(1)
+            before = os.path.getmtime(path)
+            keys('keystroke "s" using command down', raise_window=mine)
+            wait(lambda: os.path.getmtime(path) > before, 20, 1)
+            print('after lengthen:', show(notes_of(path)['Flute']))
+            return 0
         if mode == 'tuplet':
             at = lambda pos: next(n for n in fl if n.position == pos)
             print('tuplets before:', [(k, f.get('position'), f.get('duration')) for k, f in tuplets(path)])
