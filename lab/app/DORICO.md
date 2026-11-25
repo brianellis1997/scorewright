@@ -431,3 +431,14 @@ Tuplets, from the test that then ran cleanly:
 After a project is closed and opened again, Dorico keeps no autosave until it changes. The offline
 check (`dorico_apply.py --check`) then reads the open project window's name, or else the last saved
 project that is not a scratch test (the newest save was a scratch project in the Trash).
+
+## Spelling: F flat is E, and a rest breaks a group (S43, Nov 25)
+
+- The spelling check named the other spelling of every flat as the letter below plus a sharp. That is
+  right for A flat / G sharp, but F flat was checked against E sharp: S43 step 8 found the trombone's
+  F flat typed as E, matched neither name, and stopped before an edit. `Plan.spell` now works out the
+  other name from the pitch: F flat / E, C flat / B, E sharp / F, B sharp / C.
+- A spelling group (k repeated notes spelled alike) respells by widening the selection item by item,
+  and a rest is an item. The clarinet's F flat, rest, F flat of bar 127 was one group of two, so the
+  widened selection took the rest, and the second note stayed E (a one-step fix respelled it).
+  `accidentals()` now closes a group at a rest; spell notes with rests between them one by one.

@@ -63,8 +63,11 @@ def plan(x):
         p.notes('P26', first, onset, evs, staff=staff)
     state = copy_bars(state, final, 'P26', sorted(s43.HARP))
     p.use(state)
-    p.spell('P26', 126, H, staff=2, group=4)
-    p.spell('P26', 127, H, staff=1, group=2)
+    for b in (126, 127):
+        for o in (H, 3 * H):
+            p.spell('P26', b, o, staff=2)
+    for o in (H, 3 * H):
+        p.spell('P26', 127, o, staff=1)
     p.articulate('P7', (124, H), (127, 3 * H), 'kStaccato')
     p.articulate('P6', (126, H), (127, 3 * H), 'kStaccato')
     for pid, sl in s42.SLURS.items():

@@ -622,14 +622,21 @@ class Plan:
     def spell(self, pid, bar, onset, staff=1, group=1):
         """MIDI input picks the spelling itself (68 came in as A flat in S6, as G sharp in S8): the runner
         reads the note and respells it only when Dorico shows the other name. group=k: the note starts k
-        repeated notes typed one after the other, which Dorico spells alike, so a wrong first note means
-        all k are respelled at once (a respell of a right note would make B double sharp of C sharp)"""
+        repeated notes typed one after the other, with no rest between them (the respell widens the
+        selection item by item, and a rest is an item), which Dorico spells alike, so a wrong first note
+        means all k are respelled at once (a respell of a right note would make B double sharp of C sharp)"""
         s = self.spec(pid, bar, onset, staff)
         (n,) = s['names']
         m = re.match(r'([A-G])(#|b)(-?\d+)$', n)
-        i = STEPS.index(m.group(1))
-        other = STEPS[(i + 1) % 7] + 'b' if m.group(2) == '#' else STEPS[(i - 1) % 7] + '#'
-        octv = int(m.group(3)) + (1 if m.group(1) == 'B' and m.group(2) == '#' else -1 if m.group(1) == 'C' and m.group(2) == 'b' else 0)
+        letter, acc, octv0 = m.group(1), m.group(2), int(m.group(3))
+        i = STEPS.index(letter)
+        # the other name of the same pitch, on the next letter: G sharp / A flat, but F flat / E and
+        # C flat / B, E sharp / F, B sharp / C (S43 step 8, Nov 25: F flat was checked against E sharp)
+        semis = {'C': 0, 'D': 2, 'E': 4, 'F': 5, 'G': 7, 'A': 9, 'B': 11}
+        ol = STEPS[(i + 1) % 7] if acc == '#' else STEPS[(i - 1) % 7]
+        octv = octv0 + (1 if letter == 'B' and acc == '#' else -1 if letter == 'C' and acc == 'b' else 0)
+        diff = semis[letter] + (1 if acc == '#' else -1) + 12 * octv0 - (semis[ol] + 12 * octv)
+        other = ol + {-1: 'b', 0: '', 1: '#'}[diff]
         st = self.step(f'spelling of {n} for {self.who(pid)} in bar {bar}', pid, bar, onset, staff,
                        edits=[f'NoteEdit.RespellUsingNoteName{"Below" if m.group(2) == "#" else "Above"}'])
         st['spell'] = f'Note: {other}{octv} '

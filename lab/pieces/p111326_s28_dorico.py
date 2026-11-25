@@ -40,11 +40,17 @@ def accidentals(score, pid, bars, start):
     seq = []
     for b in sorted(bars):
         for it in score.items(pid, b):
-            if it[1] == 'Rest' or it[2] or (b, it[0]) < start:
+            if it[2] or (b, it[0]) < start:
                 continue
-            seq.append((b, it[0], it[1][0]))
+            seq.append((b, it[0], None if it[1] == 'Rest' else it[1][0]))
     out = []
     for b, o, n in seq:
+        if n is None:
+            # a rest closes a group: the respell widens the selection item by item, and a rest is an item
+            # (S43, Nov 25: F flat, rest, F flat; the second stayed E)
+            if out:
+                out[-1][4] = False
+            continue
         if '#' in n[1:] or 'b' in n[1:]:
             if out and out[-1][3] == n and out[-1][4]:
                 out[-1][2] += 1
