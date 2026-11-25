@@ -60,6 +60,11 @@ bars 50-52 were removed, 48 undo steps in all).
 
 ## Recipes (Plan methods)
 
+How to do each change, as a plan call and the Dorico commands it sends. A row is here only after a run or a
+scratch test proved it; the test that did is named. Before trying anything new, read this table and the
+sections below it; a command no row has is tried in `app/dorico_scratch_test.py` (modes shorten, tuplets,
+gliss, tuplet, lengthen; add a mode for the new command) and then gets its row here.
+
 | Change | Plan call | Dorico commands |
 |---|---|---|
 | dynamic | `p.dynamic('P2', 15, 1.5, 'mp')` | `NoteInput.CreateDynamic?Definition=mp&UseLocalOverride=0` |
@@ -80,6 +85,10 @@ bars 50-52 were removed, 48 undo steps in all).
 | new notes | `p.notes('P3', 18, 0, [('G4', 1), ('A4', 1, 'tie'), (None, 0.5)])` | select a note with an ID, `NoteInput.Enter?Set=true`, caret moves, then for every note `NoteInput.NoteValue?LogDuration=kCrotchet&Set=true` and, only for a dotted note, `NoteInput.SetDotted?Value=1&Set=true`; then `NoteInput.MIDINoteInput?MIDIPitches=67` (a chord: `60\,64\,67`); `NoteInput.Tie` after a note ties it to the next typed note; `NoteInput.Exit` |
 | a caret from a named note | `p.notes('P26', 1, 0, events, staff=2, start=('P26', 2, 1, 0))` | when the search cannot know a note still has its ID (the left hand of a harp after the right hand was retyped) |
 | insert bars | `p.insert_bars(3, 1, check=('P3', 7, 1.0))` | `NoteInput.CreateBarLine?Duration=2\, 1&RhythmicPosition=4\, 1&RhythmicPositionIncludesLeftOfNotes=1&FlowID=0`: time in quarters as `n\, d` (the form Dorico logs for the system track's insert); then the check note, by its ID, must be one bar later. `CreateBarLine?Value=10&Location=End` adds bars at the end |
+| clear a region before typing | `p.step(label, pid, bar, onset, to=(bar2, last), edits=['Edit.Delete'])`, then `p.use(xml)` with rests there | a range from the region's first item; whole chords and whole tuplets go with it (S31, S38). Needed before any line with rests over old notes: a rest in note entry only moves the caret, so `Plan.notes` refuses such a line |
+| a line that starts between eighths (beat 2.25) | `p.notes('P6', 131, Fraction(5, 4), events, start=('P29', 1, 131, Fraction(5, 4)))` | the caret moves in eighths (and inside a tuplet by the tuplet's notes), so it is brought from a note at that exact spot on another staff; type the line before that note is deleted (S44) |
+| a hairpin over one note | `p.hairpin(pid, (117, 0), (117, 0), up=False)` | one selected note: the hairpin spans it (a tie chain: the whole chain); put its target dynamic on the next note that starts (S43) |
+| a fade into the next chord | `p.slur(pid, last, (118, 0))`, `p.hairpin(pid, last, last, up=False)`, `p.dynamic(pid, 118, 0, 'pp')` | the last note slurs into a new note of the next chord, which carries the target; a repeated pitch moves to another chord note, so the dynamic has a note to sit on (S36-S43, his rules in `lab/style/brian.md`) |
 | anything else | `p.step(label, pid, bar, onset, to=(bar, onset), down=n, edits=[...], plain=[...])` | |
 
 Order the steps so that every ID is still valid when it is used: a tie merges two notes into one
